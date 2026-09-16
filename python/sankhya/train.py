@@ -74,15 +74,15 @@ def span_f1(gold_spans_list, pred_spans_list):
     return prec, rec, f1
 
 
-def value_accuracy(examples, all_bio_pred, all_cls_pred):
+def value_accuracy(examples, all_bio_pred, all_cls_pred, all_bio_probs):
     """For each gold span, find exact-matching predicted span and check evaluate() value match."""
     correct = 0
     total = 0
     misses = []
-    for ex, bio_pred, cls_pred in zip(examples, all_bio_pred, all_cls_pred):
+    for ex, bio_pred, cls_pred, bio_probs in zip(examples, all_bio_pred, all_cls_pred, all_bio_probs):
         text = ex["text"]
         L = min(len(text), MAX_LEN)
-        decoded = decode_spans(text, bio_pred[:L].tolist(), cls_pred[:L].tolist())
+        decoded = decode_spans(text, bio_pred[:L].tolist(), cls_pred[:L].tolist(), bio_probs=bio_probs[:L].tolist())
         pred_by_span = {(d["start"], d["end"]): d for d in decoded}
         for sp in ex["spans"]:
             total += 1
@@ -113,6 +113,7 @@ def evaluate_model(model, chars, bio, cls, mask, examples, batch=256, device="cp
     n = chars.shape[0]
     all_bio_pred = []
     all_cls_pred = []
+    all_bio_probs = []
     bio_correct = bio_total = 0
     cls_correct = cls_total = 0
     for i in range(0, n, batch):
@@ -123,6 +124,7 @@ def evaluate_model(model, chars, bio, cls, mask, examples, batch=256, device="cp
         bio_logits, cls_logits = model(cb)
         bio_pred = bio_logits.argmax(-1)
         cls_pred = cls_logits.argmax(-1)
+        bio_probs = torch.softmax(bio_logits, dim=-1)
         m = mb.bool()
         bio_correct += ((bio_pred == bb) & m).sum().item()
         bio_total += m.sum().item()
@@ -131,18 +133,19 @@ def evaluate_model(model, chars, bio, cls, mask, examples, batch=256, device="cp
         for j in range(cb.shape[0]):
             all_bio_pred.append(bio_pred[j].cpu().numpy())
             all_cls_pred.append(cls_pred[j].cpu().numpy())
+            all_bio_probs.append(bio_probs[j].cpu().numpy())
     bio_acc = bio_correct / bio_total if bio_total else 0.0
     cls_acc = cls_correct / cls_total if cls_total else 0.0
 
     gold_spans_list = [[(s["start"], s["end"]) for s in ex["spans"]] for ex in examples]
     pred_spans_list = []
-    for ex, bp, cp in zip(examples, all_bio_pred, all_cls_pred):
+    for ex, bp, cp, bpr in zip(examples, all_bio_pred, all_cls_pred, all_bio_probs):
         L = min(len(ex["text"]), MAX_LEN)
-        decoded = decode_spans(ex["text"], bp[:L].tolist(), cp[:L].tolist())
+        decoded = decode_spans(ex["text"], bp[:L].tolist(), cp[:L].tolist(), bio_probs=bpr[:L].tolist())
         pred_spans_list.append([(d["start"], d["end"]) for d in decoded])
     prec, rec, f1 = span_f1(gold_spans_list, pred_spans_list)
 
-    vacc, misses = value_accuracy(examples, all_bio_pred, all_cls_pred)
+    vacc, misses = value_accuracy(examples, all_bio_pred, all_cls_pred, all_bio_probs)
     return {
         "bio_acc": bio_acc,
         "cls_acc": cls_acc,

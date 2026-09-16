@@ -36,9 +36,11 @@ def run_torch(ckpt_path, examples):
             ids = np_infer.pad_ids([char_to_id.get(c, unk) for c in text])
             t = torch.tensor([ids], dtype=torch.int64)
             bio_logits, cls_logits = model(t)
-            bio_pred = bio_logits[0, :L].argmax(-1).tolist()
-            cls_pred = cls_logits[0, :L].argmax(-1).tolist()
-            preds.append((ex["text"], bio_pred, cls_pred))
+            bio_logits, cls_logits = bio_logits[0, :L], cls_logits[0, :L]
+            bio_pred = bio_logits.argmax(-1).tolist()
+            cls_pred = cls_logits.argmax(-1).tolist()
+            bio_probs = torch.softmax(bio_logits, dim=-1).tolist()
+            preds.append((ex["text"], bio_pred, cls_pred, bio_probs))
     return preds, classes
 
 
@@ -58,9 +60,11 @@ def run_json_weights(weights_path, examples, int8=False):
         L = len(text)
         ids = np_infer.pad_ids(np.array([char_to_id.get(c, unk) for c in text], dtype=np.int64))
         bio_logits, cls_logits = np_infer.forward(weights, ids, dilation=2, layers=layers)
-        bio_pred = bio_logits[:L].argmax(-1).tolist()
-        cls_pred = cls_logits[:L].argmax(-1).tolist()
-        preds.append((ex["text"], bio_pred, cls_pred))
+        bio_logits, cls_logits = bio_logits[:L], cls_logits[:L]
+        bio_pred = bio_logits.argmax(-1).tolist()
+        cls_pred = cls_logits.argmax(-1).tolist()
+        bio_probs = np_infer.softmax(bio_logits, axis=-1).tolist()
+        preds.append((ex["text"], bio_pred, cls_pred, bio_probs))
     return preds, classes
 
 
@@ -90,9 +94,9 @@ def main(argv=None):
     def overlaps(a, b):
         return a[0] < b[1] and b[0] < a[1]
 
-    for ex, (text, bio_pred, cls_pred) in zip(examples, preds):
+    for ex, (text, bio_pred, cls_pred, bio_probs) in zip(examples, preds):
         gold_spans = [(s["start"], s["end"]) for s in ex["spans"]]
-        decoded = decode_spans(text, bio_pred, cls_pred)
+        decoded = decode_spans(text, bio_pred, cls_pred, bio_probs=bio_probs)
         pred_set = {(d["start"], d["end"]) for d in decoded}
         pred_by_span = {(d["start"], d["end"]): d for d in decoded}
         gold_set = set(gold_spans)

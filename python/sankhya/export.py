@@ -178,7 +178,8 @@ def main(argv=None):
             bio_logits, cls_logits = bio_logits[:L], cls_logits[:L]
             bio_pred = bio_logits.argmax(-1).tolist()
             cls_pred = cls_logits.argmax(-1).tolist()
-            decoded = decode_spans(text, bio_pred, cls_pred)
+            bio_probs = np_infer.softmax(bio_logits, axis=-1).tolist()
+            decoded = decode_spans(text, bio_pred, cls_pred, bio_probs=bio_probs)
             pred_by_span = {(d["start"], d["end"]): d for d in decoded}
             for sp in ex["spans"]:
                 total += 1

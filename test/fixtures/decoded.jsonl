@@ -124,7 +124,7 @@
 {"text": "iska package sava do lakh per annum hai", "spans": [{"start": 13, "end": 25, "value": 225000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_SAVA SEP CARD_2 SEP UNIT_LAKH"}]}
 {"text": "humara loan pachas lakh ka approve hua", "spans": [{"start": 12, "end": 23, "value": 5000000, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_50 SEP UNIT_LAKH"}]}
 {"text": "Lakhan bhai ka number 9876543210 hai", "spans": []}
-{"text": "KBC ka crorepati banna hai mujhe", "spans": [{"start": 7, "end": 8, "value": 10000000, "range": null, "unit": "crore", "currency": null, "classes": "UNIT_CRORE"}]}
+{"text": "KBC ka crorepati banna hai mujhe", "spans": []}
 {"text": "lakhon log aaye the us rally mein", "spans": []}
 {"text": "do din mein aa jaunga wapas", "spans": []}
 {"text": "pin code 400001 hai humara", "spans": []}

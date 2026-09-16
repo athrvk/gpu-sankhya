@@ -64,6 +64,15 @@ def _relu(x):
     return np.maximum(x, 0.0)
 
 
+def softmax(logits: np.ndarray, axis: int = -1) -> np.ndarray:
+    """Numerically stable softmax, used to turn bio_logits into bio_probs for
+    decode_spans' confidence gate (the JS runtime applies this in production,
+    so every Python decode_spans call site must too -- see decode.py)."""
+    shifted = logits - np.max(logits, axis=axis, keepdims=True)
+    exp = np.exp(shifted)
+    return exp / np.sum(exp, axis=axis, keepdims=True)
+
+
 def forward(weights: dict, char_ids: np.ndarray, dilation: int = 2, layers: int = 3):
     """char_ids: (L,) int array of char ids (single example, no batch/padding needed
     -- caller may pass a full length row). Returns (bio_logits (L,3), cls_logits (L,n_cls))."""
