@@ -20,6 +20,8 @@
     --ok-bg: #d9f0e2;
     --bad: #b23b3b;
     --bad-bg: #f6dcdc;
+    --warn: #93650f;
+    --warn-soft: #f5e3bd;
     --cell-o: #d8d5cd;
     --focus: #3567c9;
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -41,6 +43,8 @@
       --ok-bg: #1c3527;
       --bad: #e37070;
       --bad-bg: #402323;
+      --warn: #e0b64f;
+      --warn-soft: #453210;
       --cell-o: #3a372f;
       --focus: #7fa4e8;
       color-scheme: dark;
@@ -60,6 +64,8 @@
     --ok-bg: #1c3527;
     --bad: #e37070;
     --bad-bg: #402323;
+    --warn: #e0b64f;
+    --warn-soft: #453210;
     --cell-o: #3a372f;
     --focus: #7fa4e8;
     color-scheme: dark;
@@ -228,43 +234,157 @@
     padding: 0.6rem 0;
     border-bottom: 1px solid var(--border);
     cursor: default;
+    border-left: 3px solid transparent;
   }
   .line:last-child { border-bottom: none; }
-  .line-text { font-size: 0.95rem; overflow-wrap: anywhere; }
-  .line.selected { background: var(--accent-soft); margin: 0 -0.5rem; padding: 0.6rem 0.5rem; border-radius: 6px; }
+  .line-text { font-size: 0.95rem; overflow-wrap: anywhere; padding-left: 0.1rem; }
+  .line.selected {
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+    border-left-color: var(--accent);
+    padding-left: 0.5rem;
+    margin-left: -0.6rem;
+  }
   mark {
     background: var(--mark-bg);
     border-bottom: 2px solid var(--mark-border);
     color: inherit;
     border-radius: 2px;
     padding: 0 1px;
+    position: relative;
+  }
+  mark.hot { border-bottom-width: 3px; border-bottom-color: var(--accent); }
+  .mark-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 700;
+    margin-right: 2px;
+    vertical-align: middle;
+    line-height: 1;
   }
   .no-span { color: var(--muted); font-size: 0.8rem; font-style: italic; margin-top: 0.15rem; }
+
   .span-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     gap: 0.5rem 0.9rem;
+    align-items: center;
+    min-height: 56px;
     font-size: 0.8rem;
     color: var(--muted);
-    margin-top: 0.35rem;
-    padding: 0.35rem 0.5rem;
-    background: var(--bg);
-    border-radius: 6px;
+    padding: 0.5rem 0.15rem;
+    border-top: 1px solid var(--border);
   }
-  .span-row .value { font-weight: 700; color: var(--text); font-size: 0.9rem; }
-  .span-row .plain { color: var(--muted); }
-  .span-row .classes { font-family: var(--mono); font-size: 0.72rem; overflow-wrap: anywhere; }
-  .conf-bar {
-    display: inline-block;
-    width: 54px;
-    height: 6px;
-    border-radius: 3px;
+  .span-row:first-of-type { margin-top: 0.4rem; }
+  .span-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.6rem;
+    font-weight: 700;
+    margin-right: 0.3rem;
+  }
+  .span-zone-value { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+  .span-value-btn {
+    all: unset;
+    cursor: pointer;
+    font-size: 1.35rem;
+    font-weight: 650;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    position: relative;
+  }
+  .span-value-btn:hover, .span-value-btn:focus-visible { color: var(--accent); }
+  .span-value-btn .copied-tip {
+    position: absolute;
+    top: -1.5em;
+    left: 0;
+    font-size: 0.65rem;
+    font-weight: 600;
+    background: var(--text);
+    color: var(--panel);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .span-value-btn.show-copied .copied-tip { opacity: 1; }
+  @media (prefers-reduced-motion: no-preference) {
+    .span-value-btn .copied-tip { transition: opacity 0.15s ease; }
+  }
+  .span-caption { font-size: 0.75rem; color: var(--muted); }
+  .span-zone-mid { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; min-width: 0; }
+  .chip-small {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.12rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
     background: var(--border);
-    overflow: hidden;
-    vertical-align: middle;
+    color: var(--muted);
+    white-space: nowrap;
   }
-  .conf-fill { height: 100%; background: var(--accent); }
+  .span-western {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .span-zone-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem; }
+  .conf-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+  .conf-pill.ok { background: var(--ok-bg); color: var(--ok); }
+  .conf-pill.warn { background: var(--warn-soft); color: var(--warn); }
+  .conf-pill.low { background: var(--border); color: var(--muted); }
+  .how-btn {
+    all: unset;
+    cursor: pointer;
+    font-size: 0.7rem;
+    color: var(--muted);
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+  }
+  .how-btn:hover, .how-btn:focus-visible { color: var(--accent); }
+  .how-btn .chev { display: inline-block; transition: transform 0.15s ease; }
+  .how-btn[aria-expanded="true"] .chev { transform: rotate(90deg); }
+  @media (prefers-reduced-motion: reduce) {
+    .how-btn .chev { transition: none; }
+  }
+  .how-panel {
+    grid-column: 1 / -1;
+    display: none;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0.1rem 0.15rem 0.5rem;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+  }
+  .how-panel.open { display: flex; }
+  .how-chip {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.15rem 0.45rem;
+    color: var(--text);
+  }
   h2 { font-size: 1rem; margin: 0 0 0.6rem; }
   .row-head { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
   button {
@@ -405,6 +525,16 @@
     .stats { gap: 0.5rem 1rem; }
     .bench-bar-label { width: 46px; }
     .bench-bar-num { width: 72px; }
+  }
+  @media (max-width: 520px) {
+    .span-row {
+      grid-template-columns: 1fr;
+      grid-template-areas: "value" "mid" "right";
+      row-gap: 0.4rem;
+    }
+    .span-zone-value { grid-area: value; }
+    .span-zone-mid { grid-area: mid; }
+    .span-zone-right { grid-area: right; align-items: flex-start; flex-direction: row; justify-content: space-between; }
   }
 </style>
 </head>
@@ -769,6 +899,90 @@ lakhon log aaye</textarea>
     setTimeout(() => { copyBtn.textContent = "Copy JSON"; }, 1200);
   });
 
+  const UNIT_VALUE = {
+    sau: 1e2, hazaar: 1e3, lakh: 1e5, crore: 1e7,
+    million: 1e6, billion: 1e9, arab: 1e9, kharab: 1e11,
+  };
+
+  function formatUnitAmount(n) {
+    const r = Math.round(n * 100) / 100;
+    return String(r).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+  }
+
+  function unitCaption(sp) {
+    if (!sp.unit) return "";
+    const uv = UNIT_VALUE[sp.unit];
+    if (!uv) return "";
+    if (sp.range) {
+      const a = formatUnitAmount(sp.range[0] / uv);
+      const b = formatUnitAmount(sp.range[1] / uv);
+      return `${a}–${b} ${sp.unit}`;
+    }
+    return `${formatUnitAmount(sp.value / uv)} ${sp.unit}`;
+  }
+
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  }
+
+  // human-readable "how" tokens from the raw classes[] of a span
+  function humanizeClasses(classes, spanText) {
+    const PFX = {
+      PFX_SAVA: "sava ×1.25",
+      PFX_DEDH: "dedh ×1.5",
+      PFX_DHAI: "dhai ×2.5",
+      PFX_SAADHE: "saadhe +½",
+      PFX_PAUNE: "paune −¼",
+      PFX_AADHA: "aadha ½",
+      PFX_PAAV: "paav ¼",
+    };
+    const out = [];
+    for (const cls of classes) {
+      if (!cls || cls === "SEP") continue;
+      if (PFX[cls]) { out.push(PFX[cls]); continue; }
+      if (cls.startsWith("CARD_")) { out.push(cls.slice(5)); continue; }
+      if (cls === "DIGITS") {
+        const m = spanText && spanText.match(/\d[\d.,]*/);
+        out.push(m ? m[0] : "digits");
+        continue;
+      }
+      if (cls.startsWith("UNIT_")) {
+        const unitKey = cls.slice(5).toLowerCase();
+        const uv = UNIT_VALUE[unitKey];
+        out.push(uv ? `${unitKey} ×${indianGroup(uv)}` : unitKey);
+        continue;
+      }
+      if (cls === "RANGE") { out.push("–"); continue; }
+      if (cls === "DOT") { out.push("."); continue; }
+      if (cls === "COMMA") { out.push(","); continue; }
+      out.push(cls);
+    }
+    return out;
+  }
+
+  function confBand(conf) {
+    if (conf >= 0.9) return "ok";
+    if (conf >= 0.7) return "warn";
+    return "low";
+  }
+
   function renderLine(text, spans, index) {
     const lineDiv = document.createElement("div");
     lineDiv.className = "line";
@@ -792,42 +1006,132 @@ lakhon log aaye</textarea>
       return lineDiv;
     }
 
+    const sorted = [...spans].sort((a, b) => a.start - b.start);
+    const numbered = sorted.length >= 2;
+
     let html = "";
     let cursor = 0;
-    const sorted = [...spans].sort((a, b) => a.start - b.start);
-    for (const sp of sorted) {
+    sorted.forEach((sp, i) => {
       html += escapeHtml(text.slice(cursor, sp.start));
-      html += "<mark>" + escapeHtml(text.slice(sp.start, sp.end)) + "</mark>";
+      const badge = numbered
+        ? `<span class="mark-badge" data-mark-idx="${i}">${i + 1}</span>`
+        : "";
+      html += `<mark data-mark-idx="${i}">${badge}${escapeHtml(text.slice(sp.start, sp.end))}</mark>`;
       cursor = sp.end;
-    }
+    });
     html += escapeHtml(text.slice(cursor));
     textDiv.innerHTML = html;
     lineDiv.appendChild(textDiv);
 
-    for (const sp of sorted) {
+    const marks = Array.from(textDiv.querySelectorAll("mark"));
+
+    sorted.forEach((sp, i) => {
       const row = document.createElement("div");
       row.className = "span-row";
+      row.tabIndex = 0;
+      const mark = marks[i];
+      const setHot = (on) => { if (mark) mark.classList.toggle("hot", on); };
+      row.addEventListener("mouseenter", () => setHot(true));
+      row.addEventListener("mouseleave", () => setHot(false));
+      row.addEventListener("focus", () => setHot(true));
+      row.addEventListener("blur", () => setHot(false));
+
       const pct = Math.round((sp.confidence || 0) * 100);
+      const band = confBand(sp.confidence || 0);
 
-      let valueStr = "";
-      if (sp.range) {
-        valueStr = indianGroup(sp.range[0]) + " – " + indianGroup(sp.range[1]);
-      } else {
-        valueStr = indianGroup(sp.value);
+      const valueZone = document.createElement("div");
+      valueZone.className = "span-zone-value";
+
+      const valueBtn = document.createElement("button");
+      valueBtn.type = "button";
+      valueBtn.className = "span-value-btn";
+      const rawNumber = sp.range ? sp.range[0] : sp.value;
+      const displayValue = sp.range
+        ? indianGroup(sp.range[0]) + " – " + indianGroup(sp.range[1])
+        : indianGroup(sp.value);
+      const currencyPrefix = sp.currency === "INR" ? "₹" : "";
+      valueBtn.innerHTML =
+        `${currencyPrefix}${escapeHtml(displayValue)}<span class="copied-tip">copied</span>`;
+      valueBtn.title = "Click to copy the raw number";
+      valueBtn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const ok = await copyText(String(Math.round(rawNumber)));
+        if (ok) {
+          valueBtn.classList.add("show-copied");
+          setTimeout(() => valueBtn.classList.remove("show-copied"), 1000);
+        }
+      });
+      valueZone.appendChild(valueBtn);
+
+      const caption = unitCaption(sp);
+      if (caption) {
+        const cap = document.createElement("div");
+        cap.className = "span-caption";
+        cap.textContent = caption;
+        valueZone.appendChild(cap);
       }
-      const plainStr = sp.range
-        ? Math.round(sp.range[0]) + "–" + Math.round(sp.range[1])
-        : String(Math.round(sp.value));
 
-      row.innerHTML =
-        `<span class="value">${valueStr}</span>` +
-        `<span class="plain">(${plainStr})</span>` +
-        (sp.unit ? `<span>unit: ${escapeHtml(sp.unit)}</span>` : "") +
-        (sp.currency ? `<span>currency: ${escapeHtml(sp.currency)}</span>` : "") +
-        `<span>conf: ${pct}% <span class="conf-bar"><span class="conf-fill" style="width:${pct}%"></span></span></span>` +
-        `<span class="classes">${escapeHtml(sp.classes.join(" "))}</span>`;
+      const midZone = document.createElement("div");
+      midZone.className = "span-zone-mid";
+      if (sp.unit) {
+        const c = document.createElement("span");
+        c.className = "chip-small";
+        c.textContent = sp.unit;
+        midZone.appendChild(c);
+      }
+      if (sp.currency) {
+        const c = document.createElement("span");
+        c.className = "chip-small";
+        c.textContent = sp.currency;
+        midZone.appendChild(c);
+      }
+      if (sp.range) {
+        const c = document.createElement("span");
+        c.className = "chip-small";
+        c.textContent = "range " + indianGroup(sp.range[0]) + " – " + indianGroup(sp.range[1]);
+        midZone.appendChild(c);
+      }
+      const western = document.createElement("span");
+      western.className = "span-western";
+      western.textContent = Math.round(rawNumber).toLocaleString("en-US");
+      midZone.appendChild(western);
+
+      const rightZone = document.createElement("div");
+      rightZone.className = "span-zone-right";
+      const pill = document.createElement("span");
+      pill.className = "conf-pill " + band;
+      pill.textContent = pct + "%";
+      rightZone.appendChild(pill);
+
+      const howBtn = document.createElement("button");
+      howBtn.type = "button";
+      howBtn.className = "how-btn";
+      howBtn.setAttribute("aria-expanded", "false");
+      howBtn.innerHTML = `<span class="chev">▸</span> how`;
+      rightZone.appendChild(howBtn);
+
+      row.appendChild(valueZone);
+      row.appendChild(midZone);
+      row.appendChild(rightZone);
+
+      const howPanel = document.createElement("div");
+      howPanel.className = "how-panel";
+      const tokens = humanizeClasses(sp.classes || [], sp.span || text.slice(sp.start, sp.end));
+      for (const t of tokens) {
+        const chip = document.createElement("span");
+        chip.className = "how-chip";
+        chip.textContent = t;
+        howPanel.appendChild(chip);
+      }
+      howBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const open = howPanel.classList.toggle("open");
+        howBtn.setAttribute("aria-expanded", String(open));
+      });
+
       lineDiv.appendChild(row);
-    }
+      lineDiv.appendChild(howPanel);
+    });
     return lineDiv;
   }
 
