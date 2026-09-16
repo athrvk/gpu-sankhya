@@ -4,6 +4,7 @@ dist/
 /data/
 /python/data/
 /python/models/
+# models/default/ (repo root) is tracked: the shipped checkpoint + exports
 /python/models_*/
 __pycache__/
 *.pyc

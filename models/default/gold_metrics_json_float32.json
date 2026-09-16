@@ -1,0 +1,181 @@
+{
+  "per_file": {
+    "tests/gold.jsonl": {
+      "examples": 184,
+      "spans": 165,
+      "precision": 0.8971428571428571,
+      "recall": 0.9515151515151515,
+      "f1": 0.9235294117647059,
+      "value_acc": 0.9515151515151515,
+      "categories": {
+        "digits": {
+          "spans": 51,
+          "value_acc": 0.9607843137254902,
+          "exact_match_rate": 0.9607843137254902
+        },
+        "words": {
+          "spans": 114,
+          "value_acc": 0.9473684210526315,
+          "exact_match_rate": 0.9473684210526315
+        },
+        "prefix": {
+          "spans": 50,
+          "value_acc": 0.92,
+          "exact_match_rate": 0.92
+        },
+        "range": {
+          "spans": 14,
+          "value_acc": 0.9285714285714286,
+          "exact_match_rate": 0.9285714285714286
+        },
+        "currency": {
+          "spans": 27,
+          "value_acc": 0.9629629629629629,
+          "exact_match_rate": 0.9629629629629629
+        },
+        "multi_unit": {
+          "spans": 11,
+          "value_acc": 1.0,
+          "exact_match_rate": 1.0
+        },
+        "symbol_unit": {
+          "spans": 17,
+          "value_acc": 1.0,
+          "exact_match_rate": 1.0
+        },
+        "long": {
+          "spans": 8,
+          "value_acc": 0.75,
+          "exact_match_rate": 0.75
+        }
+      },
+      "negatives": {
+        "examples": 25,
+        "false_positives": 3,
+        "fp_rate": 0.12
+      }
+    },
+    "tests/gold_deva.jsonl": {
+      "examples": 169,
+      "spans": 144,
+      "precision": 0.9662162162162162,
+      "recall": 0.9930555555555556,
+      "f1": 0.9794520547945206,
+      "value_acc": 0.9861111111111112,
+      "categories": {
+        "digits": {
+          "spans": 37,
+          "value_acc": 1.0,
+          "exact_match_rate": 1.0
+        },
+        "words": {
+          "spans": 107,
+          "value_acc": 0.9813084112149533,
+          "exact_match_rate": 0.9906542056074766
+        },
+        "prefix": {
+          "spans": 27,
+          "value_acc": 1.0,
+          "exact_match_rate": 1.0
+        },
+        "range": {
+          "spans": 10,
+          "value_acc": 0.9,
+          "exact_match_rate": 1.0
+        },
+        "currency": {
+          "spans": 20,
+          "value_acc": 1.0,
+          "exact_match_rate": 1.0
+        },
+        "multi_unit": {
+          "spans": 6,
+          "value_acc": 1.0,
+          "exact_match_rate": 1.0
+        },
+        "symbol_unit": {
+          "spans": 14,
+          "value_acc": 1.0,
+          "exact_match_rate": 1.0
+        },
+        "mixed_script": {
+          "spans": 2,
+          "value_acc": 1.0,
+          "exact_match_rate": 1.0
+        }
+      },
+      "negatives": {
+        "examples": 30,
+        "false_positives": 1,
+        "fp_rate": 0.03333333333333333
+      }
+    }
+  },
+  "combined": {
+    "examples": 353,
+    "spans": 309,
+    "precision": 0.9287925696594427,
+    "recall": 0.970873786407767,
+    "f1": 0.9493670886075949,
+    "value_acc": 0.9676375404530745,
+    "miss_summary": {
+      "missed_span": 0,
+      "spurious_span": 13,
+      "wrong_value": 1,
+      "wrong_boundary": 9,
+      "total": 23
+    },
+    "categories": {
+      "digits": {
+        "spans": 88,
+        "value_acc": 0.9772727272727273,
+        "exact_match_rate": 0.9772727272727273
+      },
+      "words": {
+        "spans": 221,
+        "value_acc": 0.9638009049773756,
+        "exact_match_rate": 0.9683257918552036
+      },
+      "prefix": {
+        "spans": 77,
+        "value_acc": 0.948051948051948,
+        "exact_match_rate": 0.948051948051948
+      },
+      "range": {
+        "spans": 24,
+        "value_acc": 0.9166666666666666,
+        "exact_match_rate": 0.9583333333333334
+      },
+      "currency": {
+        "spans": 47,
+        "value_acc": 0.9787234042553191,
+        "exact_match_rate": 0.9787234042553191
+      },
+      "multi_unit": {
+        "spans": 17,
+        "value_acc": 1.0,
+        "exact_match_rate": 1.0
+      },
+      "symbol_unit": {
+        "spans": 31,
+        "value_acc": 1.0,
+        "exact_match_rate": 1.0
+      },
+      "mixed_script": {
+        "spans": 2,
+        "value_acc": 1.0,
+        "exact_match_rate": 1.0
+      },
+      "long": {
+        "spans": 8,
+        "value_acc": 0.75,
+        "exact_match_rate": 0.75
+      }
+    },
+    "negatives": {
+      "examples": 55,
+      "false_positives": 4,
+      "fp_rate": 0.07272727272727272
+    }
+  }
+}
