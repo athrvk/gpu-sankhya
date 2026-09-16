@@ -39,9 +39,24 @@ Notes
 Full irregular Hindi table 1–99 romanised (ek, do, teen, chaar, paanch, chhe,
 saat, aath, nau, das, gyarah, baarah, terah, chaudah, pandrah, solah, satrah,
 atharah, unnees, bees, ikkis, bais, teis, chaubis, pachchis, chhabbis, sattais,
-atthais, untis, tees, … , navve, ninyanve). Stored as a 99-row table with 1–3
-curated variants each for the frequent ones (`chhe/che/chhah/chah`,
-`paanch/panch/paach`, `pachas/pachaas`, `bees/bis/biss`, `tees/tis`, etc.).
+atthais, untis, tees, … , navve, ninyanve). Stored as a 99-row table.
+
+`hi_latn`'s `_EXTRA_VARIANTS` (`sankhya/langs/hi_latn.py`) curates 2–4 real
+Hinglish-chat spellings for **every** cardinal 11–99, not just a handful of
+frequent ones, so common non-canonical spellings are recognised directly
+instead of depending on the ~4%-rate N7 char-noise to happen to produce them
+(the original gap: "unnasi" for 79 parsed as nothing because only the
+canonical "unyasi" was in the lexicon). E.g. 79: `unyasi, unasi, unnasi,
+unnyasi, unnaasi`; 81: `ikyasi, ikkyasi, ikyaasi, ekyasi`; 91: `ikyanve,
+ikkyanve, ikyaanve, ekyanve`; 21: `ikkis, ikkees, ekkis`; and so on through
+99. All variants are checked (see `test_cardinal_variants_map_correctly`)
+against cross-cardinal collisions and against every other class's forms
+(prefixes, units, symbols, English-fraction phrases) before being added, and
+use only plain lowercase a-z (so the charset — already the full ASCII
+lowercase alphabet — gains no new characters from them). 1–10 and the
+frequent round tens keep their earlier curated sets too
+(`chhe/che/chhah/chah`, `paanch/panch/paach`, `pachas/pachaas`,
+`bees/bis/biss`, `tees/tis`, etc.).
 
 English cardinals `one` … `twenty`, `thirty` … `ninety`, and `hundred` are also
 in the table (code-mixed text: `two lakh`, `ten hazaar`, `one and a half crore`).
@@ -84,11 +99,40 @@ with the positive unit words.
 - decimal + symbol unit, with/without space: `2.5L`, `2.5 L`, `20k`, `1.5 cr`, `12LPA`
 - prefix + digit: `sadhe 3 lakh`, `sawa 2 crore`, `paune 2 lakh`
 
+### 1.5b Curated typo spellings (`UNIT_*`, hi_latn only)
+
+Beyond the char-level N7 typo noise (§4), a handful of very common misspellings
+are curated directly into the `hi_latn` lexicon so they are *guaranteed* to
+appear inside a quantity context (preceded by a number), not just at N7's 4%
+rate: `UNIT_CRORE` gains `croer`, `crorr`; `UNIT_LAKH` gains `lkah`, `lakhh`;
+`UNIT_HAZAAR` already covered `hajaar`, `hazzar`. These are ordinary lexicon
+entries, so `_safe_word` may pick them directly and N-noise may still stack on
+top of them.
+
+### 1.5c Possessive/plural apostrophe noise on units (hard negative for the
+span *boundary*, not the unit)
+
+`lakh's`, `lakhs'`, `crore's`, `2lakh's`: an apostrophe+letters suffix glued
+directly onto a unit word. The unit itself keeps its class/value; the
+apostrophe run is `O`. Fires ~2% of the time a phrase ends on a unit token
+(`generator._maybe_possessive`), on top of whichever surface form/casing/N-noise
+was already chosen for that unit.
+
 ### 1.6 Connectors inside a span (class `SEP`)
 
 - additive chain glue: whitespace only (`do lakh pachas hazaar`), occasionally `aur`
 - English fraction glue: `and a half`, `and half`, `n half`, `and a quarter` → mapped to `PFX_SAADHE` / `PFX_SAVA` semantics
 - range glue (class `RANGE`): `-`, `–`, `to`, `se`, `ya`, `/`, `or`, plain juxtaposition → `2-3 lakh`, `2 se 3 lakh`, `do teen lakh`, `20-25k`, `1.5 to 2 crore`, `dedh do lakh`
+- **multi-span conjunctions** (`O`, class `conj_connectors` on the pack — NOT
+  `RANGE`): join TWO (sometimes three) *independent* quantity phrases, each
+  its own span with its own `B` tag — hi_latn: `aur`, `ya`, `ya phir`, `, `,
+  `nahi to`; hi_deva: `और`, `या`, `या फिर`, `, `, `नहीं तो`. Distinguish
+  carefully from a range: `"2-3 lakh"` / `"dedh do lakh"` is ONE span (an
+  amount range); `"sava lakh aur dedh lakh"` / `"50k ya 60k"` is TWO spans (two
+  separate amounts) — `"se lekar ... tak"` specifically is always a range, never
+  built as a conjunction. Generator: `build_conjunction_phrase` /family
+  `multi_conj` (~6% of examples), plus a couple of literal `two_spans`
+  templates for the "X mein Y flat, har flat Z" unrelated-amounts style.
 
 ### 1.7 Context words — **outside the span**, labelled `O`
 
@@ -105,6 +149,11 @@ with the positive unit words.
 ```
 Span     := Amount (RANGE Amount)?       -- range: both amounts, unit may be shared (`2-3 lakh`)
 Amount   := Term (SEP? Term)*            -- descending units, max 3 terms
+                                          -- (the LAST term may be a bare
+                                          -- cardinal with no unit of its own:
+                                          -- "ek hazaar ek" = 1001, "do lakh
+                                          -- paanch" = 200005 -- generator
+                                          -- structure `chain_trailing_bare`)
 Term     := Prefix? Number? Unit?        -- at least one of Prefix/Unit present, or Number+currency
 Number   := CARD_n | DIGITS(.DIGITS)?
 Prefix   := PFX_*
@@ -205,9 +254,10 @@ the empty string.
 | news / social feed      | 15 %  | `{P} logon ne attend kiya`, `startup ne {P} ka funding raise kiya`, `{P} se zyada views aa gaye`   |
 | salary / finance        | 10 %  | `CTC {P} per annum`, `package {P}`, `EMI {C}{P} monthly`, `loan {P} ka liya tha`                   |
 | ranges                  | 8 %   | `{P1}-{P2} lakh mein aa jayega`, `{P1} se {P2} crore ki deal`, `do teen hazaar lagenge`, `20-25k ka phone` |
-| two spans               | 10 %  | `{P1} se badhkar {P2} ho gaya`, `pehle {P1} tha ab {P2}`, `{P1} + {P2} = ?`                        |
+| two spans               | 10 %  | `{P1} se badhkar {P2} ho gaya`, `pehle {P1} tha ab {P2}`, `{P1} + {P2} = ?`, `{P1} mein {P2} flat, har flat alag price` |
+| multi-span conjunction  | ~6 %  | `sava lakh aur dedh lakh`, `50k ya 60k`, `teen lakh nahi to paanch lakh` (2, sometimes 3, independent spans — see §1.6) |
 | bare phrase             | 5 %   | `{P}`                                                                                              |
-| negatives (no span)     | 12 %  | `Lakhan bhai ka number 9876543210 hai`, `KBC crorepati`, `lakhon log aaye`, `do din mein aa jaunga`, `pin 400001`, `2.30 baje milte hain`, `so what`, `chaar dost` |
+| negatives (no span)     | 12 %  | `Lakhan bhai ka number 9876543210 hai`, `KBC crorepati`, `lakhon log aaye`, `do din mein aa jaunga`, `pin 400001`, `2.30 baje milte hain`, `so what`, `chaar dost`, `lakhpati bann gaya`, `karodpati keh diya`, `laakhon mein bik gaya`, `10 km door hai`, `5 kg aata`, `100 kmph se`, `1st prize`, `2nd floor`, `route 66`, `mobile 98765 43210`, `flat no 302`, `sava ghanta lag gaya`, `dedh ghante mein`, `saadhe teen baje`, `paune paanch baje` (prefix-word duration/time phrases, deliberately confusable with quantity prefixes but O throughout) |
 
 Templates carry random casing, trailing emoji / punctuation (`!!`, `..`, `😂`),
 and 10 % of the time a random-length prefix/suffix of unrelated chat text so the

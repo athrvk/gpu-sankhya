@@ -182,3 +182,33 @@
 {"text": "budget 2 lakh 🔥", "lang": "hi_latn", "spans": [{"start": 7, "end": 13, "value": 200000}]}
 {"text": "ok 👍 dhai lakh mein ho jayega", "lang": "hi_latn", "spans": [{"start": 5, "end": 14, "value": 250000}]}
 {"text": "€ nahi ₹ 5 lakh chahiye", "lang": "hi_latn", "spans": [{"start": 9, "end": 15, "value": 500000, "currency": "INR"}]}
+{"text": "usne ek hazaar ek diye", "lang": "hi_latn", "spans": [{"start": 5, "end": 17, "value": 1001}]}
+{"text": "budget do lakh paanch hai", "lang": "hi_latn", "spans": [{"start": 7, "end": 21, "value": 200005}]}
+{"text": "usko ek lakh dus hazaar mila", "lang": "hi_latn", "spans": [{"start": 5, "end": 23, "value": 110000}]}
+{"text": "usko ek lakh dus hazaar paanch sau mila", "lang": "hi_latn", "spans": [{"start": 5, "end": 34, "value": 110500}]}
+{"text": "teen crore chalis lakh ka budget hai", "lang": "hi_latn", "spans": [{"start": 0, "end": 22, "value": 34000000}]}
+{"text": "sava lakh aur dedh lakh mein deal hui", "lang": "hi_latn", "spans": [{"start": 0, "end": 9, "value": 125000}, {"start": 14, "end": 23, "value": 150000}]}
+{"text": "50k ya 60k mein le lo", "lang": "hi_latn", "spans": [{"start": 0, "end": 3, "value": 50000}, {"start": 7, "end": 10, "value": 60000}]}
+{"text": "teen lakh nahi to paanch lakh dedo", "lang": "hi_latn", "spans": [{"start": 0, "end": 9, "value": 300000}, {"start": 18, "end": 29, "value": 500000}]}
+{"text": "2lakh's ka fark hai", "lang": "hi_latn", "spans": [{"start": 0, "end": 7, "value": 200000}]}
+{"text": "us lakh's mein ho jayega", "lang": "hi_latn", "spans": [{"start": 3, "end": 9, "value": 100000}]}
+{"text": "do croer ka nuksaan hua", "lang": "hi_latn", "spans": [{"start": 0, "end": 8, "value": 20000000}]}
+{"text": "teen lkah mein aa jayega", "lang": "hi_latn", "spans": [{"start": 0, "end": 9, "value": 300000}]}
+{"text": "lakhpati bann gaya wo", "lang": "hi_latn", "spans": []}
+{"text": "crorepati banna hai mujhe", "lang": "hi_latn", "spans": []}
+{"text": "laakhon mein bik gaya", "lang": "hi_latn", "spans": []}
+{"text": "karodon ka nuksaan hua", "lang": "hi_latn", "spans": []}
+{"text": "10 km door hai ghar", "lang": "hi_latn", "spans": []}
+{"text": "100 kmph se gaya", "lang": "hi_latn", "spans": []}
+{"text": "1st prize jeeta usne", "lang": "hi_latn", "spans": []}
+{"text": "mobile 98765 43210 hai mera", "lang": "hi_latn", "spans": []}
+{"text": "sava ghanta lag gaya", "lang": "hi_latn", "spans": []}
+{"text": "saadhe teen baje milte hain", "lang": "hi_latn", "spans": []}
+{"text": "unnasi hazaar ka phone hai", "lang": "hi_latn", "spans": [{"start": 0, "end": 13, "value": 79000}]}
+{"text": "ikkyasi lakh ka flat hai", "lang": "hi_latn", "spans": [{"start": 0, "end": 12, "value": 8100000}]}
+{"text": "nawasi crore ka deal hua", "lang": "hi_latn", "spans": [{"start": 0, "end": 12, "value": 890000000}]}
+{"text": "budget ekyanve hazaar tak ka hai", "lang": "hi_latn", "spans": [{"start": 7, "end": 21, "value": 91000}]}
+{"text": "usne bayees sau maange the", "lang": "hi_latn", "spans": [{"start": 5, "end": 15, "value": 2200}]}
+{"text": "gyaarah lakh ka package mila", "lang": "hi_latn", "spans": [{"start": 0, "end": 12, "value": 1100000}]}
+{"text": "trepan hazaar diye the usne", "lang": "hi_latn", "spans": [{"start": 0, "end": 13, "value": 53000}]}
+{"text": "unnatis lakh ka loan liya tha", "lang": "hi_latn", "spans": [{"start": 0, "end": 12, "value": 2900000}]}

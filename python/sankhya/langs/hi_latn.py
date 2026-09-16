@@ -21,18 +21,93 @@ assert len(_BASE99) == 99
 
 CARD_WORDS = {i + 1: [w] for i, w in enumerate(_BASE99)}
 
+# Curated Hinglish-chat spellings for every 1..99 cardinal (2-4 each), so
+# common non-canonical spellings like "unnasi" (79) are recognised directly
+# instead of relying on the ~4%-rate N7 char-noise to happen to produce them.
+# Checked for collisions: no variant here collides (case-insensitively) with
+# a different cardinal, or with any prefix/unit/symbol/english-fraction form
+# (see python/tests/test_generator.py::test_cardinal_variants_map_correctly).
 _EXTRA_VARIANTS = {
     1: ["ek", "1"],
     2: ["do"],
     3: ["teen", "tin"],
     5: ["paanch", "panch", "paach"],
     6: ["chhe", "che", "chhah", "chah"],
+    11: ["gyarah", "gyaarah", "gyara"],
+    12: ["baarah", "barah", "bara"],
+    13: ["terah", "tera"],
+    14: ["chaudah", "chauda", "choudah"],
+    15: ["pandrah", "pandra", "pandreh"],
+    16: ["solah", "sola", "soleh"],
+    17: ["satrah", "satra", "satreh"],
+    18: ["atharah", "athara", "attharah"],
+    19: ["unnees", "unnis", "unees"],
     20: ["bees", "bis", "biss"],
+    21: ["ikkis", "ikkees", "ekkis"],
+    22: ["baais", "bais", "bayees"],
     25: ["pachchis", "pachees", "pachchees"],
+    27: ["sattais", "sattaees", "satais"],
+    29: ["untis", "unattis", "unnatis"],
     30: ["tees", "tis"],
+    31: ["iktis", "ektis", "ikattis"],
+    35: ["paintis", "paintees", "pentis"],
+    37: ["saintis", "saitis", "saintees"],
+    38: ["adtis", "artis", "athtis"],
+    39: ["untalis", "unchalis", "untaalis"],
+    41: ["iktalis", "ektalis", "iktaalis"],
+    42: ["bayalis", "bayaalis", "byalis"],
+    45: ["paintalis", "pentalis", "paintaalis"],
+    47: ["saintalis", "saitalis"],
+    48: ["adtalis", "artalis", "athtalis"],
+    49: ["unchas", "unnchas", "unanchas"],
     50: ["pachas", "pachaas"],
+    51: ["ikyavan", "ikkyavan", "ekyavan"],
+    52: ["bavan", "baavan", "bawan"],
+    53: ["tirpan", "trepan", "tirepan"],
+    54: ["chauwan", "chauvan", "chawwan"],
+    55: ["pachpan", "pachpann"],
+    56: ["chhappan", "chappan", "chhapan"],
+    57: ["sattavan", "satavan", "sattawan"],
+    58: ["atthavan", "athavan", "atthawan"],
+    59: ["unsath", "unsatth", "unnsath"],
     60: ["saath", "sath"],
+    61: ["iksath", "eksath", "ikhsath"],
+    62: ["basath", "baasath", "baseth"],
+    63: ["tirsath", "tresath", "tirseth"],
+    64: ["chaunsath", "chausath", "chonsath"],
+    65: ["painsath", "pensath", "painsatth"],
+    66: ["chhiyasath", "chiyasath", "chhiasath"],
+    67: ["sadsath", "sarsath", "sarhsath"],
+    68: ["adsath", "arsath", "athsath"],
+    69: ["unhattar", "unhatar", "unnhattar"],
+    71: ["ikhattar", "ikhatar", "ekhattar"],
+    72: ["bahattar", "bahatar"],
+    73: ["tihattar", "tihatar", "tehattar"],
+    74: ["chauhattar", "chauhatar", "chohattar"],
+    75: ["pachhattar", "pachattar", "pachhatar"],
+    76: ["chhihattar", "chihattar", "chhiyattar"],
+    77: ["sathattar", "satattar", "sattahattar"],
+    78: ["athhattar", "athattar", "atthattar"],
+    79: ["unyasi", "unasi", "unnasi", "unnyasi", "unnaasi"],
+    81: ["ikyasi", "ikkyasi", "ikyaasi", "ekyasi"],
+    82: ["bayasi", "bayaasi", "byasi"],
+    83: ["tirasi", "tiraasi", "terasi"],
+    84: ["chaurasi", "chauraasi", "chorasi"],
+    85: ["pachasi", "pachaasi", "pichasi"],
+    86: ["chhiyasi", "chiyasi", "chhiasi"],
+    87: ["sattasi", "sataasi", "satasi"],
+    88: ["atthasi", "athasi", "atthaasi"],
+    89: ["navasi", "nawasi", "navaasi", "nawaasi"],
     90: ["nabbe", "nabbey"],
+    91: ["ikyanve", "ikkyanve", "ikyaanve", "ekyanve"],
+    92: ["banve", "baanve", "banave"],
+    93: ["tiranve", "tiraanve", "teranve"],
+    94: ["chauranve", "chauraanve", "choranve"],
+    95: ["pachanve", "pachaanve", "panchanve"],
+    96: ["chhiyanve", "chiyanve", "chhianve"],
+    97: ["sattanve", "sataanve", "satanve"],
+    98: ["atthanve", "athanve", "atthaanve"],
+    99: ["ninyanve", "ninnyanve", "ninanve", "ninyaanve"],
 }
 for n, variants in _EXTRA_VARIANTS.items():
     CARD_WORDS[n] = list(dict.fromkeys(CARD_WORDS[n] + variants))
@@ -61,9 +136,13 @@ LEXICON.update({
 
     "UNIT_SAU": ["sau", "so", "sao", "sou", "hundred"],
     "UNIT_HAZAAR": ["hazaar", "hazar", "hajaar", "hajar", "hazzar", "thousand", "thou"],
-    "UNIT_LAKH": ["lakh", "lac", "lack", "laakh", "lakhs", "lacs", "peti"],
+    # "lkah"/"lakhh" are curated typo spellings (see DATA_GRAMMAR §4 N7) kept
+    # in the lexicon so they are always recognised inside a quantity context
+    # ("do lkah") rather than only occasionally produced by random N7 noise.
+    "UNIT_LAKH": ["lakh", "lac", "lack", "laakh", "lakhs", "lacs", "peti", "lkah", "lakhh"],
     "UNIT_MILLION": ["million", "mil"],
-    "UNIT_CRORE": ["crore", "karod", "karor", "karore", "crores", "karodh", "khokha"],
+    # "croer"/"crorr" are curated typo spellings, same rationale as above.
+    "UNIT_CRORE": ["crore", "karod", "karor", "karore", "crores", "karodh", "khokha", "croer", "crorr"],
     "UNIT_BILLION": ["billion"],
     "UNIT_ARAB": ["arab"],
     "UNIT_KHARAB": ["kharab"],
@@ -177,6 +256,11 @@ CURRENCY_WORDS_AFTER = ["rupaye", "rupay", "rupees", "rupiya", "rupya", "/-"]
 APPROXIMATORS = ["karib", "kareeb", "lagbhag", "takreeban", "around", "approx", "about", "roughly", "~", "koi", "kuch"]
 RANGE_CONNECTORS = [" - ", "-", " to ", " se ", " ya ", " / ", " or "]
 
+# joins TWO/THREE independent quantity spans in one text ("sava lakh aur
+# dedh lakh", "50k ya 60k"). Distinct from RANGE_CONNECTORS: "se lekar ... tak"
+# is a RANGE (one span, two amounts) and is never used here.
+CONJ_CONNECTORS = [" aur ", " ya ", " ya phir ", ", ", " nahi to "]
+
 TEMPLATES = {
     "casual": [
         "bhai {A} {P} mein ho jayega kya",
@@ -274,6 +358,8 @@ TEMPLATES = {
         "{P1} khatam hokar {P2} bacha",
         "usne {P1} diya maine {P2} liya",
         "{P1} lagaya {P2} kamaya",
+        "{P1} mein {P2} flat, har flat alag price",
+        "society mein {P1} ghar hain, average {P2} ka",
     ],
     "bare": [
         "{P}",
@@ -327,6 +413,32 @@ TEMPLATES = {
         "seat #23 book kar di",
         "order #45 aa gaya",
         "table number 9 reserve hai",
+        # -pati / indefinite-plural hard negatives (§(c)): net still tags these
+        "lakhpati bann gaya wo",
+        "karodpati keh diya sabne",
+        "crore-pati nikla akhir",
+        "laakhon mein bik gaya",
+        "karodon ka nuksaan hua",
+        # unit-noun abbreviations after digits, not scale units
+        "10 km door hai ghar",
+        "5 kg aata chahiye",
+        "100 kmph se gaya",
+        "10kb ki file hai",
+        "5mb ka video hai",
+        # ordinals
+        "1st prize jeeta usne",
+        "2nd floor pe rehta hoon",
+        "3rd prize mila mujhe",
+        "4th floor tak jao",
+        # bare id-like numbers
+        "route 66 pe gaya tha",
+        "mobile 98765 43210 hai mera",
+        "flat no 302 hai mera",
+        # duration/time phrases that use prefix words - must stay O, not a span
+        "sava ghanta lag gaya",
+        "dedh ghante mein aa jaunga",
+        "saadhe teen baje milte hain",
+        "paune paanch baje nikalna",
     ],
 }
 
@@ -353,6 +465,7 @@ PACK = base.LanguagePack(
     blocked_surfaces=BLOCKED_SURFACES,
     filler_words=FILLER_WORDS,
     duration_nouns=DURATION_NOUNS,
+    conj_connectors=CONJ_CONNECTORS,
 )
 
 # drop any filler word that collides with a real vocabulary surface form
