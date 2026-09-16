@@ -1,14 +1,13 @@
 # Publishes gpu-sankhya to npm using npm's trusted publishing (OIDC) —
 # no NPM_TOKEN secret is stored or used.
 #
-# There are three ways to publish:
+# There are two ways to publish:
 #   1. Automatic: bump the "version" field in package.json and land the
 #      change on master (e.g. `npm version patch` + push, or a PR that
 #      edits package.json). The workflow compares that version against
 #      what's already on npm and publishes only when it differs.
-#   2. Publish a GitHub release with tag vX.Y.Z matching package.json.
-#   3. Manually via workflow_dispatch (publishes only if the version is not
-#      on npm yet; otherwise just ensures the tag and GitHub release exist).
+#   2. Manually via workflow_dispatch (publishes only if the version is not
+#      on npm yet; otherwise just ensures the git tag exists).
 #
 # One-time setup:
 #   1. Publish the package to npm manually once from a local machine:
@@ -22,16 +21,12 @@
 #        Workflow filename:    publish.yml
 #        Environment:          (leave blank)
 #
-# After that, publishing is fully automatic through any of the three
-# paths above: the workflow builds, tests, and publishes with
-# provenance, and (for the version-bump path) tags the commit and
-# creates a matching GitHub release.
+# After that, publishing is fully automatic through either path above: the workflow builds, tests, and publishes with
+# provenance, and tags the commit vX.Y.Z if that tag does not exist yet.
 
 name: publish
 
 on:
-  release:
-    types: [published]
   workflow_dispatch:
   push:
     branches: [master]
@@ -58,22 +53,13 @@ jobs:
           VERSION="$(node -p "require('./package.json').version")"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-          if [ "${{ github.event_name }}" = "release" ]; then
-            TAG="${GITHUB_REF_NAME#v}"
-            if [ "$TAG" != "$VERSION" ]; then
-              echo "::error::Release tag ($GITHUB_REF_NAME) does not match package.json version (v$VERSION)."
-              exit 1
-            fi
-            echo "publish=true" >> "$GITHUB_OUTPUT"
+          # push or workflow_dispatch: publish only if this version is not on npm yet
+          PUBLISHED_VERSION="$(npm view gpu-sankhya@$VERSION version 2>/dev/null || true)"
+          if [ "$PUBLISHED_VERSION" = "$VERSION" ]; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "gpu-sankhya@$VERSION already on npm, nothing to do"
           else
-            # push or workflow_dispatch: publish only if this version is not on npm yet
-            PUBLISHED_VERSION="$(npm view gpu-sankhya@$VERSION version 2>/dev/null || true)"
-            if [ "$PUBLISHED_VERSION" = "$VERSION" ]; then
-              echo "publish=false" >> "$GITHUB_OUTPUT"
-              echo "gpu-sankhya@$VERSION already on npm, nothing to do"
-            else
-              echo "publish=true" >> "$GITHUB_OUTPUT"
-            fi
+            echo "publish=true" >> "$GITHUB_OUTPUT"
           fi
 
       # Trusted publishing (OIDC) requires npm >= 11.5.
@@ -100,11 +86,9 @@ jobs:
         if: steps.decide.outputs.publish == 'true'
         run: npm publish --provenance
 
-      # Tag and release run on push and workflow_dispatch (not on the release
-      # event, where both already exist). Both are idempotent: the tag is only
-      # created if missing, and action-gh-release updates an existing release.
-      - name: Tag release commit
-        if: github.event_name != 'release'
+      # Tag the published commit (skipped when the tag already exists, e.g.
+      # after `npm version` + `git push --follow-tags`).
+      - name: Tag published commit
         run: |
           VERSION="${{ steps.decide.outputs.version }}"
           if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null 2>&1; then
@@ -113,10 +97,3 @@ jobs:
             git tag "v$VERSION"
             git push origin "v$VERSION"
           fi
-
-      - name: Create GitHub release
-        if: github.event_name != 'release'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.decide.outputs.version }}
-          generate_release_notes: true
