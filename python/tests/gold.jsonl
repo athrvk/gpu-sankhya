@@ -18,10 +18,10 @@
 {"text": "acha theek hai 12LPA ka offer hai", "lang": "hi_latn", "spans": [{"start": 15, "end": 20, "value": 1200000}]}
 {"text": "lol 50k ki salary mein guzara nahi hota", "lang": "hi_latn", "spans": [{"start": 4, "end": 7, "value": 50000}]}
 {"text": "sahi hai 3.2 lakh mein deal ho gayi", "lang": "hi_latn", "spans": [{"start": 9, "end": 17, "value": 320000}]}
-{"text": "Price: Rs 85000 negotiable", "lang": "hi_latn", "spans": [{"start": 7, "end": 15, "value": 85000}]}
+{"text": "Price: Rs 85000 negotiable", "lang": "hi_latn", "spans": [{"start": 10, "end": 15, "value": 85000, "currency": "INR"}]}
 {"text": "2019 model, 3.5 lakh final", "lang": "hi_latn", "spans": [{"start": 12, "end": 20, "value": 350000}]}
 {"text": "rent 15000/month, 2bhk", "lang": "hi_latn", "spans": [{"start": 5, "end": 10, "value": 15000}]}
-{"text": "MRP Rs.2.5L only", "lang": "hi_latn", "spans": [{"start": 4, "end": 11, "value": 250000}]}
+{"text": "MRP Rs.2.5L only", "lang": "hi_latn", "spans": [{"start": 7, "end": 11, "value": 250000, "currency": "INR"}]}
 {"text": "bike for sale 45k fixed price", "lang": "hi_latn", "spans": [{"start": 14, "end": 17, "value": 45000}]}
 {"text": "flat available rent sadhe saat hazaar mahina", "lang": "hi_latn", "spans": [{"start": 20, "end": 37, "value": 7500}]}
 {"text": "used laptop 22000 rs urgent sale", "lang": "hi_latn", "spans": [{"start": 12, "end": 17, "value": 22000}]}
@@ -38,7 +38,7 @@
 {"text": "channel ne bees lakh subscribers ka aankda paar kiya", "lang": "hi_latn", "spans": [{"start": 11, "end": 20, "value": 2000000}]}
 {"text": "CTC saade saat lakh per annum hai", "lang": "hi_latn", "spans": [{"start": 4, "end": 19, "value": 750000}]}
 {"text": "package chaar lakh mila mujhe", "lang": "hi_latn", "spans": [{"start": 8, "end": 18, "value": 400000}]}
-{"text": "EMI Rs 12000 monthly deni hai", "lang": "hi_latn", "spans": [{"start": 4, "end": 12, "value": 12000}]}
+{"text": "EMI Rs 12000 monthly deni hai", "lang": "hi_latn", "spans": [{"start": 7, "end": 12, "value": 12000, "currency": "INR"}]}
 {"text": "loan das lakh ka liya tha usne", "lang": "hi_latn", "spans": [{"start": 5, "end": 13, "value": 1000000}]}
 {"text": "salary badhkar 85k ho gayi is baar", "lang": "hi_latn", "spans": [{"start": 15, "end": 18, "value": 85000}]}
 {"text": "mera CTC 9.5 LPA hai abhi", "lang": "hi_latn", "spans": [{"start": 9, "end": 16, "value": 950000}]}
@@ -61,7 +61,7 @@
 {"text": "adhaai crore ka ghar hai unka", "lang": "hi_latn", "spans": [{"start": 0, "end": 12, "value": 25000000}]}
 {"text": "saadhe teen hazaar bache hain wallet mein", "lang": "hi_latn", "spans": [{"start": 0, "end": 18, "value": 3500}]}
 {"text": "sadhe char lakh mein deal final hui", "lang": "hi_latn", "spans": [{"start": 0, "end": 15, "value": 450000}]}
-{"text": "hazar rupaye mein kaam ho jayega", "lang": "hi_latn", "spans": [{"start": 0, "end": 12, "value": 1000}]}
+{"text": "hazar rupaye mein kaam ho jayega", "lang": "hi_latn", "spans": [{"start": 0, "end": 5, "value": 1000, "currency": "INR"}]}
 {"text": "hajaar do sau rupaye bache hain", "lang": "hi_latn", "spans": [{"start": 0, "end": 13, "value": 1200}]}
 {"text": "teen lac mein bik gaya plot", "lang": "hi_latn", "spans": [{"start": 0, "end": 8, "value": 300000}]}
 {"text": "do lakh's ka scam hua tha", "lang": "hi_latn", "spans": [{"start": 0, "end": 9, "value": 200000}]}
@@ -79,8 +79,8 @@
 {"text": "2,50,00,000 ka bangla hai unka", "lang": "hi_latn", "spans": [{"start": 0, "end": 11, "value": 25000000}]}
 {"text": "125,000 rupaye ka bill aaya", "lang": "hi_latn", "spans": [{"start": 0, "end": 7, "value": 125000}]}
 {"text": ".5 lakh de diya usne turant", "lang": "hi_latn", "spans": [{"start": 0, "end": 7, "value": 50000}]}
-{"text": "Rs.2.5L ka discount mil raha hai", "lang": "hi_latn", "spans": [{"start": 0, "end": 7, "value": 250000}]}
-{"text": "Rs 2,50,000/- final price hai", "lang": "hi_latn", "spans": [{"start": 0, "end": 13, "value": 250000}]}
+{"text": "Rs.2.5L ka discount mil raha hai", "lang": "hi_latn", "spans": [{"start": 3, "end": 7, "value": 250000, "currency": "INR"}]}
+{"text": "Rs 2,50,000/- final price hai", "lang": "hi_latn", "spans": [{"start": 3, "end": 11, "value": 250000, "currency": "INR"}]}
 {"text": "total 12.5 crore ka investment hai", "lang": "hi_latn", "spans": [{"start": 6, "end": 16, "value": 125000000}]}
 {"text": "sirf 1.25 lakh mein mil jayega", "lang": "hi_latn", "spans": [{"start": 5, "end": 14, "value": 125000}]}
 {"text": "karib das lakh ka kharcha aaya shaadi mein", "lang": "hi_latn", "spans": [{"start": 6, "end": 14, "value": 1000000}]}
@@ -109,15 +109,15 @@
 {"text": "humne saadhe paanch crore mein zameen kharidi", "lang": "hi_latn", "spans": [{"start": 6, "end": 25, "value": 55000000}]}
 {"text": "uska salary dedh lakh se badhkar do lakh ho gaya", "lang": "hi_latn", "spans": [{"start": 12, "end": 21, "value": 150000}, {"start": 33, "end": 40, "value": 200000}]}
 {"text": "mujhe bas pachas hazaar aur chahiye", "lang": "hi_latn", "spans": [{"start": 10, "end": 23, "value": 50000}]}
-{"text": "iski keemat teen sau rupaye hai", "lang": "hi_latn", "spans": [{"start": 12, "end": 27, "value": 300}]}
+{"text": "iski keemat teen sau rupaye hai", "lang": "hi_latn", "spans": [{"start": 12, "end": 20, "value": 300, "currency": "INR"}]}
 {"text": "dedh sau rupaye mein mil gaya", "lang": "hi_latn", "spans": [{"start": 0, "end": 8, "value": 150}]}
 {"text": "dhai sau ka recharge karaya maine", "lang": "hi_latn", "spans": [{"start": 0, "end": 8, "value": 250}]}
 {"text": "sava sau rupaye bache hain mere paas", "lang": "hi_latn", "spans": [{"start": 0, "end": 8, "value": 125}]}
-{"text": "uska naya phone paanch sau rupaye ka hai", "lang": "hi_latn", "spans": [{"start": 16, "end": 33, "value": 500}]}
+{"text": "uska naya phone paanch sau rupaye ka hai", "lang": "hi_latn", "spans": [{"start": 16, "end": 26, "value": 500, "currency": "INR"}]}
 {"text": "investment 50 million ka hai company mein", "lang": "hi_latn", "spans": [{"start": 11, "end": 21, "value": 50000000}]}
 {"text": "startup ne 2 billion ka valuation paaya", "lang": "hi_latn", "spans": [{"start": 11, "end": 20, "value": 2000000000}]}
 {"text": "humein 100k ka target mila hai is mahine", "lang": "hi_latn", "spans": [{"start": 7, "end": 11, "value": 100000}]}
-{"text": "rent Rs 8000 per month 1bhk available", "lang": "hi_latn", "spans": [{"start": 5, "end": 12, "value": 8000}]}
+{"text": "rent Rs 8000 per month 1bhk available", "lang": "hi_latn", "spans": [{"start": 8, "end": 12, "value": 8000, "currency": "INR"}]}
 {"text": "second hand car 3.75 lakh mein bikega", "lang": "hi_latn", "spans": [{"start": 16, "end": 25, "value": 375000}]}
 {"text": "gold rate aaj 62000 rupaye per 10 gram", "lang": "hi_latn", "spans": [{"start": 14, "end": 19, "value": 62000}]}
 {"text": "EMI saadhe teen hazaar monthly deni hogi", "lang": "hi_latn", "spans": [{"start": 4, "end": 22, "value": 3500}]}
@@ -148,3 +148,33 @@
 {"text": "chaubis ghante kaam karta hai woh", "lang": "hi_latn", "spans": []}
 {"text": "das minute mein pahuch jaunga", "lang": "hi_latn", "spans": []}
 {"text": "gyarah tareekh ko exam hai mera", "lang": "hi_latn", "spans": []}
+{"text": "das hazaar crore ka ghotala nikla", "lang": "hi_latn", "spans": [{"start": 0, "end": 16, "value": 100000000000, "unit": "crore"}]}
+{"text": "sarkar ne sau crore ka budget rakha", "lang": "hi_latn", "spans": [{"start": 10, "end": 19, "value": 1000000000, "unit": "crore"}]}
+{"text": "unki company ki value do lakh crore ho gayi", "lang": "hi_latn", "spans": [{"start": 22, "end": 35, "value": 2000000000000, "unit": "crore"}]}
+{"text": "dedh sau crore ka nuksaan hua", "lang": "hi_latn", "spans": [{"start": 0, "end": 14, "value": 1500000000, "unit": "crore"}]}
+{"text": "is scheme mein paanch hazaar crore lagenge", "lang": "hi_latn", "spans": [{"start": 15, "end": 34, "value": 50000000000, "unit": "crore"}]}
+{"text": "market cap teen lakh crore paar kar gaya", "lang": "hi_latn", "spans": [{"start": 11, "end": 26, "value": 3000000000000, "unit": "crore"}]}
+{"text": "saadhe teen sau crore ka tender nikla", "lang": "hi_latn", "spans": [{"start": 0, "end": 21, "value": 3500000000, "unit": "crore"}]}
+{"text": "ek lakh bees hazaar crore ka package announce hua", "lang": "hi_latn", "spans": [{"start": 0, "end": 25, "value": 1200000000000, "unit": "crore"}]}
+{"text": "20 se 25 lakh ke beech mein milega", "lang": "hi_latn", "spans": [{"start": 0, "end": 13, "value": 2000000, "range": [2000000, 2500000], "unit": "lakh"}]}
+{"text": "3-5 crore ka budget hai unka", "lang": "hi_latn", "spans": [{"start": 0, "end": 9, "value": 30000000, "range": [30000000, 50000000], "unit": "crore"}]}
+{"text": "das ya pandrah hazaar lagenge shayad", "lang": "hi_latn", "spans": [{"start": 0, "end": 21, "value": 10000, "range": [10000, 15000], "unit": "hazaar"}]}
+{"text": "2 to 3 lakh ka phone dekh raha hoon", "lang": "hi_latn", "spans": [{"start": 0, "end": 11, "value": 200000, "range": [200000, 300000], "unit": "lakh"}]}
+{"text": "50-60 hazaar ki salary milti hai fresher ko", "lang": "hi_latn", "spans": [{"start": 0, "end": 12, "value": 50000, "range": [50000, 60000], "unit": "hazaar"}]}
+{"text": "dedh se do crore ka flat chahiye", "lang": "hi_latn", "spans": [{"start": 0, "end": 16, "value": 15000000, "range": [15000000, 20000000], "unit": "crore"}]}
+{"text": "5-10 lakh ke beech mein sett ho jayega", "lang": "hi_latn", "spans": [{"start": 0, "end": 9, "value": 500000, "range": [500000, 1000000], "unit": "lakh"}]}
+{"text": "22000 rs mein deal ho gayi thi", "lang": "hi_latn", "spans": [{"start": 0, "end": 5, "value": 22000, "currency": "INR"}]}
+{"text": "500 rupaye de dena kal", "lang": "hi_latn", "spans": [{"start": 0, "end": 3, "value": 500, "currency": "INR"}]}
+{"text": "1200 rupees mein mil gaya sasta wala", "lang": "hi_latn", "spans": [{"start": 0, "end": 4, "value": 1200, "currency": "INR"}]}
+{"text": "35000 rs ki cycle li maine", "lang": "hi_latn", "spans": [{"start": 0, "end": 5, "value": 35000, "currency": "INR"}]}
+{"text": "800 rupaye bacha liye humne", "lang": "hi_latn", "spans": [{"start": 0, "end": 3, "value": 800, "currency": "INR"}]}
+{"text": "15000 rs advance dena padega", "lang": "hi_latn", "spans": [{"start": 0, "end": 5, "value": 15000, "currency": "INR"}]}
+{"text": "250 rupaye ka recharge karwao", "lang": "hi_latn", "spans": [{"start": 0, "end": 3, "value": 250, "currency": "INR"}]}
+{"text": "yaar sach mein bhai wo laptop sasta hai bas paanch hazaar mein le lo genuine hai", "lang": "hi_latn", "spans": [{"start": 44, "end": 57, "value": 5000, "unit": "hazaar"}]}
+{"text": "arre suno na bhai woh flat ka price sirf pachas lakh hai bilkul negotiable", "lang": "hi_latn", "spans": [{"start": 41, "end": 52, "value": 5000000, "unit": "lakh"}]}
+{"text": "dekho seller genuine hai aur scooty ka rate bas bees hazaar hai final", "lang": "hi_latn", "spans": [{"start": 48, "end": 59, "value": 20000, "unit": "hazaar"}]}
+{"text": "sahi hai bro package basically dedh lakh ka hai monthly nahi annual", "lang": "hi_latn", "spans": [{"start": 31, "end": 40, "value": 150000, "unit": "lakh"}]}
+{"text": "acha theek hai toh mera budget bas do lakh tak ka hai abhi urgent chahiye", "lang": "hi_latn", "spans": [{"start": 35, "end": 42, "value": 200000, "unit": "lakh"}]}
+{"text": "waise bhai woh purana scooter bilkul genuine condition mein hai sirf pandrah hazaar mein de dunga", "lang": "hi_latn", "spans": [{"start": 69, "end": 83, "value": 15000, "unit": "hazaar"}]}
+{"text": "matlab seriously bro yeh deal ekdum sahi hai bas sava lakh mein pakki ho jayegi", "lang": "hi_latn", "spans": [{"start": 49, "end": 58, "value": 125000, "unit": "lakh"}]}
+{"text": "chalo theek hai bhai itna sun lo total budget sirf tees hazaar hai mera abhi", "lang": "hi_latn", "spans": [{"start": 51, "end": 62, "value": 30000, "unit": "hazaar"}]}

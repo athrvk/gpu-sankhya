@@ -117,6 +117,46 @@ def test_currency_detection():
     assert cur3 is None
 
 
+def test_das_hazaar_crore():
+    r = ev(("CARD_10", "das"), ("SEP", " "), ("UNIT_HAZAAR", "hazaar"), ("SEP", " "), ("UNIT_CRORE", "crore"))
+    assert r.value == 1e11, r.value
+    assert r.unit == "crore"
+
+
+def test_sau_crore():
+    r = ev(("UNIT_SAU", "sau"), ("SEP", " "), ("UNIT_CRORE", "crore"))
+    assert r.value == 1e9, r.value
+
+
+def test_dedh_sau_crore():
+    r = ev(("PFX_DEDH", "dedh"), ("SEP", " "), ("UNIT_SAU", "sau"), ("SEP", " "), ("UNIT_CRORE", "crore"))
+    assert r.value == 1.5e9, r.value
+
+
+def test_2_lakh_crore():
+    r = ev(("DIGITS", "2"), ("SEP", " "), ("UNIT_LAKH", "lakh"), ("SEP", " "), ("UNIT_CRORE", "crore"))
+    assert r.value == 2e12, r.value
+
+
+def test_saadhe_teen_sau_crore():
+    r = ev(("PFX_SAADHE", "saadhe"), ("SEP", " "), ("CARD_3", "teen"), ("SEP", " "),
+           ("UNIT_SAU", "sau"), ("SEP", " "), ("UNIT_CRORE", "crore"))
+    assert r.value == 3.5e9, r.value
+
+
+def test_50_hazaar_crore():
+    r = ev(("DIGITS", "5"), ("DIGITS", "0"), ("SEP", " "), ("UNIT_HAZAAR", "hazaar"), ("SEP", " "), ("UNIT_CRORE", "crore"))
+    assert r.value == 5e11, r.value
+
+
+def test_ek_lakh_bees_hazaar_crore():
+    r = ev(("CARD_1", "ek"), ("SEP", " "), ("UNIT_LAKH", "lakh"), ("SEP", " "),
+           ("CARD_20", "bees"), ("SEP", " "), ("UNIT_HAZAAR", "hazaar"), ("SEP", " "),
+           ("UNIT_CRORE", "crore"))
+    assert r.value == 1.2e12, r.value
+    assert r.unit == "crore"
+
+
 def _run_all():
     fns = [v for k, v in list(globals().items()) if k.startswith("test_")]
     for fn in fns:

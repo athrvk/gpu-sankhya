@@ -12,6 +12,7 @@ import sys
 
 from . import classes as C
 from . import core
+from . import noise_latn as NL
 from .langs import base as langbase
 
 MAX_LEN = 128
@@ -223,6 +224,17 @@ def build_term_tokens(pack, rng, structure, unit_cls=None):
             phrase = rng.choice(pack.english_fraction_phrases.get("PFX_SAADHE", ["and a half"]))
             toks += [(f"CARD_{n}", str(n)), _sep(), ("PFX_SAADHE", phrase), _sep(), (u, uword)]
 
+    elif structure == "mult_chain":
+        # ascending-unit multiplicative stack: "das hazaar crore", "sau crore",
+        # "2 lakh crore" - a small unit's amount, then ONE larger unit on top.
+        small_unit = rng.choices(["UNIT_SAU", "UNIT_HAZAAR", "UNIT_LAKH"], weights=[40, 35, 25])[0]
+        larger_options = [u for u in ("UNIT_LAKH", "UNIT_CRORE") if C.unit_value(u) > C.unit_value(small_unit)]
+        larger_unit = rng.choice(larger_options)
+        first_structure = rng.choice(["prefix_unit", "prefix_num_unit", "card_unit", "digits_word_unit"])
+        toks = build_term_tokens(pack, rng, first_structure, unit_cls=small_unit)
+        uword, _ = _safe_word(pack, rng, larger_unit)
+        toks += [_sep(), (larger_unit, uword)]
+
     elif structure == "bare_card_currency":
         n = rng.randint(1, 99)
         card = f"CARD_{n}"
@@ -243,6 +255,7 @@ _STRUCTURE_WEIGHTS = [
     ("prefix_unit", 20), ("prefix_num_unit", 12), ("card_unit", 15),
     ("digits_word_unit", 15), ("digits_symbol", 15), ("digits_currency", 8),
     ("chain", 7), ("english_fraction", 4), ("bare_card_currency", 4),
+    ("mult_chain", 5),
 ]
 
 
@@ -488,6 +501,90 @@ def _finalize(pack, rng, text, span_defs, is_negative):
     }
 
 
+def _make_filler_word(pack, rng):
+    """A filler word, occasionally noised (elongation / vowel drop) so the
+    model also sees never-before-seen O-labelled strings."""
+    if not getattr(pack, "filler_words", None):
+        return "hmm"
+    w = rng.choice(pack.filler_words)
+    if rng.random() < 0.10:
+        fn = rng.choice([NL.n5_final_vowel, NL.n11_elongation])
+        try:
+            w = fn(w, rng)
+        except Exception:
+            pass
+    if rng.random() < 0.85:
+        w = w.lower()
+    elif rng.random() < 0.5:
+        w = w.title()
+    return w
+
+
+def _insert_fillers(pack, rng, text, span_defs):
+    """(2) an O-labelled filler word landing immediately adjacent to a span
+    15% of the time, and (1) 1-3 filler words dropped at a random word
+    boundary outside every span 40% of the time. Uses fresh text.find() per
+    span (positions get re-resolved downstream by _recompute_offsets).
+
+    Spans with no UNIT_* token (bare digits/cardinals) depend on a currency
+    marker/word staying adjacent (see §2) - filler insertion must never land
+    between such a span and its currency context, so those spans (and a
+    small buffer around them) are excluded from BOTH filler steps.
+    """
+    eligible = []  # (seg_text,) for spans safe to touch with filler
+    protected_spans = []  # seg_text for bare currency-dependent spans
+    for _, _, toks in span_defs:
+        seg_text, _ = _tokens_to_text_and_labels(toks)
+        if not seg_text:
+            continue
+        has_unit = any(C.is_unit(c) for c, _ in toks)
+        if has_unit:
+            eligible.append(seg_text)
+        else:
+            protected_spans.append(seg_text)
+
+    def _span_occupied_positions():
+        """Character positions to avoid: every span itself, plus an 8-char
+        buffer on both sides of every bare (currency-dependent) span."""
+        occupied = set()
+        for seg in eligible + protected_spans:
+            idx = text.find(seg)
+            if idx == -1:
+                continue
+            occupied.update(range(idx, idx + len(seg)))
+        for seg in protected_spans:
+            idx = text.find(seg)
+            if idx == -1:
+                continue
+            occupied.update(range(max(0, idx - 8), idx))
+            occupied.update(range(idx + len(seg), min(len(text), idx + len(seg) + 8)))
+        return occupied
+
+    if eligible and rng.random() < 0.15:
+        seg = rng.choice(eligible)
+        pos = text.find(seg)
+        if pos != -1:
+            filler = _make_filler_word(pack, rng)
+            if rng.random() < 0.5:
+                text = text[:pos] + filler + " " + text[pos:]
+            else:
+                end = pos + len(seg)
+                text = text[:end] + " " + filler + text[end:]
+
+    if rng.random() < 0.40:
+        n = rng.randint(1, 3)
+        chunk = " ".join(_make_filler_word(pack, rng) for _ in range(n))
+        for _try in range(10):
+            occupied = _span_occupied_positions()
+            positions = [i for i, ch in enumerate(text) if ch == " " and i not in occupied]
+            if not positions:
+                break
+            pos = rng.choice(positions)
+            text = text[:pos] + " " + chunk + text[pos:]
+            break
+    return text
+
+
 def _apply_casing_and_wrap(pack, rng, text):
     if rng.random() < 0.10:
         frag = rng.choice(_CHAT_FRAGMENTS)
@@ -509,7 +606,11 @@ def _sample_example_once(pack, rng):
     template = rng.choice(pack.templates[family])
 
     if family == "negatives":
-        text = template
+        if rng.random() < 0.15:
+            n = rng.randint(3, 10)
+            text = " ".join(_make_filler_word(pack, rng) for _ in range(n))
+        else:
+            text = template
         text = _apply_casing_and_wrap(pack, rng, text)
         return _finalize(pack, rng, text, [], is_negative=True)
 
@@ -567,6 +668,8 @@ def _sample_example_once(pack, rng):
             s, e, _ = span_defs[-1]
             if core.detect_currency(out, s, e, pack) is None:
                 out = out[:e] + " rupaye" + out[e:]
+
+    out = _insert_fillers(pack, rng, out, span_defs)
 
     out = _apply_casing_and_wrap(pack, rng, out)
     return _finalize(pack, rng, out, _recompute_offsets(out, span_defs), is_negative=False)

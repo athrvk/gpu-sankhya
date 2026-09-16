@@ -22,6 +22,9 @@ class LanguagePack:
     # surface forms that must never be emitted even if noise produces them
     # (e.g. they collide with a real-world proper noun / place name)
     blocked_surfaces: List[str] = field(default_factory=list)
+    # common chat/English words used as O-labelled filler around spans, so
+    # the model learns unknown words outside a span are not part of it
+    filler_words: List[str] = field(default_factory=list)
 
     def noise(self, word: str, rng) -> str:
         if self.noise_fn is not None:

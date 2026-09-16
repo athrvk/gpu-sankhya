@@ -141,7 +141,22 @@ Given a class sequence for one span:
    - Prefix + Number → `sava`: N + 0.25, `saadhe`: N + 0.5, `paune`: N − 0.25
    - neither → 1 (bare `lakh`, `crore`)
    - English `and a half` / `and a quarter` behave as `saadhe` / `sava`
-3. `term = coef × unit`; `value = Σ terms`.
+3. `term = coef × unit`; `value = Σ terms` for units in DESCENDING order
+   (`ek crore bees lakh` = 1e7 + 20×1e5). Hindi/Indian-English also stacks a
+   *larger* unit on top of everything accumulated so far instead of adding it
+   ("das hazaar crore" = 10 000 crore, "2 lakh crore" = 2 lakh crore, "sau
+   crore" = 100 crore): while walking terms within one amount, if the unit
+   that closes the current term is LARGER than the unit that closed the
+   previous term, the running total accumulated so far is MULTIPLIED by the
+   new unit's value instead of a new additive term being appended, and the
+   reported `unit` becomes that larger unit. Descending units keep adding as
+   before; only a run of `sau`/`hazaar`/`lakh` may precede a larger unit
+   (`crore` or `lakh`), and the generator caps this at one multiplicative
+   step per amount. Worked: `das hazaar crore` = (10×1e3)×1e7 = 1e11;
+   `sau crore` = (1×1e2)×1e7 = 1e9; `dedh sau crore` = (1.5×1e2)×1e7 = 1.5e9;
+   `2 lakh crore` = (2×1e5)×1e7 = 2e12; `saadhe teen sau crore` =
+   (3.5×1e2)×1e7 = 3.5e9; `ek lakh bees hazaar crore` = (1e5 + 20×1e3)×1e7 =
+   120 000×1e7 = 1.2e12.
 3b. Ranges: split at `RANGE`; if the left amount has no unit it inherits the
    right amount's unit (`2-3 lakh` → 200 000–300 000, `dedh do lakh` → 150 000–200 000).
    Output `value` = low end, `range = [low, high]`. Juxtaposed cardinals

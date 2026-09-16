@@ -71,51 +71,66 @@ def _flush_coef(num, pfx):
 
 
 def _eval_amount(tokens):
-    """tokens: list of (cls, text) with SEP already droppable, RANGE excluded."""
+    """tokens: list of (cls, text) with SEP already droppable, RANGE excluded.
+
+    Units within one amount are normally descending and additive
+    ("ek crore bees lakh" = 1e7 + 20*1e5). But Hindi/Indian-English also
+    stacks an ASCENDING unit on top of everything accumulated so far
+    ("das hazaar crore" = 10,000 * 1e7, "sau crore" = 100 * 1e7,
+    "2 lakh crore" = 2e5 * 1e7): when a new unit is LARGER than the unit
+    that closed the previous term, the running total is MULTIPLIED by the
+    new unit's value instead of a new additive term being appended.
+    """
     merged = _merge_numbers(tokens)
-    terms = []  # list of (value, unit_cls_or_None)
+    accum = 0
+    last_unit_val = None
+    max_unit_cls = None
     pending_num = None
     pending_pfx = None
 
-    def flush_pending(unit_cls=None):
-        nonlocal pending_num, pending_pfx
+    def close_term(unit_cls=None):
+        nonlocal accum, last_unit_val, max_unit_cls, pending_num, pending_pfx
         coef = _flush_coef(pending_num, pending_pfx)
-        uval = C.unit_value(unit_cls) if unit_cls else 1
-        terms.append((coef * uval, unit_cls))
+        if unit_cls is None:
+            accum += coef * 1
+        else:
+            new_val = C.unit_value(unit_cls)
+            if last_unit_val is not None and new_val > last_unit_val:
+                accum = accum * new_val
+            else:
+                accum = accum + coef * new_val
+            last_unit_val = new_val
+            if max_unit_cls is None or new_val > C.unit_value(max_unit_cls):
+                max_unit_cls = unit_cls
         pending_num = None
         pending_pfx = None
 
     for cls, text in merged:
         if cls == "NUM":
             if pending_num is not None:
-                flush_pending(None)
+                close_term(None)
             pending_num = text
         elif C.is_card(cls):
             if pending_num is not None:
-                flush_pending(None)
+                close_term(None)
             try:
                 pending_num = C.card_value(cls)
             except Exception:
                 pass
         elif C.is_prefix(cls):
             if pending_pfx is not None:
-                flush_pending(None)
+                close_term(None)
             pending_pfx = cls
         elif C.is_unit(cls):
-            flush_pending(cls)
+            close_term(cls)
         else:
             # unknown / stray class: ignore leniently
             continue
 
     if pending_num is not None or pending_pfx is not None:
-        flush_pending(None)
+        close_term(None)
 
-    value = sum(t[0] for t in terms)
-    units = [t[1] for t in terms if t[1]]
-    unit = None
-    if units:
-        unit = max(units, key=lambda u: C.unit_value(u))
-    return value, unit
+    return accum, max_unit_cls
 
 
 def _num(v):
