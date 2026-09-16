@@ -185,6 +185,49 @@ def test_collapse_repeated_prefix_does_not_merge_different_prefixes():
     assert r.value == 150001.25, r.value
 
 
+def test_descending_range_evaluated_as_additive_chain():
+    # "ek lakh dus hazaar" mistagged RANGE on the space between: both sides
+    # carry their own unit and the left (100000) > right (10000) -> additive
+    # chain 110000, not a [10000, 100000] range.
+    r = ev(("CARD_1", "ek"), ("SEP", " "), ("UNIT_LAKH", "lakh"), ("RANGE", " "),
+           ("CARD_10", "dus"), ("SEP", " "), ("UNIT_HAZAAR", "hazaar"))
+    assert r.value == 110000, r.value
+    assert r.range is None
+    assert r.unit == "lakh"
+
+
+def test_ascending_range_stays_a_range():
+    # "2-3 lakh" -- only the RIGHT side carries a unit, so this must stay a
+    # genuine [200000, 300000] range.
+    r = ev(("DIGITS", "2"), ("RANGE", "-"), ("DIGITS", "3"), ("SEP", " "), ("UNIT_LAKH", "lakh"))
+    assert r.value == 200000, r.value
+    assert r.range == (200000, 300000), r.range
+
+
+def test_true_range_both_sides_units_ascending_stays_range():
+    # "5 lakh-10 lakh" -- both sides carry units but left < right: a
+    # genuine ascending range, not a descending chain.
+    r = ev(("DIGITS", "5"), ("SEP", " "), ("UNIT_LAKH", "lakh"), ("RANGE", "-"),
+           ("DIGITS", "10"), ("SEP", " "), ("UNIT_LAKH", "lakh"))
+    assert r.value == 500000, r.value
+    assert r.range == (500000, 1000000), r.range
+
+
+def test_is_bare_digits_true_for_digits_only():
+    assert core.is_bare_digits([("DIGITS", "1")]) is True
+    assert core.is_bare_digits([("DIGITS", "1"), ("COMMA", ","), ("DIGITS", "00"), ("COMMA", ","), ("DIGITS", "000")]) is True
+
+
+def test_is_bare_digits_false_with_unit_or_card_or_prefix():
+    assert core.is_bare_digits([("DIGITS", "2"), ("SEP", " "), ("UNIT_LAKH", "lakh")]) is False
+    assert core.is_bare_digits([("CARD_2", "do"), ("SEP", " "), ("UNIT_LAKH", "lakh")]) is False
+    assert core.is_bare_digits([("PFX_SAVA", "sava"), ("SEP", " "), ("UNIT_LAKH", "lakh")]) is False
+
+
+def test_is_bare_digits_false_when_no_digits_at_all():
+    assert core.is_bare_digits([("SEP", " ")]) is False
+
+
 def _run_all():
     fns = [v for k, v in list(globals().items()) if k.startswith("test_")]
     for fn in fns:
@@ -195,3 +238,51 @@ def _run_all():
 
 if __name__ == "__main__":
     _run_all()
+
+
+def test_should_drop_bare_digits_short_ungrouped_dropped():
+    assert core.should_drop_bare_digits([("DIGITS", "1")]) is True
+    assert core.should_drop_bare_digits([("DIGITS", "66")]) is True
+    assert core.should_drop_bare_digits([("DIGITS", "4521")]) is True
+    assert core.should_drop_bare_digits([("DIGITS", "2024")]) is True
+
+
+def test_should_drop_bare_digits_phone_number_dropped():
+    assert core.should_drop_bare_digits([("DIGITS", "9876543210")]) is True
+
+
+def test_should_drop_bare_digits_mid_length_amounts_kept():
+    assert core.should_drop_bare_digits([("DIGITS", "15000")]) is False
+    assert core.should_drop_bare_digits([("DIGITS", "85000")]) is False
+    assert core.should_drop_bare_digits([("DIGITS", "62000")]) is False
+
+
+def test_should_drop_bare_digits_grouped_short_amount_kept():
+    # "1,00,000" -- only 6 digits, but a grouping comma is a strong signal
+    # of a real amount, so rule (a) (<=4 digits, no comma) does not apply.
+    toks = [("DIGITS", "1"), ("COMMA", ","), ("DIGITS", "00"), ("COMMA", ","), ("DIGITS", "000")]
+    assert core.should_drop_bare_digits(toks) is False
+
+
+def test_should_drop_bare_digits_grouped_long_amount_kept():
+    # "2,50,00,000" -- 8 digits with commas, below the 10-digit phone
+    # threshold, kept.
+    toks = [("DIGITS", "2"), ("COMMA", ","), ("DIGITS", "50"), ("COMMA", ","), ("DIGITS", "00"), ("COMMA", ","), ("DIGITS", "000")]
+    assert core.should_drop_bare_digits(toks) is False
+
+
+def test_should_drop_bare_digits_not_bare_digits_at_all():
+    assert core.should_drop_bare_digits([("DIGITS", "2"), ("SEP", " "), ("UNIT_LAKH", "lakh")]) is False
+
+
+def test_detect_currency_window_wide_enough_for_rupees_after_a_short_number():
+    # "1200 rupees" -- the "rupees" (6-char) marker sits right after a
+    # single-space gap past the span end; the scan window must be wide
+    # enough to see the whole word, not just its first few letters.
+    text = "1200 rupees mein mil gaya"
+    assert core.detect_currency(text, 0, 4, pack) == "INR"
+
+
+def test_detect_currency_glued_symbol_before_digits():
+    text = "₹85000"
+    assert core.detect_currency(text, 1, 6, pack) == "INR"

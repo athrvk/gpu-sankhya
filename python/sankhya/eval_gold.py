@@ -30,6 +30,37 @@ CATEGORY_NAMES = [
 ]
 
 
+_BOTH_PACKS = None
+
+
+def _both_packs():
+    """hi_latn + hi_deva packs, used for the R3 bare-digits currency gate
+    below regardless of an individual example's declared `lang` (mirrors
+    make_fixtures.py, which always scans the union of both)."""
+    global _BOTH_PACKS
+    if _BOTH_PACKS is None:
+        packs = []
+        for lang_id in ("hi_latn", "hi_deva"):
+            try:
+                packs.append(langs_base.get_pack(lang_id))
+            except KeyError:
+                pass
+        _BOTH_PACKS = packs
+    return _BOTH_PACKS
+
+
+def _apply_bare_digits_gate(text, decoded, classes):
+    """R3: drop a decoded span whose meaningful tokens are digits-only
+    unless a currency marker is present for it."""
+    kept = []
+    for d in decoded:
+        toks = [(classes[cid], sub) for cid, sub in d["tokens"]]
+        if core.should_drop_bare_digits(toks) and core.detect_currency_multi(text, d["start"], d["end"], _both_packs()) is None:
+            continue
+        kept.append(d)
+    return kept
+
+
 def _get_pack(lang_id):
     if lang_id in langs_base.registry:
         return langs_base.registry[lang_id]
@@ -171,6 +202,7 @@ def _print_metrics(examples, preds, classes, header=""):
     for ex, (text, bio_pred, cls_pred, bio_probs) in zip(examples, preds):
         gold_spans = [(s["start"], s["end"]) for s in ex["spans"]]
         decoded = decode_spans(text, bio_pred, cls_pred, bio_probs=bio_probs)
+        decoded = _apply_bare_digits_gate(text, decoded, classes)
         pred_set = {(d["start"], d["end"]) for d in decoded}
         pred_by_span = {(d["start"], d["end"]): d for d in decoded}
         gold_set = set(gold_spans)
@@ -212,6 +244,7 @@ def _category_and_negative_metrics(examples, preds, classes):
         norm_text = normalize_text(ex["text"])[:MAX_LEN]
         pack = _get_pack(ex.get("lang"))
         decoded = decode_spans(text, bio_pred, cls_pred, bio_probs=bio_probs)
+        decoded = _apply_bare_digits_gate(text, decoded, classes)
         pred_set = {(d["start"], d["end"]) for d in decoded}
         pred_by_span = {(d["start"], d["end"]): d for d in decoded}
 
@@ -298,6 +331,7 @@ def _evaluate_all(gold_files, examples, preds, classes, file_bounds, quiet=False
     for ex, (text, bio_pred, cls_pred, bio_probs) in zip(examples, preds):
         gold_spans = [(s["start"], s["end"]) for s in ex["spans"]]
         decoded = decode_spans(text, bio_pred, cls_pred, bio_probs=bio_probs)
+        decoded = _apply_bare_digits_gate(text, decoded, classes)
         pred_set = {(d["start"], d["end"]) for d in decoded}
         pred_by_span = {(d["start"], d["end"]): d for d in decoded}
         gold_set = set(gold_spans)

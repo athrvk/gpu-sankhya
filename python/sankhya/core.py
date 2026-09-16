@@ -191,6 +191,19 @@ def evaluate(tokens: List[Tuple[str, str]]) -> Result:
             return Result(value=_num(value), range=None, unit=(C.UNIT_NAME.get(unit) if unit else None), classes=all_classes)
 
         (v1, u1), (v2, u2) = amounts[0], amounts[1]
+
+        # R6: a RANGE connector that actually sits between a DESCENDING
+        # additive chain (e.g. "ek lakh dus hazaar" mistagged RANGE on the
+        # space) -- both sides already carry their own unit and the left
+        # value is strictly greater than the right -- is evaluated as one
+        # additive amount instead of a [low, high] range. A genuine range
+        # ("2-3 lakh", "paanch se sadhe saat lakh") has only ONE side
+        # carrying a unit (the other is a bare number/prefix scaled by it
+        # below), so it never hits this branch.
+        if u1 is not None and u2 is not None and v1 > v2:
+            total = _num(v1 + v2)
+            return Result(value=total, range=None, unit=C.UNIT_NAME.get(u1), classes=all_classes)
+
         if u1 is None and u2 is not None:
             v1 = v1 * C.unit_value(u2)
             eff_unit = u2
@@ -208,16 +221,66 @@ def evaluate(tokens: List[Tuple[str, str]]) -> Result:
         return Result(value=0, range=None, unit=None, classes=[c for c, _ in tokens])
 
 
+def is_bare_digits(tokens: List[Tuple[str, str]]) -> bool:
+    """R3: true when a span's meaningful tokens are ONLY digits (with
+    DOT/COMMA/SEP glue) -- no UNIT_/PFX_/CARD_ token at all."""
+    has_digits = False
+    for cls, _ in tokens:
+        if cls == "DIGITS":
+            has_digits = True
+        elif cls.startswith(("UNIT_", "PFX_", "CARD_")):
+            return False
+    return has_digits
+
+
+def should_drop_bare_digits(tokens: List[Tuple[str, str]]) -> bool:
+    """R3 (narrowed): whether a bare-digits span (see is_bare_digits) with
+    NO detected currency should be dropped. Most bare numbers ARE amounts
+    (rent, prices, quantities: "15000", "2,50,00,000", "125,000") and must
+    be kept; only the two genuinely ambiguous shapes are dropped:
+
+      (a) short (<=4 digits) AND ungrouped (no comma) -- route numbers,
+          OTPs, years, house numbers: "1", "66", "4521", "2024", "302".
+      (b) very long (>=10 digits) -- phone numbers: "9876543210".
+
+    A grouping comma (Indian or Western) is itself a strong signal of a
+    real amount, so it exempts an otherwise-short span from rule (a):
+    "1,00,000" (6 digits, comma) is kept, not dropped.
+    """
+    if not is_bare_digits(tokens):
+        return False
+    digit_count = 0
+    has_comma = False
+    for cls, text in tokens:
+        if cls == "DIGITS":
+            digit_count += len(text)
+        elif cls == "COMMA":
+            has_comma = True
+    if digit_count <= 4 and not has_comma:
+        return True
+    if digit_count >= 10:
+        return True
+    return False
+
+
 def detect_currency(text: str, start: int, end: int, pack) -> Optional[str]:
-    """Scan up to 4/6 chars before/after [start,end) for a currency marker.
+    """Scan up to 8 chars before/after [start,end) for a currency marker.
 
     `pack` may be a single LanguagePack, or a list of packs (multi-lang runs)
     in which case the union of both packs' marker lists is scanned.
+
+    The window has to be wider than the longest marker word (6 chars, e.g.
+    "rupaye"/"rupees"): the span boundary sits right after the number, so
+    the gap before the marker word starts (whitespace, and occasionally
+    punctuation like ", ") eats into a same-sized window and truncates the
+    word -- "1200 rupees" with a 6-char after-window is " rupee" (missing
+    the final "s"), so "rupees" never matches with startswith(). 8 leaves
+    slack for a couple of separator chars ahead of the longest marker.
     """
     packs = pack if isinstance(pack, (list, tuple)) else [pack]
 
-    before = text[max(0, start - 6):start]
-    after = text[end:end + 6]
+    before = text[max(0, start - 8):start]
+    after = text[end:end + 8]
 
     before_stripped = before.rstrip()
     after_stripped = after.lstrip()

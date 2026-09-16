@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parse } from "../src/index.ts";
+import { parse, parseBatch, inspect } from "../src/index.ts";
 
 // These exercise the bundled dev weights end-to-end. The current training
 // run is early, so some spec examples may not decode/evaluate correctly yet;
@@ -70,4 +70,25 @@ test("unknown characters around a span do not break it", () => {
   r = parse("€ 2 lakh");
   assert.equal(r.length, 1);
   assert.equal(r[0].value, 200000);
+});
+
+test("R1: parse() treats non-string input as empty rather than throwing", () => {
+  assert.deepEqual(parse(null as unknown as string), []);
+  assert.deepEqual(parse(undefined as unknown as string), []);
+  assert.deepEqual(parse(12345 as unknown as string), []);
+  assert.deepEqual(parse({} as unknown as string), []);
+});
+
+test("R1: inspect() treats non-string input as empty", () => {
+  const r = inspect(null as unknown as string);
+  assert.equal(r.text, "");
+  assert.deepEqual(r.chars, []);
+  assert.deepEqual(r.spans, []);
+});
+
+test("R1: parseBatch() tolerates non-string entries in the batch", async () => {
+  const r = await parseBatch([null as unknown as string, "sava lakh"]);
+  assert.deepEqual(r[0], []);
+  assert.equal(r[1].length, 1);
+  assert.equal(r[1][0].value, 125000);
 });

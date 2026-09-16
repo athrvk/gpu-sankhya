@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { decodeSpans, repairClasses } from "../src/decode.ts";
+import { decodeSpans, repairClasses, repairWordIntegrity, letterRuns } from "../src/decode.ts";
 import { CLASS_TO_ID, CLASSES } from "../src/classes.ts";
 import { evaluate } from "../src/core.ts";
 
@@ -51,7 +51,10 @@ test("drops spans with no meaningful tokens", () => {
 });
 
 test("I after O is ignored (treated as O)", () => {
-  const text = "xdo";
+  // "a-o" -- "-" separates "a" and "o" into their own one-char letters-runs,
+  // so the CARD_ token on "o" alone still fully covers its own run and
+  // survives R2's word-integrity check.
+  const text = "a-o";
   const bio = [0, 2, 1]; // O, I(ignored), B
   const cls = [cid("O"), cid("CARD_2"), cid("CARD_2")];
   const spans = decodeSpans(text, bio, cls);
@@ -286,4 +289,77 @@ test("Devanagari: डेढ़ लाख (\"one and a half lakh\") -> 150000", (
   const r = evaluate(tokens);
   assert.equal(r.value, 150000);
   assert.equal(r.unit, "lakh");
+});
+
+test("R2: word integrity -- a letters-run that is only PARTIALLY meaningful (some chars fell back to O) has ALL its meaningful chars wiped too", () => {
+  const text = "10 km";
+  const cls = [cid("DIGITS"), cid("DIGITS"), cid("SEP"), cid("UNIT_HAZAAR"), cid("O")];
+  const out = repairWordIntegrity(text, 0, text.length, cls, letterRuns(text));
+  assert.deepEqual(out.slice(3, 5).map((c) => CLASSES[c]), ["O", "O"]);
+});
+
+test("R2: word integrity -- a whole-run single-char symbol unit is kept", () => {
+  const text = "20k";
+  const cls = [cid("DIGITS"), cid("DIGITS"), cid("UNIT_HAZAAR")];
+  const out = repairWordIntegrity(text, 0, text.length, cls, letterRuns(text));
+  assert.equal(CLASSES[out[2]], "UNIT_HAZAAR");
+});
+
+test("R2: word integrity -- 'dedhlakh' joined compound (both sub-runs meaningful) stays untouched", () => {
+  const text = "dedhlakh";
+  const cls = [
+    ...new Array(4).fill(cid("PFX_DEDH")),
+    ...new Array(4).fill(cid("UNIT_LAKH")),
+  ];
+  const out = repairWordIntegrity(text, 0, text.length, cls, letterRuns(text));
+  assert.deepEqual(
+    out.map((c) => CLASSES[c]),
+    [...new Array(4).fill("PFX_DEDH"), ...new Array(4).fill("UNIT_LAKH")],
+  );
+});
+
+test("R4: connector between a closed UNIT_ amount and a fresh DIGITS amount is a real range", () => {
+  const text = "2 lakh/3 lakh";
+  const bio = [1, ...new Array(text.length - 1).fill(2)];
+  const cls = [
+    cid("DIGITS"), cid("SEP"), cid("UNIT_LAKH"), cid("UNIT_LAKH"), cid("UNIT_LAKH"), cid("UNIT_LAKH"),
+    cid("O"), // "/"
+    cid("DIGITS"), cid("SEP"), cid("UNIT_LAKH"), cid("UNIT_LAKH"), cid("UNIT_LAKH"), cid("UNIT_LAKH"),
+  ];
+  const spans = decodeSpans(text, bio, cls);
+  assert.equal(spans.length, 1);
+  const tokClasses = spans[0].tokens.map(([c]) => CLASSES[c]);
+  assert.deepEqual(tokClasses, ["DIGITS", "SEP", "UNIT_LAKH", "RANGE", "DIGITS", "SEP", "UNIT_LAKH"]);
+});
+
+test("R4: PFX_ directly glued to UNIT_ (one compound number) keeps the hyphen SEP", () => {
+  const text = "dedh-lakh";
+  const raw = [
+    ...new Array(4).fill(cid("PFX_DHAI")),
+    cid("O"),
+    ...new Array(4).fill(cid("UNIT_LAKH")),
+  ];
+  const repaired = repairClasses(text, raw);
+  assert.deepEqual(repaired.slice(4, 5).map((c) => CLASSES[c]), ["SEP"]);
+});
+
+test("R5: possessive apostrophe+letters trimmed from the end of the amount", () => {
+  const text = "2 lakh's ka scam";
+  const bio = [1, ...new Array("2 lakh's".length - 1).fill(2), ...new Array(text.length - "2 lakh's".length).fill(0)];
+  const cls = [
+    cid("DIGITS"), cid("SEP"), cid("UNIT_LAKH"), cid("UNIT_LAKH"), cid("UNIT_LAKH"), cid("UNIT_LAKH"), cid("O"), cid("O"),
+    ...new Array(text.length - 8).fill(cid("O")),
+  ];
+  const spans = decodeSpans(text, bio, cls);
+  assert.equal(spans.length, 1);
+  assert.equal(spans[0].text, "2 lakh");
+});
+
+test("R5: possessive with no space before the apostrophe", () => {
+  const text = "2lakh's";
+  const bio = [1, ...new Array(text.length - 1).fill(2)];
+  const cls = [cid("DIGITS"), cid("UNIT_LAKH"), cid("UNIT_LAKH"), cid("UNIT_LAKH"), cid("UNIT_LAKH"), cid("O"), cid("O")];
+  const spans = decodeSpans(text, bio, cls);
+  assert.equal(spans.length, 1);
+  assert.equal(spans[0].text, "2lakh");
 });

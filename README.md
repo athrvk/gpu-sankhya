@@ -280,10 +280,39 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   majority vote over character-type sub-runs (fixes a stray misclassified
   character inside an otherwise-consistent digit or letter run), plus a
   few punctuation-specific rules.
+- **Word integrity**: a `UNIT_`/`PFX_`/`CARD_` token must line up with the
+  letter-word it sits in — a letters-run that's only partially meaningful
+  (some characters fell back to `O`) has all of it retagged `O` (e.g.
+  `"10 km"`), while a run legitimately split into several back-to-back
+  meaningful sub-words is left alone (e.g. `"dedhlakh"` = `PFX_DEDH` +
+  `UNIT_LAKH`). A one-character symbol unit (`k`/`K`/`l`/`L`) is additionally
+  only valid when the next character isn't a letter, so `"20k logon"`
+  keeps its `k` but `"10 km"`'s `k` doesn't survive alone either.
+- **Bare-digits gate**: a span whose only meaningful tokens are digits (no
+  unit/prefix/cardinal word at all) with no detected currency marker is
+  dropped only when it's short and ungrouped (≤4 digits, no comma — route
+  numbers, OTPs, years: `"1"`, `"route 66"`, `"OTP 4521"`, `"2024"`) or very
+  long (≥10 digits — phone numbers: `"9876543210"`). Everything else is
+  kept as a plain (unitless) amount — `"15000"`, `"1,00,000"`,
+  `"2,50,00,000"` all parse; `"₹75"` / `"Rs 2,50,000/-"` / `"1200 rupees"`
+  still parse with `currency: "INR"`.
+- **Range-connector repair**: a bare `-`/`–`/`—`/`/` between two amounts
+  becomes a `RANGE` tag (spaces around it stay `SEP`) when the left side
+  can end an amount by itself and the right side can start a fresh one
+  (`"2 lakh/3 lakh"`, `"दो-तीन लाख"`) — but not when it's really one
+  compound number, e.g. a prefix glued straight to a unit (`"dedh-lakh"`
+  stays one span, not a range).
+- **Possessive trim**: a trailing `'s`/`’s` (1-2 letters) is stripped from
+  the end of a word and excluded from the span (`"2 lakh's"` → `"2 lakh"`).
 - **Confidence filter**: a span's confidence is the mean of the max BIO
   softmax probability per character; spans below 0.5 are dropped.
 - Only after all of the above does the deterministic arithmetic core run
-  on the resulting token sequence.
+  on the resulting token sequence, which also treats a `RANGE` connector
+  between two amounts that BOTH already carry a unit and are strictly
+  *descending* (e.g. `"ek lakh dus hazaar"` mistagged `RANGE` on the
+  space) as one additive amount rather than a `[low, high]` range —
+  genuine ranges (only one side has a unit, or both do but ascending) are
+  unaffected.
 
 One more detail that matters more than it looks like it should: the
 runtime right-pads the character-id array with 24 pad tokens before
