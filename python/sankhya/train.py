@@ -218,7 +218,7 @@ def main(argv=None):
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=args.lr, total_steps=total_steps)
 
     # B (class 1) is rare relative to O/I; upweight it 2x in the bio loss.
-    bio_class_weight = torch.tensor([1.0, 2.0, 1.0], dtype=torch.float32)
+    bio_class_weight = torch.tensor([1.0, 2.0, 1.0], dtype=torch.float32, device=device)
     ce_bio = nn.CrossEntropyLoss(reduction="none", weight=bio_class_weight, label_smoothing=args.label_smoothing)
     ce_cls = nn.CrossEntropyLoss(reduction="none", label_smoothing=args.label_smoothing)
 
