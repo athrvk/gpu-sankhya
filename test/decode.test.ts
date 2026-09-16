@@ -204,3 +204,50 @@ test("class-repair: 'dedhlakh' (joined, no space) tagged dedh(4)+lakh(4) -> 1500
   const r = repairAndEvaluate(text, raw);
   assert.equal(r.value, 150000);
 });
+
+// --- BIO repairs (applied before class-repair) ------------------------
+
+test("BIO bridge: space after 'five' mistagged O -> 55000000", () => {
+  const text = "five and a half crore";
+  const bio = new Array(text.length).fill(2);
+  bio[0] = 1;
+  bio[text.indexOf(" ")] = 0; // single stray O right after "five"
+
+  const cls = new Array(text.length).fill(cid("O"));
+  const tag = (word: string, from: number, clsName: string): number => {
+    const start = text.indexOf(word, from);
+    for (let i = start; i < start + word.length; i++) cls[i] = cid(clsName);
+    return start + word.length;
+  };
+  let pos = 0;
+  pos = tag("five", pos, "CARD_5");
+  pos = tag("and", pos, "PFX_SAADHE");
+  pos = tag("a", pos, "PFX_SAADHE");
+  pos = tag("half", pos, "PFX_SAADHE");
+  tag("crore", pos, "UNIT_CRORE");
+
+  const spans = decodeSpans(text, bio, cls);
+  assert.equal(spans.length, 1, `expected the bridged O to keep this as one span, got ${spans.length}`);
+  const tokens: Array<[string, string]> = spans[0].tokens.map(([c, t]) => [CLASSES[c], t]);
+  const r = evaluate(tokens);
+  assert.equal(r.value, 55000000);
+});
+
+test("digit-extension: last '0' of '15000' mistagged O -> 15000", () => {
+  const text = "15000/month";
+  const bio = new Array(text.length).fill(0);
+  bio[0] = 1;
+  bio[1] = 2;
+  bio[2] = 2;
+  bio[3] = 2; // span so far covers "1500" (indices 0-3); index 4 ('0') stays O below
+
+  const cls = new Array(text.length).fill(cid("O"));
+  for (let i = 0; i < 5; i++) cls[i] = cid("DIGITS"); // all five digit chars, including the mistagged one
+
+  const spans = decodeSpans(text, bio, cls);
+  assert.equal(spans.length, 1);
+  assert.equal(spans[0].text, "15000", "digit-extension should pull the trailing '0' back into the span");
+  const tokens: Array<[string, string]> = spans[0].tokens.map(([c, t]) => [CLASSES[c], t]);
+  const r = evaluate(tokens);
+  assert.equal(r.value, 15000);
+});

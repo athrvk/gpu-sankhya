@@ -67,20 +67,26 @@ function runMajority(ids: number[] | Int32Array, start: number, end: number): nu
   const tied = [...counts.entries()].filter(([, c]) => c === maxCount).map(([cid]) => cid);
   if (tied.length === 1) return tied[0];
   let bestLen = -1;
+  let bestFirstPos = Infinity;
   let bestId = tied[0];
   for (const cid of tied) {
     let curLen = 0;
     let maxLen = 0;
+    let firstPos = Infinity;
     for (let i = start; i < end; i++) {
       if (ids[i] === cid) {
+        if (firstPos === Infinity) firstPos = i;
         curLen++;
         if (curLen > maxLen) maxLen = curLen;
       } else {
         curLen = 0;
       }
     }
-    if (maxLen > bestLen || (maxLen === bestLen && cid < bestId)) {
+    // longest contiguous sub-run wins; a further tie prefers whichever
+    // class occurs first (leftmost) in the run.
+    if (maxLen > bestLen || (maxLen === bestLen && firstPos < bestFirstPos)) {
       bestLen = maxLen;
+      bestFirstPos = firstPos;
       bestId = cid;
     }
   }
@@ -213,6 +219,36 @@ export interface DecodedSpan {
   confidence: number | null;
 }
 
+/** BIO repair (a): bridge a single stray O back into I when it sits between
+ * an already-open span (B or I immediately before) and a continuing I
+ * immediately after -- a lone one-char dropout shouldn't split the span.
+ * Decisions are all made from the ORIGINAL array (not the array being
+ * built), so this only ever bridges a single-char gap, never a run of
+ * multiple consecutive O's. */
+function bridgeBio(bioIds: number[] | Int32Array, n: number): number[] {
+  const out = Array.from({ length: n }, (_, i) => bioIds[i] as number);
+  for (let i = 1; i < n - 1; i++) {
+    if (bioIds[i] === 0 && (bioIds[i - 1] === 1 || bioIds[i - 1] === 2) && bioIds[i + 1] === 2) {
+      out[i] = 2;
+    }
+  }
+  return out;
+}
+
+function isDigitChar(c: string | undefined): boolean {
+  return c !== undefined && c >= "0" && c <= "9";
+}
+
+/** BIO repair (b): if a span ends right on a digit and the following
+ * char(s) are also digits, extend the span through the rest of that digit
+ * run (a stray O mid-digit-run shouldn't truncate a number). */
+function extendDigitRun(text: string, s: number, e: number): number {
+  if (e <= s || !isDigitChar(text[e - 1])) return e;
+  let ee = e;
+  while (ee < text.length && isDigitChar(text[ee])) ee++;
+  return ee;
+}
+
 export function decodeSpans(
   text: string,
   bioIds: number[] | Int32Array,
@@ -220,10 +256,11 @@ export function decodeSpans(
   bioProbs?: Float32Array[] | number[][] | null,
 ): DecodedSpan[] {
   const n = text.length;
+  const bridged = bridgeBio(bioIds, n);
   const spans: Array<[number, number]> = [];
   let start: number | null = null;
   for (let i = 0; i < n; i++) {
-    const b = bioIds[i];
+    const b = bridged[i];
     if (b === 1) {
       if (start !== null) spans.push([start, i]);
       start = i;
@@ -237,6 +274,9 @@ export function decodeSpans(
     }
   }
   if (start !== null) spans.push([start, n]);
+  for (let k = 0; k < spans.length; k++) {
+    spans[k] = [spans[k][0], extendDigitRun(text, spans[k][0], spans[k][1])];
+  }
 
   const out: DecodedSpan[] = [];
   for (const [s, e] of spans) {

@@ -156,8 +156,11 @@ function collapsePfxRuns(tokens: Tok[]): Tok[] {
 
 export function evaluate(rawTokens: Tok[]): Result {
   try {
+    // `classes` in the Result reports the original (uncollapsed) token
+    // sequence -- collapsing is purely an arithmetic-evaluation detail, not
+    // part of the normalised class listing callers see.
+    const allClasses = rawTokens.map((t) => t[0]);
     const tokens = collapsePfxRuns(rawTokens);
-    const allClasses = tokens.map((t) => t[0]);
 
     const parts: Tok[][] = [[]];
     for (const [cls, text] of tokens) {

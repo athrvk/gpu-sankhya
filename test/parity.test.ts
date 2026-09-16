@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { loadWeights } from "../src/weights.ts";
-import { buildCharToId, encodeChars } from "../src/charset.ts";
+import { buildCharToId, encodeChars, paddedLength } from "../src/charset.ts";
 import { forward, argmaxRow, Scratch } from "../src/infer-cpu.ts";
 import weightsJson from "../src/data/default-weights.json" with { type: "json" };
 
@@ -19,11 +19,17 @@ test("CPU backend argmax matches python np_infer reference (parity fixture)", ()
   const mismatches: string[] = [];
   for (const line of lines) {
     const row = JSON.parse(line) as { text: string; bio: number[]; cls: number[] };
-    const ids = encodeChars(row.text, charToId);
+    // Right-pad to match training-time padding (see charset.ts PAD_TAIL /
+    // python np_infer.py's pad_ids()); run forward() on the padded array but
+    // only argmax the real (unpadded) text length -- the padded tail's
+    // logits are discarded, only used to give the real tokens correct
+    // right-context.
+    const padLen = paddedLength(row.text.length);
+    const ids = encodeChars(row.text, charToId, undefined, padLen);
     const fw = forward(weights, ids, scratch);
     const bio: number[] = [];
     const cls: number[] = [];
-    for (let t = 0; t < fw.length; t++) {
+    for (let t = 0; t < row.text.length; t++) {
       bio.push(argmaxRow(fw.bioLogits, t * 3, 3));
       cls.push(argmaxRow(fw.clsLogits, t * fw.nCls, fw.nCls));
     }

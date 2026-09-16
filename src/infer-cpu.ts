@@ -2,7 +2,7 @@
 //
 // Performance notes: all working buffers (including the zero-padded input
 // copy each conv layer needs) are preallocated once per Scratch (sized to
-// MAX_LEN) and reused across calls -- forward() itself never allocates on
+// PADDED_MAX) and reused across calls -- forward() itself never allocates on
 // the hot path. The conv1d inner loop is loop-interchanged (t innermost,
 // tap coefficients hoisted into locals and unrolled for the k=3/k=5 kernel
 // sizes this model actually uses) instead of a separate tap loop per
@@ -10,7 +10,7 @@
 // and roughly triples throughput over the naive "for tap { for t }" form.
 
 import type { ConvLayer, LoadedWeights, Tensor } from "./weights.ts";
-import { MAX_LEN } from "./charset.ts";
+import { PADDED_MAX } from "./charset.ts";
 
 export interface ForwardResult {
   bioLogits: Float32Array; // (L, 3) row-major, view into scratch (valid until next forward() call on the same scratch)
@@ -20,22 +20,22 @@ export interface ForwardResult {
 }
 
 /** Preallocated buffers for one Parser's forward passes, sized once from the
- * weights' channel counts and MAX_LEN so forward() does no per-call allocation. */
+ * weights' channel counts and PADDED_MAX so forward() does no per-call allocation. */
 export class Scratch {
-  private buffers: Float32Array[]; // ping-pong pair, sized [maxChannels * MAX_LEN]
-  private padded: Float32Array; // scratch for the zero-padded conv input, sized [maxChannels * (MAX_LEN + 2*maxPad)]
+  private buffers: Float32Array[]; // ping-pong pair, sized [maxChannels * PADDED_MAX]
+  private padded: Float32Array; // scratch for the zero-padded conv input, sized [maxChannels * (PADDED_MAX + 2*maxPad)]
   readonly bioBuf: Float32Array;
   readonly clsBuf: Float32Array;
 
   constructor(weights: LoadedWeights) {
     const layers = [weights.conv1, weights.conv2, weights.conv3, ...(weights.layers === 4 && weights.conv4 ? [weights.conv4] : [])];
     const maxC = Math.max(weights.embed.shape[1], ...layers.map((l) => l.w.shape[0]));
-    this.buffers = [new Float32Array(maxC * MAX_LEN), new Float32Array(maxC * MAX_LEN)];
+    this.buffers = [new Float32Array(maxC * PADDED_MAX), new Float32Array(maxC * PADDED_MAX)];
     // Max padding across layers this model uses is small (dilation*(k-1)/2, dilation<=4, k<=5) -- 8 is a safe ceiling.
     const maxPad = 8;
-    this.padded = new Float32Array(maxC * (MAX_LEN + 2 * maxPad));
-    this.bioBuf = new Float32Array(weights.bio.w.shape[0] * MAX_LEN);
-    this.clsBuf = new Float32Array(weights.cls.w.shape[0] * MAX_LEN);
+    this.padded = new Float32Array(maxC * (PADDED_MAX + 2 * maxPad));
+    this.bioBuf = new Float32Array(weights.bio.w.shape[0] * PADDED_MAX);
+    this.clsBuf = new Float32Array(weights.cls.w.shape[0] * PADDED_MAX);
   }
 
   buf(i: number): Float32Array {

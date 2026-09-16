@@ -1,6 +1,6 @@
 import type { Sankhya, ParseOptions, WeightsJson } from "./types.ts";
 import { loadWeights, type LoadedWeights } from "./weights.ts";
-import { buildCharToId, encodeChars, makeWindows, MAX_LEN } from "./charset.ts";
+import { buildCharToId, encodeChars, makeWindows, MAX_LEN, PADDED_MAX, paddedLength } from "./charset.ts";
 import { forward, softmaxRow, argmaxRow, Scratch } from "./infer-cpu.ts";
 import { decodeSpans } from "./decode.ts";
 import { evaluate, detectCurrency } from "./core.ts";
@@ -26,7 +26,7 @@ export class Parser {
   // Reused scratch buffers for the hot (single-window) CPU path -- forward()
   // and its callers do no per-call allocation beyond small per-span objects.
   private scratch: Scratch;
-  private idsScratch = new Int32Array(MAX_LEN);
+  private idsScratch = new Int32Array(PADDED_MAX);
   private bioIdsScratch = new Int32Array(MAX_LEN);
   private clsIdsScratch = new Int32Array(MAX_LEN);
   private bioProbsScratch: Float32Array[] = Array.from({ length: MAX_LEN }, () => new Float32Array(3));
@@ -43,17 +43,19 @@ export class Parser {
     const windows = makeWindows(text.length);
     if (windows.length === 1 && windows[0].length === text.length) {
       // fast path: no window offset bookkeeping / merge-dedup needed
-      const ids = encodeChars(text, this.charToId, this.idsScratch);
+      const padLen = paddedLength(text.length);
+      const ids = encodeChars(text, this.charToId, this.idsScratch, padLen);
       const fw = forward(this.weights, ids, this.scratch);
-      return this.decodeForward(text, fw, 0);
+      return this.decodeForward(text, fw, 0, text.length);
     }
     const merged: Sankhya[] = [];
     const seen = new Set<string>();
     for (const win of windows) {
       const sub = text.slice(win.offset, win.offset + win.length);
-      const ids = encodeChars(sub, this.charToId, this.idsScratch);
+      const padLen = paddedLength(sub.length);
+      const ids = encodeChars(sub, this.charToId, this.idsScratch, padLen);
       const fw = forward(this.weights, ids, this.scratch);
-      const results = this.decodeForward(sub, fw, win.offset);
+      const results = this.decodeForward(sub, fw, win.offset, sub.length);
       for (const r of results) {
         const key = `${r.start}:${r.end}`;
         if (!seen.has(key)) {
@@ -66,8 +68,12 @@ export class Parser {
     return merged;
   }
 
-  private decodeForward(sub: string, fw: ReturnType<typeof forward>, offset: number): Sankhya[] {
-    const L = fw.length;
+  /** `fw` may cover a padded length (PAD_TAIL right-padding, see charset.ts);
+   * `realLen` (defaults to fw.length, i.e. no padding) bounds decoding to the
+   * actual text -- the padded tail's logits are only used to give the real
+   * tokens correct right-context during the conv stack, never decoded. */
+  private decodeForward(sub: string, fw: ReturnType<typeof forward>, offset: number, realLen: number = fw.length): Sankhya[] {
+    const L = realLen;
     const useScratchBufs = L <= MAX_LEN;
     const bioIds = useScratchBufs ? this.bioIdsScratch : new Int32Array(L);
     const clsIds = useScratchBufs ? this.clsIdsScratch : new Int32Array(L);
@@ -122,17 +128,22 @@ export class Parser {
 
     if (gpuIdx.length > 0) {
       if (!this.gpu) this.gpu = new WebGPUBackend(this.weights);
-      const length = Math.max(...gpuIdx.map((i) => texts[i].length), 1);
+      const maxRealLen = Math.max(...gpuIdx.map((i) => texts[i].length), 1);
+      // row length includes PAD_TAIL right-padding beyond the longest real
+      // text in the batch (see charset.ts) -- without it the longest row
+      // would have zero pad context, same distribution-mismatch bug as an
+      // unpadded single-text parse().
+      const rowLen = paddedLength(maxRealLen);
       const batch = gpuIdx.length;
-      const charIds = new Int32Array(batch * length);
+      const charIds = new Int32Array(batch * rowLen);
       const padId = this.charToId.get("<pad>") ?? 0;
       charIds.fill(padId);
       for (let bi = 0; bi < batch; bi++) {
         const text = texts[gpuIdx[bi]];
         const ids = encodeChars(text, this.charToId);
-        charIds.set(ids, bi * length);
+        charIds.set(ids, bi * rowLen);
       }
-      const { bio, cls } = await this.gpu.run(charIds, batch, length);
+      const { bio, cls } = await this.gpu.run(charIds, batch, rowLen);
       const nCls = this.weights.cls.w.shape[0];
       for (let bi = 0; bi < batch; bi++) {
         const text = texts[gpuIdx[bi]];
@@ -140,11 +151,11 @@ export class Parser {
         const bioLogits = new Float32Array(L * 3);
         const clsLogits = new Float32Array(L * nCls);
         for (let t = 0; t < L; t++) {
-          bioLogits.set(bio.subarray((bi * length + t) * 3, (bi * length + t) * 3 + 3), t * 3);
-          clsLogits.set(cls.subarray((bi * length + t) * nCls, (bi * length + t) * nCls + nCls), t * nCls);
+          bioLogits.set(bio.subarray((bi * rowLen + t) * 3, (bi * rowLen + t) * 3 + 3), t * 3);
+          clsLogits.set(cls.subarray((bi * rowLen + t) * nCls, (bi * rowLen + t) * nCls + nCls), t * nCls);
         }
         const fw = { bioLogits, clsLogits, length: L, nCls };
-        results[gpuIdx[bi]] = this.decodeForward(text, fw, 0);
+        results[gpuIdx[bi]] = this.decodeForward(text, fw, 0, L);
       }
     }
     return results;
