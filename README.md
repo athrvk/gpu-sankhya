@@ -218,9 +218,9 @@ spans) — evaluated against the shipped int8-quantized weights:
 
 | gold set | examples | spans | value accuracy | span precision | span recall | span F1 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| gold.jsonl (romanised) | 214 | 188 | 0.9381 | 0.9293 | 0.9485 | 0.9388 |
+| gold.jsonl (romanised) | 220 | 194 | 0.9381 | 0.9293 | 0.9485 | 0.9388 |
 | gold_deva.jsonl (Devanagari) | 182 | 151 | 0.9735 | 0.9867 | 0.9801 | 0.9834 |
-| combined | 396 | 339 | 0.9536 | 0.9540 | 0.9623 | 0.9582 |
+| combined | 402 | 345 | 0.9536 | 0.9540 | 0.9623 | 0.9582 |
 
 Negatives (zero-gold-span examples, 73 total): 0 false positives.
 Miss summary: missed 0, spurious 4, wrong value 3, wrong boundary 13.
