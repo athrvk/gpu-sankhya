@@ -1,7 +1,7 @@
 # gpu-sankhya
 
 [![npm version](https://img.shields.io/npm/v/gpu-sankhya.svg)](https://www.npmjs.com/package/gpu-sankhya)
-[![bundle size](https://img.shields.io/bundlephobia/minzip/gpu-sankhya)](https://bundlephobia.com/package/gpu-sankhya)
+[![bundle size](https://img.shields.io/badge/bundle-27%20KB%20gzipped-blue)](https://www.npmjs.com/package/gpu-sankhya?activeTab=code)
 [![license](https://img.shields.io/npm/l/gpu-sankhya.svg)](./LICENSE)
 [![demo](https://img.shields.io/badge/demo-live-brightgreen)](https://athrvk.github.io/gpu-sankhya/)
 
