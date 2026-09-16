@@ -368,7 +368,7 @@ minutes on 4 CPU cores for `v1:32`, about 2x that for `v2:48` on CPU).
 ```bash
 python -m kaggle_train.run push              # upload the kernel, start the GPU run
 python -m kaggle_train.run status             # poll every 30s until complete/error
-python -m kaggle_train.run pull               # download output, update weights + fixtures
+python -m kaggle_train.run pull               # download output, update weights + fixtures + models/default/
 python -m kaggle_train.run all                # push, then status, then pull
 ```
 
@@ -423,7 +423,41 @@ for the kernel to be scheduled.
 **After `pull`, run `npm test` from the repo root before committing.**
 `pull` overwrites `src/data/default-weights.json` and regenerates
 `test/fixtures/parity.jsonl` / `decoded.jsonl` from the new weights —
-`npm test` must pass (`63/63`) before those changes are committed.
+`npm test` must pass (`63/63`) before those changes are committed. `pull`
+also copies the winning run's checkpoint + exports (`sankhya.pt`,
+`sankhya.onnx`, `sankhya.weights.json`, `sankhya.weights.int8.json`,
+`charset.json`, `classes.json`, `gold_metrics_*.json`) plus
+`output/matrix.md` and `output/metrics.json` into `models/default/` (repo
+root, tracked in git) and prints what it copied — this is the tree the
+`huggingface` workflow publishes from (see "Publishing to Hugging Face"
+below).
+
+## Publishing to Hugging Face
+
+`python -m sankhya.hf_push model|space|dataset|all [--dry-run]` (from
+`python/`, needs `pip install -r requirements-hf.txt`) pushes:
+
+- `model` — `models/default/*` plus a generated model card, to
+  https://huggingface.co/athrvk/gpu-sankhya (and tags the revision
+  `vX.Y.Z` from `package.json`'s version)
+- `space` — the built `site/` directory (run `npm run build && npm run
+  site` from the repo root first), to
+  https://huggingface.co/spaces/athrvk/gpu-sankhya-demo
+- `dataset` — `python/tests/gold.jsonl` / `gold_deva.jsonl`, to
+  https://huggingface.co/datasets/athrvk/gpu-sankhya-gold
+
+Requires an `HF_TOKEN` env var (a write-scoped Hugging Face token); repos
+are created automatically on first push. `--dry-run` writes the generated
+cards + file lists to `python/hf_out/` without any network access, so you
+can review them before running for real.
+
+In CI, the `.github/workflows/huggingface.yml` workflow does this
+automatically: on `workflow_dispatch` (pick `all`/`model`/`space`/`dataset`
+via the `target` input), and on push to `master` when `package.json`,
+`models/default/**`, `python/tests/gold*.jsonl`, or `demo/**` change. It
+needs an `HF_TOKEN` repo secret (Settings -> Secrets and variables ->
+Actions -> New repository secret) with write access to the `athrvk`
+namespace on huggingface.co; without it, the jobs print a notice and skip.
 
 See the module docstrings in `python/kaggle_train/run.py` and
 `python/kaggle_train/train_kernel.py` for how the kernel is structured,
