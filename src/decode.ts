@@ -23,8 +23,26 @@ const ID_COMMA = CLASS_TO_ID["COMMA"];
 
 type CharType = "letter" | "digit" | "space" | "punct";
 
+// Devanagari letters (base consonants/vowels) and combining marks (matras,
+// nukta, virama/halant, anusvara, chandrabindu -- U+0900-U+097F) must count
+// as "letter" for run-splitting, or every matra (e.g. the ि in डेढ़) would
+// be classified as punctuation and forced into its own SEP run, splitting
+// what should be one letters-run mid-word. `\p{L}` (Unicode "Letter"
+// category) alone excludes combining marks -- they're category `\p{M}`
+// ("Mark: nonspacing"/"spacing combining"/"enclosing") -- so both are
+// required. This mirrors the Python side, which cannot use `str.isalpha()`
+// for the same reason (combining marks are not alphabetic per Python
+// either) and instead checks unicodedata category startswith("L") or
+// startswith("M"). Devanagari digits (U+0966-U+096F) are excluded from
+// both categories already (Unicode category Nd), and normalizeText() maps
+// them to ASCII digits before this ever runs, so they fall into the
+// "digit" branch below regardless. Danda (।) and double danda (॥) are
+// punctuation (category Po), not \p{L}/\p{M}, so they correctly fall
+// through to "punct".
+const LETTER_OR_MARK_RE = /\p{L}|\p{M}/u;
+
 function charType(c: string): CharType {
-  if (/[a-z]/i.test(c)) return "letter";
+  if (LETTER_OR_MARK_RE.test(c)) return "letter";
   if (/[0-9]/.test(c)) return "digit";
   if (/\s/.test(c)) return "space";
   return "punct";

@@ -39,6 +39,28 @@ export function paddedLength(realLen: number): number {
  * capped at MAX_LEN chars) -- the size Scratch buffers are allocated to. */
 export const PADDED_MAX = paddedLength(MAX_LEN);
 
+// Devanagari decimal digits U+0966 ('०') .. U+096F ('९') -> ASCII "0".."9".
+const DEVANAGARI_DIGIT_RE = /[०-९]/g;
+
+/** Normalize input text exactly as the Python side does, before char
+ * encoding: (1) Unicode NFC normalization, (2) Devanagari digits U+0966-
+ * U+096F mapped 1:1 to ASCII "0"-"9", (3) lowercasing. Must stay byte-
+ * identical to Python's `s.normalize("NFC")` + digit map + `.lower()`.
+ *
+ * NFC normalization can change string length (e.g. composing a base +
+ * combining mark into fewer code units, or occasionally more). `parse()`
+ * returns spans/offsets into `normalizeText(input)`, not the original
+ * input string -- for the overwhelming majority of real-world inputs,
+ * which already arrive in NFC form, normalization is a no-op on length
+ * and offsets, and the `span` field is safe to treat as a substring of
+ * the original input too (this is guaranteed to be true when the two
+ * strings have equal length). Callers who need to map offsets back onto
+ * the original input for non-NFC input should first call
+ * `normalizeText()` themselves and index into its result. */
+export function normalizeText(s: string): string {
+  return s.normalize("NFC").replace(DEVANAGARI_DIGIT_RE, (d) => String(d.charCodeAt(0) - 0x0966)).toLowerCase();
+}
+
 export function buildCharToId(charset: string[]): Map<string, number> {
   const m = new Map<string, number>();
   for (let i = 0; i < charset.length; i++) m.set(charset[i], i);
@@ -51,16 +73,41 @@ export function buildCharToId(charset: string[]): Map<string, number> {
  * (no allocation beyond the view itself); otherwise allocates a fresh
  * Int32Array. Use `paddedLength(text.length)` as `padLen` before calling
  * forward() -- see PAD_TAIL above. */
+// NOTE: `text` passed here must already be normalizeText()'d by the caller
+// (Parser.parse / parseBatch normalize once up front) -- this function does
+// not re-normalize, so its indexing matches the caller's offset bookkeeping
+// exactly.
+//
+// Code-point vs. code-unit semantics: Python strings are sequences of
+// Unicode code points, so decode.py's per-character labelling (and the
+// offsets it reports) operate on code points. JS strings are UTF-16 code
+// units, which agree with code points for every BMP character -- all of
+// ASCII, Latin, and Devanagari (U+0000-U+FFFF) included, so hi_latn and
+// hi_deva offsets are unaffected. They disagree for astral characters
+// (e.g. most emoji, U+10000+), which JS represents as a surrogate *pair*
+// (two UTF-16 code units) where Python counts one code point. This
+// package deliberately keeps plain index-based (UTF-16 code unit)
+// iteration here -- consistent with every other index/slice in this
+// codebase (windowing in makeWindows/parse, decode.ts's run-splitting and
+// text.slice()) -- rather than switching to `Array.from`-based code-point
+// iteration, because doing so would require re-threading code-point
+// offsets through windowing, decode.ts and Parser.parse as well; a
+// partial fix in this function alone would only worsen the mismatch. The
+// documented, tested consequence (see charset.test astral-emoji case):
+// for input containing an astral character, every offset gpu-sankhya
+// reports *after* that character is shifted by +1 (one extra UTF-16 code
+// unit) relative to the equivalent Python (code-point-indexed) offset.
+// Devanagari and Latin/ASCII input -- the supported scripts -- never hit
+// this; it only affects stray astral characters such as emoji.
 export function encodeChars(text: string, charToId: Map<string, number>, out?: Int32Array, padLen?: number): Int32Array {
-  const lower = text.toLowerCase();
   const unk = charToId.get("<unk>") ?? 1;
   const padId = charToId.get("<pad>") ?? 0;
-  const total = padLen ?? lower.length;
+  const total = padLen ?? text.length;
   const ids = out ? out.subarray(0, total) : new Int32Array(total);
-  for (let i = 0; i < lower.length; i++) {
-    ids[i] = charToId.get(lower[i]) ?? unk;
+  for (let i = 0; i < text.length; i++) {
+    ids[i] = charToId.get(text[i]) ?? unk;
   }
-  for (let i = lower.length; i < total; i++) {
+  for (let i = text.length; i < total; i++) {
     ids[i] = padId;
   }
   return ids;

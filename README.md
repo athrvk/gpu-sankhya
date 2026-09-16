@@ -6,9 +6,12 @@
 [![demo](https://img.shields.io/badge/demo-live-brightgreen)](https://athrvk.github.io/gpu-sankhya/)
 
 Parses Indian informal number/currency shorthand — Hinglish (romanised
-Hindi) and Indian-English amount phrases like `sava lakh`, `dedh crore`,
-`2.5L`, `20k`, `2-3 lakh` — into a clean numeric value, with the span,
-unit, currency, and confidence that produced it.
+Hindi), Devanagari Hindi, and Indian-English amount phrases like `sava
+lakh`, `dedh crore`, `डेढ़ लाख`, `सवा करोड़`, `2.5L`, `20k`, `2-3 lakh` —
+into a clean numeric value, with the span, unit, currency, and confidence
+that produced it. Mixed-script input (Latin and Devanagari in the same
+string, e.g. `"budget 2 लाख hai"`) is supported: currency and unit
+detection scan both scripts' marker lists.
 
 A small char-level CNN tags each character of the input with a BIO span
 label and a semantic token class (digit, prefix word like "sava"/"dedh",
@@ -65,6 +68,22 @@ parse("sawaa laakh ka budget hai");
 // variance ("sawaa"/"sava", "laakh"/"lakh") is part of the training data,
 // not special-cased.
 
+// Devanagari input follows the same grammar/arithmetic as Hinglish (the
+// core is language-independent -- see How it works); the expected output
+// shape is identical, e.g.:
+parse("डेढ़ लाख");
+// [{ span: "डेढ़ लाख", value: 150000, unit: "lakh", ... }]
+
+parse("सवा दो करोड़ का फ्लैट");
+// [{ span: "सवा दो करोड़", value: 22500000, unit: "crore", ... }]
+
+parse("बजट साढ़े तीन लाख है");
+// [{ span: "साढ़े तीन लाख", value: 350000, unit: "lakh", ... }]
+// NOTE: the correctness of these Devanagari examples depends on the
+// bundled weights being trained on the hi_deva pack (see python/README.md);
+// the runtime-side normalization/decoding/currency support is in place
+// independent of which weights are loaded (createParser({ weights })).
+
 // batch (uses WebGPU automatically for large batches in a browser, else CPU)
 const results = await parseBatch(["sava lakh", "dedh crore", "..."]);
 
@@ -110,6 +129,16 @@ interface Sankhya {
   actually obtained. Result is cached, so repeated calls only probe once.
   `parseBatch`'s `"auto"` backend uses this (not `isWebGPUAvailable()`)
   to decide whether to try the GPU path.
+- **`normalizeText(text) => string`** — the exact normalization
+  `parse`/`parseBatch` apply before char-encoding (Unicode NFC, then
+  Devanagari digits U+0966-U+096F mapped 1:1 to ASCII `"0"`-`"9"`, then
+  lowercasing), exposed so callers can reproduce the same offsets. `parse`
+  returns `start`/`end` as indices into `normalizeText(text)`, not the raw
+  input — for the overwhelming majority of input, which already arrives in
+  NFC form, normalization never changes the string's length, so offsets
+  are unaffected; call `normalizeText` yourself first if you need to be
+  sure for non-NFC input. The `span` field is a substring of your original
+  input when lengths match, and of the normalized string otherwise.
 
 ## Backends
 
@@ -177,10 +206,14 @@ Reproduce these numbers yourself with
 `python -m sankhya.eval_gold --gold tests/gold.jsonl --weights-json src/data/default-weights.json --int8`
 from `python/` (see `python/README.md`).
 
+Devanagari gold-set numbers: see python/README.md.
+
 ## How it works
 
-1. The input string is lowercased and char-encoded against the model's
-   vocab (unknown chars map to `<unk>`).
+1. The input string is normalized (`normalizeText`: Unicode NFC, then
+   Devanagari digits U+0966-U+096F mapped to ASCII `"0"`-`"9"`, then
+   lowercased — byte-identical to the Python reference) and char-encoded
+   against the model's vocab (unknown chars map to `<unk>`).
 2. A 4-layer dilated conv1d stack (see Accuracy above) produces, per
    character, a 3-way BIO logit (O/B/I) and a class logit over the
    semantic token vocabulary (prefix words, cardinals, units, digits,
@@ -227,11 +260,20 @@ outputs are discarded; only the real characters' predictions are used.
 
 ## Limitations
 
-- **Latin-script Hindi only.** Only Hinglish / romanised Hindi and Indian
-  English amount phrases are supported today. Devanagari script and other
-  Indian languages are planned via additional language packs (the
-  arithmetic core is already language-independent; only the class
-  vocabulary and currency-marker lists are per-language) — see Roadmap.
+- **Hinglish and Devanagari Hindi.** Romanised Hindi / Indian-English
+  amount phrases and Devanagari-script Hindi (`डेढ़ लाख`, `सवा करोड़`) are
+  both supported, including mixed-script input in the same string.
+  Currency and unit detection scan the Latin (`hi_latn`) and Devanagari
+  (`hi_deva`) marker lists together. Other Indian languages (Marathi,
+  Gujarati, Bengali, Tamil/Telugu/Kannada) are planned via additional
+  language packs (the arithmetic core is already language-independent;
+  only the class vocabulary and currency-marker lists are per-language) —
+  see Roadmap. Devanagari accuracy depends on the bundled weights being
+  trained on the `hi_deva` pack; see Devanagari gold-set numbers above.
+- **Offsets are into the normalized string.** `parse()`'s `start`/`end`
+  index `normalizeText(text)`, not the raw input, in the rare case NFC
+  normalization changes the string's length (see `normalizeText` in the
+  API section above).
 - Text longer than 128 characters is processed with a sliding window
   (128-char windows, 16-char overlap) and results are merged/deduplicated
   by span; extremely long inputs may still miss a span that straddles a
@@ -271,11 +313,12 @@ outputs are discarded; only the real characters' predictions are used.
 Everything here is scoped to Indian languages — there's no plan to
 support non-Indian numbering/currency shorthand.
 
-1. **Devanagari Hindi pack** (डेढ़ लाख). A new language pack plus a new
-   noise module for Devanagari-specific variance (matra/nukta elision or
-   substitution) and a charset rebuild — no changes needed to `core.ts`/
-   `core.py` or the runtime, since the arithmetic core and BIO/class
-   architecture are already language-independent.
+1. ~~**Devanagari Hindi pack** (डेढ़ लाख).~~ **Done.** The `hi_deva`
+   language pack, Devanagari currency markers, Unicode-aware (`\p{L}`/
+   `\p{M}`) letters-run repair for matras/nukta/virama, and input
+   normalization (NFC + Devanagari-digit mapping) are all in place, and
+   mixed Latin/Devanagari input is supported. See `python/README.md` for
+   the training-side status and gold-set numbers.
 2. **Other Indian languages as packs**: Marathi (साडे, सव्वा), Gujarati
    (સવા, દોઢ), Bengali (দেড়, আড়াই), and Tamil/Telugu/Kannada number
    words. Same shape as (1) — a new pack, a new noise function, a charset

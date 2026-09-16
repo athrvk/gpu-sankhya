@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { evaluate, detectCurrency } from "../src/core.ts";
+import { evaluate, detectCurrency, mergeLangPacks } from "../src/core.ts";
 import { HI_LATN } from "../src/lang-hi-latn.ts";
+import { HI_DEVA } from "../src/lang-hi-deva.ts";
 
 type Tok = [string, string];
 function ev(...toks: Tok[]) {
@@ -111,6 +112,38 @@ test("currency detection", () => {
   assert.equal(detectCurrency(text2, 0, 6, HI_LATN), "INR");
   const text3 = "do din baad";
   assert.equal(detectCurrency(text3, 0, 2, HI_LATN), null);
+});
+
+test("hi_deva currency detection: markers before", () => {
+  const text = "₹500 only";
+  assert.equal(detectCurrency(text, 1, 4, HI_DEVA), "INR");
+  const text2 = "रु 500 only";
+  assert.equal(detectCurrency(text2, 3, 6, HI_DEVA), "INR");
+  const text3 = "रु. 500 only";
+  assert.equal(detectCurrency(text3, 4, 7, HI_DEVA), "INR");
+});
+
+test("hi_deva currency detection: words after", () => {
+  const text = "पचास रुपये चाहिए";
+  assert.equal(detectCurrency(text, 0, 4, HI_DEVA), "INR");
+  const text2 = "पचास रुपए चाहिए";
+  assert.equal(detectCurrency(text2, 0, 4, HI_DEVA), "INR");
+  const text3 = "दो दिन बाद";
+  assert.equal(detectCurrency(text3, 0, 2, HI_DEVA), null);
+});
+
+test("mergeLangPacks: union of hi_latn + hi_deva, longest-match first", () => {
+  const pack = mergeLangPacks(HI_LATN, HI_DEVA);
+  // hi_latn behaviour preserved
+  assert.equal(detectCurrency("Rs 500 only", 3, 6, pack), "INR");
+  assert.equal(detectCurrency("pachas rupaye chahiye", 0, 6, pack), "INR");
+  // hi_deva markers also recognised through the merged pack
+  assert.equal(detectCurrency("₹500 only", 1, 4, pack), "INR");
+  assert.equal(detectCurrency("पचास रुपये चाहिए", 0, 4, pack), "INR");
+  // "Rs." (longer) must win over a bare "Rs" prefix match
+  assert.equal(detectCurrency("Rs.500 only", 3, 6, pack), "INR");
+  // negative case still negative through the merged pack
+  assert.equal(detectCurrency("do din baad", 0, 2, pack), null);
 });
 
 test("das hazaar crore", () => {
