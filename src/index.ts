@@ -6,11 +6,11 @@ import { decodeSpans } from "./decode.ts";
 import { evaluate, detectCurrency } from "./core.ts";
 import { HI_LATN } from "./lang-hi-latn.ts";
 import { CLASSES } from "./classes.ts";
-import { WebGPUBackend, isWebGPUAvailable as gpuAvailable } from "./infer-webgpu.ts";
+import { WebGPUBackend, probeWebGPU } from "./infer-webgpu.ts";
 import defaultWeightsJson from "./data/default-weights.json" with { type: "json" };
 
 export type { Sankhya, ParseOptions } from "./types.ts";
-export { isWebGPUAvailable } from "./infer-webgpu.ts";
+export { isWebGPUAvailable, probeWebGPU } from "./infer-webgpu.ts";
 
 export interface CreateParserOptions {
   weights?: WeightsJson;
@@ -109,7 +109,8 @@ export class Parser {
   async parseBatch(texts: string[], opts: ParseOptions = {}): Promise<Sankhya[][]> {
     const backend = opts.backend ?? this.defaultBackend;
     const useGpu =
-      backend === "webgpu" || (backend === "auto" && gpuAvailable() && texts.length >= 32);
+      backend === "webgpu" ||
+      (backend === "auto" && texts.length >= 32 && (await probeWebGPU()));
 
     if (!useGpu) {
       return texts.map((t) => this.parse(t, { backend: "cpu" }));

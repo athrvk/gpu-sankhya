@@ -90,8 +90,32 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 }
 `;
 
+/** Cheap synchronous check: the WebGPU API is present on `navigator`. This
+ * does not guarantee an adapter is actually available -- headless browsers
+ * and some CI/sandboxed environments expose `navigator.gpu` but return null
+ * from `requestAdapter()`. Use `probeWebGPU()` for an authoritative check. */
 export function isWebGPUAvailable(): boolean {
   return typeof navigator !== "undefined" && !!(navigator as any).gpu;
+}
+
+let probePromise: Promise<boolean> | null = null;
+
+/** Authoritative (but async) check: resolves false immediately if
+ * `navigator.gpu` is missing, otherwise awaits `requestAdapter()` and
+ * resolves to whether an adapter was actually obtained. The result is
+ * cached at module scope, so repeated calls only probe once. */
+export function probeWebGPU(): Promise<boolean> {
+  if (probePromise) return probePromise;
+  probePromise = (async () => {
+    if (!isWebGPUAvailable()) return false;
+    try {
+      const adapter = await (navigator as any).gpu.requestAdapter();
+      return adapter !== null;
+    } catch {
+      return false;
+    }
+  })();
+  return probePromise;
 }
 
 interface GPUState {

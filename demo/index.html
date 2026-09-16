@@ -253,7 +253,7 @@ lakhon log aaye</textarea>
       throw e2;
     }
   }
-  const { parse, parseBatch, isWebGPUAvailable } = mod;
+  const { parse, parseBatch, probeWebGPU } = mod;
 
   const input = document.getElementById("input");
   const results = document.getElementById("results");
@@ -288,8 +288,10 @@ lakhon log aaye</textarea>
   }
 
   let gpuAvail = false;
+  webgpuBadge.textContent = "probing…";
+  webgpuBadge.className = "badge no";
   try {
-    gpuAvail = !!isWebGPUAvailable();
+    gpuAvail = !!(await probeWebGPU());
   } catch {
     gpuAvail = false;
   }
@@ -410,7 +412,7 @@ lakhon log aaye</textarea>
 
     const gpuCol = document.createElement("div");
     gpuCol.className = "bench-col";
-    gpuCol.innerHTML = "<h3>WebGPU</h3><div>" + (gpuAvail ? "running&hellip;" : "not available in this browser") + "</div>";
+    gpuCol.innerHTML = "<h3>WebGPU</h3><div>" + (gpuAvail ? "running&hellip;" : "no adapter") + "</div>";
     benchResults.appendChild(gpuCol);
 
     try {

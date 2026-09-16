@@ -97,7 +97,14 @@ interface Sankhya {
   `python/sankhya/export.py`), instead of the bundled default model. See
   `python/README.md` for how to train and export your own weights.
 - **`isWebGPUAvailable()`** — true if `navigator.gpu` exists in the
-  current environment.
+  current environment. Cheap and synchronous, but doesn't guarantee a
+  usable adapter (e.g. headless browsers without GPU access).
+- **`probeWebGPU() => Promise<boolean>`** — authoritative async check:
+  resolves false immediately if `navigator.gpu` is missing, otherwise
+  awaits `requestAdapter()` and resolves to whether an adapter was
+  actually obtained. Result is cached, so repeated calls only probe once.
+  `parseBatch`'s `"auto"` backend uses this (not `isWebGPUAvailable()`)
+  to decide whether to try the GPU path.
 
 ## Backends
 
