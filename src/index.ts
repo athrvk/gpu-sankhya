@@ -1,7 +1,7 @@
 import type { Sankhya, ParseOptions, WeightsJson } from "./types.ts";
 import { loadWeights, type LoadedWeights } from "./weights.ts";
-import { buildCharToId, encodeChars, makeWindows } from "./charset.ts";
-import { forward, softmaxRow, argmaxRow } from "./infer-cpu.ts";
+import { buildCharToId, encodeChars, makeWindows, MAX_LEN } from "./charset.ts";
+import { forward, softmaxRow, argmaxRow, Scratch } from "./infer-cpu.ts";
 import { decodeSpans } from "./decode.ts";
 import { evaluate, detectCurrency } from "./core.ts";
 import { HI_LATN } from "./lang-hi-latn.ts";
@@ -23,21 +23,36 @@ export class Parser {
   private gpu: WebGPUBackend | null = null;
   private defaultBackend: "cpu" | "webgpu" | "auto";
 
+  // Reused scratch buffers for the hot (single-window) CPU path -- forward()
+  // and its callers do no per-call allocation beyond small per-span objects.
+  private scratch: Scratch;
+  private idsScratch = new Int32Array(MAX_LEN);
+  private bioIdsScratch = new Int32Array(MAX_LEN);
+  private clsIdsScratch = new Int32Array(MAX_LEN);
+  private bioProbsScratch: Float32Array[] = Array.from({ length: MAX_LEN }, () => new Float32Array(3));
+
   constructor(opts: CreateParserOptions = {}) {
     this.weights = loadWeights(opts.weights ?? (defaultWeightsJson as unknown as WeightsJson));
     this.charToId = buildCharToId(this.weights.charset);
     this.defaultBackend = opts.backend ?? "cpu";
+    this.scratch = new Scratch(this.weights);
   }
 
   /** Synchronous CPU parse of a single string. */
   parse(text: string, opts: ParseOptions = {}): Sankhya[] {
     const windows = makeWindows(text.length);
+    if (windows.length === 1 && windows[0].length === text.length) {
+      // fast path: no window offset bookkeeping / merge-dedup needed
+      const ids = encodeChars(text, this.charToId, this.idsScratch);
+      const fw = forward(this.weights, ids, this.scratch);
+      return this.decodeForward(text, fw, 0);
+    }
     const merged: Sankhya[] = [];
     const seen = new Set<string>();
     for (const win of windows) {
       const sub = text.slice(win.offset, win.offset + win.length);
-      const ids = encodeChars(sub, this.charToId);
-      const fw = forward(this.weights, ids);
+      const ids = encodeChars(sub, this.charToId, this.idsScratch);
+      const fw = forward(this.weights, ids, this.scratch);
       const results = this.decodeForward(sub, fw, win.offset);
       for (const r of results) {
         const key = `${r.start}:${r.end}`;
@@ -53,15 +68,16 @@ export class Parser {
 
   private decodeForward(sub: string, fw: ReturnType<typeof forward>, offset: number): Sankhya[] {
     const L = fw.length;
-    const bioIds = new Int32Array(L);
-    const clsIds = new Int32Array(L);
-    const bioProbs: Float32Array[] = new Array(L);
+    const useScratchBufs = L <= MAX_LEN;
+    const bioIds = useScratchBufs ? this.bioIdsScratch : new Int32Array(L);
+    const clsIds = useScratchBufs ? this.clsIdsScratch : new Int32Array(L);
+    const bioProbs: Float32Array[] = useScratchBufs ? this.bioProbsScratch : Array.from({ length: L }, () => new Float32Array(3));
     for (let t = 0; t < L; t++) {
       bioIds[t] = argmaxRow(fw.bioLogits, t * 3, 3);
       clsIds[t] = argmaxRow(fw.clsLogits, t * fw.nCls, fw.nCls);
-      bioProbs[t] = softmaxRow(fw.bioLogits, t * 3, 3);
+      softmaxRow(fw.bioLogits, t * 3, 3, bioProbs[t]);
     }
-    const spans = decodeSpans(sub, bioIds, clsIds, bioProbs);
+    const spans = decodeSpans(sub, bioIds.subarray(0, L), clsIds.subarray(0, L), bioProbs);
     const out: Sankhya[] = [];
     for (const span of spans) {
       const tokens: Array<[string, string]> = span.tokens.map(([cid, txt]) => [CLASSES[cid], txt]);

@@ -10,10 +10,13 @@ export function buildCharToId(charset: string[]): Map<string, number> {
   return m;
 }
 
-export function encodeChars(text: string, charToId: Map<string, number>): Int32Array {
+/** Encode `text` into char ids. If `out` is given (must be >= text.length),
+ * writes into it and returns a subarray view (no allocation beyond the view
+ * itself); otherwise allocates a fresh Int32Array. */
+export function encodeChars(text: string, charToId: Map<string, number>, out?: Int32Array): Int32Array {
   const lower = text.toLowerCase();
   const unk = charToId.get("<unk>") ?? 1;
-  const ids = new Int32Array(lower.length);
+  const ids = out ? out.subarray(0, lower.length) : new Int32Array(lower.length);
   for (let i = 0; i < lower.length; i++) {
     ids[i] = charToId.get(lower[i]) ?? unk;
   }
