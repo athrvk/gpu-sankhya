@@ -1,10 +1,23 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { decodeSpans } from "../src/decode.ts";
-import { CLASS_TO_ID } from "../src/classes.ts";
+import { CLASS_TO_ID, CLASSES } from "../src/classes.ts";
+import { evaluate } from "../src/core.ts";
 
 function cid(name: string): number {
   return CLASS_TO_ID[name];
+}
+
+/** Run decodeSpans (which applies class-repair internally) on a whole-text
+ * single span and evaluate the first resulting span's tokens via core, to
+ * check repair + evaluate produce the expected final value. */
+function repairAndEvaluate(text: string, rawCls: number[]) {
+  const bio = new Array(text.length).fill(2);
+  bio[0] = 1;
+  const spans = decodeSpans(text, bio, rawCls);
+  assert.equal(spans.length, 1, `expected exactly one span, got ${spans.length}`);
+  const tokens: Array<[string, string]> = spans[0].tokens.map(([c, t]) => [CLASSES[c], t]);
+  return evaluate(tokens);
 }
 
 test("trims leading/trailing SEP tokens", () => {
@@ -88,4 +101,106 @@ test("multiple spans are all returned", () => {
   assert.equal(spans.length, 2);
   assert.equal(spans[0].text, "do");
   assert.equal(spans[1].text, "lakh");
+});
+
+// --- class-repair ----------------------------------------------------
+
+test("class-repair: '1.5cr' with '.' mistagged O -> 15000000", () => {
+  const text = "1.5cr";
+  const raw = [cid("DIGITS"), cid("O"), cid("DIGITS"), cid("UNIT_CRORE"), cid("UNIT_CRORE")];
+  const r = repairAndEvaluate(text, raw);
+  assert.equal(r.value, 15000000);
+});
+
+test("class-repair: '2-3 lakh' with '-' mistagged O -> range [200000,300000]", () => {
+  const text = "2-3 lakh";
+  const raw = [
+    cid("DIGITS"),
+    cid("O"),
+    cid("DIGITS"),
+    cid("SEP"),
+    cid("UNIT_LAKH"),
+    cid("UNIT_LAKH"),
+    cid("UNIT_LAKH"),
+    cid("UNIT_LAKH"),
+  ];
+  const r = repairAndEvaluate(text, raw);
+  assert.deepEqual(r.range, [200000, 300000]);
+});
+
+test("class-repair: 'das hazaar crore' with 'd' mistagged PFX_DHAI -> 1e11", () => {
+  const text = "das hazaar crore";
+  const raw = [
+    cid("PFX_DHAI"), // d (wrong)
+    cid("CARD_10"), // a
+    cid("CARD_10"), // s
+    cid("SEP"),
+    cid("UNIT_HAZAAR"),
+    cid("UNIT_HAZAAR"),
+    cid("UNIT_HAZAAR"),
+    cid("UNIT_HAZAAR"),
+    cid("UNIT_HAZAAR"),
+    cid("UNIT_HAZAAR"),
+    cid("SEP"),
+    cid("UNIT_CRORE"),
+    cid("UNIT_CRORE"),
+    cid("UNIT_CRORE"),
+    cid("UNIT_CRORE"),
+    cid("UNIT_CRORE"),
+  ];
+  const r = repairAndEvaluate(text, raw);
+  assert.equal(r.value, 1e11);
+  assert.equal(r.unit, "crore");
+});
+
+test("class-repair: 'five and a half crore' with the 'a' in 'half' mistagged CARD_8 -> 55000000", () => {
+  // "five"=CARD_5, "and"/"a"/"half" all vote/repair to PFX_SAADHE (the
+  // multi-word "and a half" idiom), then core's PFX-collapse-across-SEP
+  // rule merges the three separated-by-SEP PFX_SAADHE tokens into one.
+  // The injected error sits on the 'a' *inside* "half" (h-a-l-f): none of
+  // "half"'s sub-runs reach length 3, so the whole run falls back to
+  // majority vote (3x SAADHE vs 1x CARD_8) and self-corrects.
+  const text = "five and a half crore";
+  //             f i v e   a n d   a   h a l f   c r o r e
+  const raw = [
+    cid("CARD_5"),
+    cid("CARD_5"),
+    cid("CARD_5"),
+    cid("CARD_5"), // five
+    cid("SEP"), // space
+    cid("PFX_SAADHE"),
+    cid("PFX_SAADHE"),
+    cid("PFX_SAADHE"), // and
+    cid("SEP"), // space
+    cid("PFX_SAADHE"), // a
+    cid("SEP"), // space
+    cid("PFX_SAADHE"), // h
+    cid("CARD_8"), // a (wrong)
+    cid("PFX_SAADHE"), // l
+    cid("PFX_SAADHE"), // f
+    cid("SEP"), // space
+    cid("UNIT_CRORE"),
+    cid("UNIT_CRORE"),
+    cid("UNIT_CRORE"),
+    cid("UNIT_CRORE"),
+    cid("UNIT_CRORE"), // crore
+  ];
+  const r = repairAndEvaluate(text, raw);
+  assert.equal(r.value, 55000000);
+});
+
+test("class-repair: 'dedhlakh' (joined, no space) tagged dedh(4)+lakh(4) -> 150000", () => {
+  const text = "dedhlakh";
+  const raw = [
+    cid("PFX_DEDH"),
+    cid("PFX_DEDH"),
+    cid("PFX_DEDH"),
+    cid("PFX_DEDH"), // dedh
+    cid("UNIT_LAKH"),
+    cid("UNIT_LAKH"),
+    cid("UNIT_LAKH"),
+    cid("UNIT_LAKH"), // lakh
+  ];
+  const r = repairAndEvaluate(text, raw);
+  assert.equal(r.value, 150000);
 });

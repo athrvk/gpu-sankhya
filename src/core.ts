@@ -120,8 +120,43 @@ function num(v: number): number {
   return Math.round(v * 1e6) / 1e6;
 }
 
-export function evaluate(tokens: Tok[]): Result {
+/** Consecutive tokens with the same PFX_* class, separated only by SEP
+ * tokens, collapse into one prefix token (e.g. "half a" = PFX_AADHA SEP
+ * PFX_AADHA -> one PFX_AADHA; "three n half" = CARD_3 SEP PFX_SAADHE SEP
+ * PFX_SAADHE -> CARD_3 SEP PFX_SAADHE). Without this, each repeated prefix
+ * closes and re-opens a term on its own, double-counting the prefix's
+ * standalone/combining value. */
+function collapsePfxRuns(tokens: Tok[]): Tok[] {
+  const out: Tok[] = [];
+  let i = 0;
+  while (i < tokens.length) {
+    const [cls, text] = tokens[i];
+    if (cls.startsWith("PFX_")) {
+      let mergedText = text;
+      let j = i + 1;
+      for (;;) {
+        let k = j;
+        if (k < tokens.length && tokens[k][0] === "SEP") k++;
+        if (k < tokens.length && tokens[k][0] === cls) {
+          for (let m = j; m <= k; m++) mergedText += tokens[m][1];
+          j = k + 1;
+          continue;
+        }
+        break;
+      }
+      out.push([cls, mergedText]);
+      i = j;
+    } else {
+      out.push(tokens[i]);
+      i++;
+    }
+  }
+  return out;
+}
+
+export function evaluate(rawTokens: Tok[]): Result {
   try {
+    const tokens = collapsePfxRuns(rawTokens);
     const allClasses = tokens.map((t) => t[0]);
 
     const parts: Tok[][] = [[]];
@@ -168,7 +203,7 @@ export function evaluate(tokens: Tok[]): Result {
       currency: null,
     };
   } catch {
-    return { value: 0, range: null, unit: null, classes: tokens.map((t) => t[0]), currency: null };
+    return { value: 0, range: null, unit: null, classes: rawTokens.map((t) => t[0]), currency: null };
   }
 }
 

@@ -37,25 +37,17 @@ test("20k logon ne attend kiya", () => {
   assert.equal(r[0].value, 20000);
 });
 
-test("2-3 lakh (expected-failure: early dev weights mistag '-' as O not RANGE)", () => {
+test("2-3 lakh", () => {
+  // The dev checkpoint tags '-' as O in isolation; decode.ts's class-repair
+  // step recovers RANGE from context (digit run on both sides), fixing this.
   const r = parse("2-3 lakh");
-  if (r.length === 1 && r[0].range && r[0].range[0] === 200000 && r[0].range[1] === 300000) {
-    assert.deepEqual(r[0].range, [200000, 300000]);
-  } else {
-    console.log("2-3 lakh: dev-weights mismatch (expected-failure)", r);
-    assert.ok(true);
-  }
+  assert.equal(r.length, 1);
+  assert.deepEqual(r[0].range, [200000, 300000]);
 });
 
-test("das hazaar crore (expected-failure: early dev weights)", () => {
+test("das hazaar crore", () => {
+  // Similarly recovered by class-repair's letter-run majority vote/fallback.
   const r = parse("das hazaar crore");
-  // Model correctness for this multi-unit multiplicative phrase depends on
-  // training quality; the arithmetic core itself is verified in core.test.ts.
-  // With the current dev checkpoint this may not yet equal 1e11.
-  if (r.length === 1 && r[0].value === 1e11) {
-    assert.equal(r[0].value, 1e11);
-  } else {
-    console.log("das hazaar crore: dev-weights mismatch (expected-failure)", r);
-    assert.ok(true);
-  }
+  assert.equal(r.length, 1);
+  assert.equal(r[0].value, 1e11);
 });

@@ -167,3 +167,21 @@ test("ek lakh bees hazaar crore", () => {
   assert.equal(r.value, 1.2e12);
   assert.equal(r.unit, "crore");
 });
+
+test("half a lakh (PFX collapse: repeated PFX_AADHA separated only by SEP)", () => {
+  const r = ev(["PFX_AADHA", "half"], ["SEP", " "], ["PFX_AADHA", "a"], ["SEP", " "], ["UNIT_LAKH", "lakh"]);
+  assert.equal(r.value, 50000);
+});
+
+test("three n half lakh (PFX collapse: CARD_3 + collapsed PFX_SAADHE)", () => {
+  const r = ev(
+    ["CARD_3", "three"],
+    ["SEP", " "],
+    ["PFX_SAADHE", "n"],
+    ["SEP", " "],
+    ["PFX_SAADHE", "half"],
+    ["SEP", " "],
+    ["UNIT_LAKH", "lakh"],
+  );
+  assert.equal(r.value, 350000);
+});
