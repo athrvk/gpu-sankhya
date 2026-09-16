@@ -30,7 +30,7 @@ def _relu(x):
     return np.maximum(x, 0.0)
 
 
-def forward(weights: dict, char_ids: np.ndarray, dilation: int = 2):
+def forward(weights: dict, char_ids: np.ndarray, dilation: int = 2, layers: int = 3):
     """char_ids: (L,) int array of char ids (single example, no batch/padding needed
     -- caller may pass a full length row). Returns (bio_logits (L,3), cls_logits (L,n_cls))."""
     embed = weights["embed"]  # (V, 16)
@@ -40,8 +40,12 @@ def forward(weights: dict, char_ids: np.ndarray, dilation: int = 2):
     x = _relu(_conv1d(x, weights["conv2"]["w"], weights["conv2"]["b"], padding=2, dilation=1))
     pad3 = dilation * (3 - 1) // 2
     x = _relu(_conv1d(x, weights["conv3"]["w"], weights["conv3"]["b"], padding=pad3, dilation=dilation))
+    if layers == 4:
+        dilation4 = 4
+        pad4 = dilation4 * (3 - 1) // 2
+        x = _relu(_conv1d(x, weights["conv4"]["w"], weights["conv4"]["b"], padding=pad4, dilation=dilation4))
 
-    # x: (32, L) -> (L, 32)
+    # x: (C, L) -> (L, C)
     xt = x.T
     bio_logits = xt @ weights["bio"]["w"].T + weights["bio"]["b"]
     cls_logits = xt @ weights["cls"]["w"].T + weights["cls"]["b"]
@@ -54,7 +58,8 @@ def load_weights_json(obj: dict) -> dict:
         return np.array(t["data"], dtype=np.float32).reshape(t["shape"])
 
     out = {"embed": arr(obj["embed"])}
-    for name in ("conv1", "conv2", "conv3", "bio", "cls"):
+    names = ["conv1", "conv2", "conv3"] + (["conv4"] if obj.get("layers", 3) == 4 else []) + ["bio", "cls"]
+    for name in names:
         out[name] = {"w": arr(obj[name]["w"]), "b": arr(obj[name]["b"])}
     return out
 
@@ -70,6 +75,7 @@ def load_weights_int8_json(obj: dict) -> dict:
         return np.array(t, dtype=np.float32)
 
     out = {"embed": dequant(obj["embed"])}
-    for name in ("conv1", "conv2", "conv3", "bio", "cls"):
+    names = ["conv1", "conv2", "conv3"] + (["conv4"] if obj.get("layers", 3) == 4 else []) + ["bio", "cls"]
+    for name in names:
         out[name] = {"w": dequant(obj[name]["w"]), "b": bias(obj[name]["b"])}
     return out

@@ -66,6 +66,13 @@ def verify_onnx(model, onnx_path, chars_np, n=50):
     return max_diff
 
 
+def _conv_layer_names(model):
+    names = [("conv1", "conv1"), ("conv2", "conv2"), ("conv3", "conv3")]
+    if getattr(model, "layers", 3) == 4:
+        names.append(("conv4", "conv4"))
+    return names + [("bio", "bio_head"), ("cls", "cls_head")]
+
+
 def build_weights_json(model, vocab, classes):
     sd = model.state_dict()
     def t(x):
@@ -74,12 +81,12 @@ def build_weights_json(model, vocab, classes):
     embed = t(sd["embed.weight"])
     out = {
         "version": 1,
+        "layers": getattr(model, "layers", 3),
         "charset": vocab,
         "classes": classes,
         "embed": {"shape": list(embed.shape), "data": round_arr(embed)},
     }
-    for name, key in [("conv1", "conv1"), ("conv2", "conv2"), ("conv3", "conv3"),
-                       ("bio", "bio_head"), ("cls", "cls_head")]:
+    for name, key in _conv_layer_names(model):
         w = t(sd[f"{key}.weight"])
         b = t(sd[f"{key}.bias"])
         out[name] = {
@@ -109,12 +116,12 @@ def build_weights_int8_json(model, vocab, classes):
     out = {
         "version": 1,
         "quantized": "int8_symmetric_per_tensor",
+        "layers": getattr(model, "layers", 3),
         "charset": vocab,
         "classes": classes,
         "embed": qtensor(embed),
     }
-    for name, key in [("conv1", "conv1"), ("conv2", "conv2"), ("conv3", "conv3"),
-                       ("bio", "bio_head"), ("cls", "cls_head")]:
+    for name, key in _conv_layer_names(model):
         w = t(sd[f"{key}.weight"])
         b = t(sd[f"{key}.bias"])
         out[name] = {"w": qtensor(w), "b": [sig(v) for v in b.tolist()]}
@@ -132,7 +139,9 @@ def main(argv=None):
     vocab = ckpt["vocab"]
     classes = ckpt["classes"]
     dilation = ckpt.get("dilation", 1)
-    model = SankhyaCNN(vocab_size=len(vocab), n_cls=len(classes), dilation=dilation)
+    channels = ckpt.get("channels", 32)
+    layers = ckpt.get("layers", 3)
+    model = SankhyaCNN(vocab_size=len(vocab), n_cls=len(classes), dilation=dilation, channels=channels, layers=layers)
     model.load_state_dict(ckpt["state_dict"])
     model.eval()
 
@@ -165,7 +174,7 @@ def main(argv=None):
             text = ex["text"]
             L = min(len(text), MAX_LEN)
             row = chars_np[i, :L]
-            bio_logits, cls_logits = np_infer.forward(weights_np, row, dilation=dilation)
+            bio_logits, cls_logits = np_infer.forward(weights_np, row, dilation=dilation, layers=layers)
             bio_pred = bio_logits.argmax(-1).tolist()
             cls_pred = cls_logits.argmax(-1).tolist()
             decoded = decode_spans(text, bio_pred, cls_pred)
@@ -192,7 +201,7 @@ def main(argv=None):
             L = min(len(val_ex[i]["text"]), MAX_LEN)
             row = chars_np[i, :L]
             t_bio, t_cls = model(torch.from_numpy(chars_np[i:i+1, :L]))
-            n_bio, n_cls = np_infer.forward(w_float, row, dilation=dilation)
+            n_bio, n_cls = np_infer.forward(w_float, row, dilation=dilation, layers=layers)
             d = max(np.abs(t_bio[0].numpy() - n_bio).max(), np.abs(t_cls[0].numpy() - n_cls).max())
             print(f"np_infer vs torch example {i} max diff: {d:.6g}")
 

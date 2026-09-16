@@ -136,9 +136,9 @@ def evaluate_model(model, chars, bio, cls, mask, examples, batch=256, device="cp
 
     gold_spans_list = [[(s["start"], s["end"]) for s in ex["spans"]] for ex in examples]
     pred_spans_list = []
-    for ex, bp in zip(examples, all_bio_pred):
+    for ex, bp, cp in zip(examples, all_bio_pred, all_cls_pred):
         L = min(len(ex["text"]), MAX_LEN)
-        decoded = decode_spans(ex["text"], bp[:L].tolist(), [0] * L)
+        decoded = decode_spans(ex["text"], bp[:L].tolist(), cp[:L].tolist())
         pred_spans_list.append([(d["start"], d["end"]) for d in decoded])
     prec, rec, f1 = span_f1(gold_spans_list, pred_spans_list)
 
@@ -158,12 +158,17 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--train", default="data/train.jsonl")
     ap.add_argument("--val", default="data/val.jsonl")
-    ap.add_argument("--epochs", type=int, default=8)
+    ap.add_argument("--epochs", type=int, default=30)
     ap.add_argument("--batch", type=int, default=128)
     ap.add_argument("--lr", type=float, default=3e-3)
     ap.add_argument("--out", default="models/")
     ap.add_argument("--lang", default="hi_latn")
     ap.add_argument("--dilation", type=int, default=1)
+    ap.add_argument("--channels", type=int, default=32)
+    ap.add_argument("--layers", type=int, default=3, choices=[3, 4])
+    ap.add_argument("--label-smoothing", type=float, default=0.05)
+    ap.add_argument("--grad-clip", type=float, default=1.0)
+    ap.add_argument("--num-train", type=int, default=None, help="subsample training set to this many examples")
     args = ap.parse_args(argv)
 
     torch.manual_seed(0)
@@ -176,6 +181,10 @@ def main(argv=None):
 
     train_ex = load_jsonl(args.train)
     val_ex = load_jsonl(args.val)
+    if args.num_train is not None and args.num_train < len(train_ex):
+        rng = np.random.RandomState(0)
+        idx = rng.choice(len(train_ex), size=args.num_train, replace=False)
+        train_ex = [train_ex[i] for i in idx]
     print(f"loaded {len(train_ex)} train, {len(val_ex)} val examples in {time.time()-t0:.1f}s")
 
     t0 = time.time()
@@ -186,17 +195,22 @@ def main(argv=None):
     device = "cpu"
     torch.set_num_threads(4)
 
-    model = SankhyaCNN(vocab_size=len(vocab), n_cls=len(C.CLASSES), dilation=args.dilation).to(device)
+    model = SankhyaCNN(
+        vocab_size=len(vocab), n_cls=len(C.CLASSES), dilation=args.dilation,
+        channels=args.channels, layers=args.layers,
+    ).to(device)
     n_params = count_params(model)
-    print(f"param count: {n_params}")
+    print(f"param count: {n_params} (channels={args.channels} layers={args.layers})")
 
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
     n_batches_per_epoch = math.ceil(len(train_ex) / args.batch)
     total_steps = n_batches_per_epoch * args.epochs
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=args.lr, total_steps=total_steps)
 
-    ce_bio = nn.CrossEntropyLoss(reduction="none")
-    ce_cls = nn.CrossEntropyLoss(reduction="none")
+    # B (class 1) is rare relative to O/I; upweight it 2x in the bio loss.
+    bio_class_weight = torch.tensor([1.0, 2.0, 1.0], dtype=torch.float32)
+    ce_bio = nn.CrossEntropyLoss(reduction="none", weight=bio_class_weight, label_smoothing=args.label_smoothing)
+    ce_cls = nn.CrossEntropyLoss(reduction="none", label_smoothing=args.label_smoothing)
 
     n = tr_chars.shape[0]
     best_vacc = -1.0
@@ -224,6 +238,7 @@ def main(argv=None):
 
             opt.zero_grad()
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
             opt.step()
             sched.step()
             epoch_loss += loss.item()
@@ -233,6 +248,7 @@ def main(argv=None):
         print(
             f"epoch {epoch+1}/{args.epochs} loss={epoch_loss/nb:.4f} "
             f"bio_acc={metrics['bio_acc']:.4f} cls_acc={metrics['cls_acc']:.4f} "
+            f"span_prec={metrics['span_prec']:.4f} span_rec={metrics['span_rec']:.4f} "
             f"span_f1={metrics['span_f1']:.4f} value_acc={metrics['value_acc']:.4f} "
             f"time={time.time()-train_t0:.1f}s"
         )
@@ -252,6 +268,8 @@ def main(argv=None):
         "vocab": vocab,
         "classes": C.CLASSES,
         "dilation": args.dilation,
+        "channels": args.channels,
+        "layers": args.layers,
         "val_metrics": {k: v for k, v in best_metrics.items() if k != "misses"},
     }, ckpt_path)
     print(f"saved checkpoint to {ckpt_path}")
