@@ -1,6 +1,6 @@
 {
   "name": "gpu-sankhya",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Fast char-CNN extraction of Hinglish (Latin-script Hindi) numeric quantities, with CPU and WebGPU backends.",
   "license": "MIT",
