@@ -279,14 +279,17 @@
   .strip-wrap { overflow-x: auto; padding-bottom: 0.3rem; }
   .strip {
     display: inline-flex;
-    gap: 2px;
+    flex-direction: column;
+    gap: 3px;
     padding: 0.25rem 0;
   }
+  .strip-chars { display: flex; gap: 2px; }
   .cell {
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 22px;
+    width: 22px;
+    flex: 0 0 22px;
     font-family: var(--mono);
   }
   .cell .ch {
@@ -303,17 +306,23 @@
   }
   .cell.tag-B .ch { background: var(--accent); color: #fff; border-color: var(--accent); }
   .cell.tag-I .ch { background: var(--accent-soft); color: var(--accent); border-color: var(--mark-border); }
-  .cell .cls {
-    font-size: 0.55rem;
-    color: var(--muted);
-    margin-top: 2px;
-    max-width: 34px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
   .cell .probbar { width: 18px; height: 3px; background: var(--border); border-radius: 2px; margin-top: 2px; overflow: hidden; }
   .cell .probbar i { display: block; height: 100%; background: var(--accent); }
+  .strip-labels { position: relative; height: 15px; }
+  .run-label {
+    position: absolute;
+    top: 0;
+    box-sizing: border-box;
+    height: 100%;
+    padding-top: 2px;
+    border-top: 1px solid var(--mark-border);
+    font-size: 0.55rem;
+    color: var(--muted);
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
   .inspect-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
   .unavailable-note { font-size: 0.8rem; color: var(--muted); font-style: italic; }
   pre.raw {
@@ -853,6 +862,8 @@ lakhon log aaye</textarea>
       .replace(/^PFX_/, "P:");
   }
 
+  const CELL_STEP = 24; // 22px cell + 2px gap
+
   function renderInspect() {
     if (!inspectFn || !inspectToggle.checked) return;
     const line = selectedLineIndex !== null ? lastParseData[selectedLineIndex] : null;
@@ -866,7 +877,14 @@ lakhon log aaye</textarea>
       return;
     }
     inspectTime.textContent = `· inspect: ${insp.ms.toFixed(2)} ms`;
-    for (const c of insp.chars) {
+
+    const charsRow = document.createElement("div");
+    charsRow.className = "strip-chars";
+    const labelsRow = document.createElement("div");
+    labelsRow.className = "strip-labels";
+    labelsRow.style.width = insp.chars.length * CELL_STEP - 2 + "px";
+
+    insp.chars.forEach((c, i) => {
       const cell = document.createElement("div");
       const tag = c.bio === 1 ? "B" : c.bio === 2 ? "I" : "O";
       cell.className = "cell tag-" + tag;
@@ -876,10 +894,6 @@ lakhon log aaye</textarea>
       ch.textContent = c.ch === " " ? "·" : c.ch;
       ch.style.opacity = String(Math.max(0.35, Math.min(1, 0.35 + bProb * 0.65)));
       cell.appendChild(ch);
-      const cls = document.createElement("div");
-      cls.className = "cls";
-      cls.textContent = tag === "O" ? "" : abbrevClass(c.cls);
-      cell.appendChild(cls);
       const bar = document.createElement("div");
       bar.className = "probbar";
       const fill = document.createElement("i");
@@ -887,8 +901,36 @@ lakhon log aaye</textarea>
       bar.appendChild(fill);
       cell.appendChild(bar);
       cell.title = `char: "${c.ch}"  bio: ${tag}  class: ${c.cls}  P(B)=${bProb.toFixed(2)}`;
-      strip.appendChild(cell);
+      charsRow.appendChild(cell);
+    });
+
+    // group contiguous non-O runs of the same class into a single centred
+    // label with a bracket line, so labels never overlap between cells.
+    let i = 0;
+    while (i < insp.chars.length) {
+      const c = insp.chars[i];
+      const tag = c.bio === 1 ? "B" : c.bio === 2 ? "I" : "O";
+      if (tag === "O" || !c.cls) { i++; continue; }
+      let j = i + 1;
+      while (j < insp.chars.length) {
+        const cj = insp.chars[j];
+        const tagj = cj.bio === 1 ? "B" : cj.bio === 2 ? "I" : "O";
+        if (tagj === "O" || cj.cls !== c.cls) break;
+        j++;
+      }
+      const runLen = j - i;
+      const label = document.createElement("div");
+      label.className = "run-label";
+      label.style.left = i * CELL_STEP + "px";
+      label.style.width = runLen * CELL_STEP - 2 + "px";
+      label.textContent = abbrevClass(c.cls);
+      label.title = c.cls;
+      labelsRow.appendChild(label);
+      i = j;
     }
+
+    strip.appendChild(charsRow);
+    strip.appendChild(labelsRow);
   }
 
   // ---------- batch benchmark ----------
