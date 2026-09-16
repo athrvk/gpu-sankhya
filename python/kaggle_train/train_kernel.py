@@ -250,7 +250,7 @@ def select_winner(results, pydir):
 
     The actual selection rule lives in `sankhya.eval_matrix.select_matrix_winner`
     (config = highest mean int8 combined gold value_acc across seeds; within
-    a config, seed ranked by val value_acc rounded to 2dp, tie-broken by
+    a config, seeds within 0.005 val value_acc of the best are tied, broken by
     higher gold int8 F1, then lower negatives fp_rate, then input order) --
     this wraps it rather than re-implementing it, so there is one place the
     rule is defined. `pydir` is the cloned repo's `python/` dir, which is

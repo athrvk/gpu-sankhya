@@ -319,10 +319,10 @@ Winner selection (one implementation, `sankhya.eval_matrix.select_matrix_winner`
 shared by `train_kernel.py` and `eval_matrix.py`):
 1. Winning **config** (arch:channels) = highest mean int8 combined gold
    value_acc across its seeds.
-2. Within that config, seeds are ranked by val value_acc **rounded to 2
-   decimals** (so near-tied seeds, e.g. 0.9343 vs. 0.9338 vs. 0.9346,
-   aren't decided by noise), tie-broken by higher int8 combined gold F1,
-   then by lower negatives false-positive rate, then by input order.
+2. Within that config, every seed within **0.005 val value_acc** of the
+   best seed counts as tied (near-tied seeds, e.g. 0.9343 vs. 0.9351,
+   aren't decided by noise); among them, higher int8 combined gold F1
+   wins, then lower negatives false-positive rate, then input order.
 
 That winning run's `models/` and metrics are staged at `output/models/` /
 `output/metrics.json` exactly as a single-config run would be (plus a
