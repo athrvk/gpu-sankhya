@@ -4,6 +4,34 @@
   "type": "module",
   "description": "Fast char-CNN extraction of Hinglish (Latin-script Hindi) numeric quantities, with CPU and WebGPU backends.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/athrvk/gpu-sankhya.git"
+  },
+  "homepage": "https://athrvk.github.io/gpu-sankhya/",
+  "bugs": {
+    "url": "https://github.com/athrvk/gpu-sankhya/issues"
+  },
+  "keywords": [
+    "hindi",
+    "hinglish",
+    "lakh",
+    "crore",
+    "number-parsing",
+    "nlp",
+    "webgpu",
+    "indian-numbering",
+    "char-cnn",
+    "onnx"
+  ],
+  "author": "Atharva Kusumbia",
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -20,7 +48,8 @@
     "test": "node --test --experimental-strip-types test/*.test.ts",
     "bench": "node --experimental-strip-types bench/bench.mjs",
     "size": "node scripts/size.mjs",
-    "site": "node scripts/build.mjs && node scripts/site.mjs"
+    "site": "node scripts/build.mjs && node scripts/site.mjs",
+    "prepublishOnly": "npm run build && npm test"
   },
   "devDependencies": {
     "@webgpu/types": "^0.1.72",
