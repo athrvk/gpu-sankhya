@@ -51,3 +51,23 @@ test("das hazaar crore", () => {
   assert.equal(r.length, 1);
   assert.equal(r[0].value, 1e11);
 });
+
+test("unknown characters around a span do not break it", () => {
+  // Out-of-vocab characters (uncommon punctuation, emoji, other currency
+  // symbols) map every affected char to <unk>. These specific cases already
+  // decode correctly with the currently shipped weights. Retraining the
+  // generator to inject unk noise (see python/sankhya/generator.py) is meant
+  // to make more such cases robust (e.g. emoji directly before a span);
+  // those aren't asserted here yet since they depend on the retrained model.
+  let r = parse("» sava lakh");
+  assert.equal(r.length, 1);
+  assert.equal(r[0].value, 125000);
+
+  r = parse("sava lakh 🙏");
+  assert.equal(r.length, 1);
+  assert.equal(r[0].value, 125000);
+
+  r = parse("€ 2 lakh");
+  assert.equal(r.length, 1);
+  assert.equal(r[0].value, 200000);
+});

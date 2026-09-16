@@ -49,6 +49,18 @@ vocab is the union of every pack present (`build_charset_multi`):
 python -m sankhya.charset --lang hi_latn,hi_deva --out data/charset.json
 ```
 
+Every generated example also has a `P_UNK` (default 0.12) chance of getting
+a 1-3 character out-of-vocab "unk noise" run inserted as O-labelled context
+(emoji, CJK, Cyrillic, Greek, arrows, other currency symbols, fullwidth
+punctuation — chars guaranteed absent from every pack's charset, so they
+always map to `<unk>`), placed at the start/end of the text or at a random
+space, sometimes glued to the adjacent word with no space, and occasionally
+repeated (`🙏🙏`) to mimic JS's UTF-16 surrogate-pair splitting; this trains
+the `<unk>` embedding, which clean synthetic data otherwise never exercises
+even though production input (real emoji, foreign scripts, uncommon
+symbols) hits it constantly. Tune or disable it with `--unk-noise FLOAT`
+passed to `sankhya.generator` (0 disables).
+
 ## Train
 
 ```bash

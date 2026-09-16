@@ -164,3 +164,6 @@
 {"text": "tax ₹बीस हज़ार banta hai", "lang": "mixed", "spans": [{"start": 5, "end": 14, "value": 20000}], "cross_script": true}
 {"text": "तीन lakh ka scooty liya", "lang": "mixed", "spans": [{"start": 0, "end": 8, "value": 300000}], "cross_script": true}
 {"text": "पैकेज 6 lpa hai isme", "lang": "mixed", "spans": [{"start": 6, "end": 11, "value": 600000}], "cross_script": true}
+{"text": "🙏 सवा लाख", "lang": "hi_deva", "spans": [{"start": 2, "end": 9, "value": 125000}]}
+{"text": "ढाई लाख 🔥 चाहिए", "lang": "hi_deva", "spans": [{"start": 0, "end": 7, "value": 250000}]}
+{"text": "→ दो हज़ार का", "lang": "hi_deva", "spans": [{"start": 2, "end": 10, "value": 2000}]}

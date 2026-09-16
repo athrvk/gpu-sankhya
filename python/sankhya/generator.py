@@ -18,6 +18,33 @@ from .langs import base as langbase
 
 MAX_LEN = 128
 
+# Probability an example gets an out-of-vocab "unk noise" run inserted as
+# O-labelled context (see _insert_unk_noise). Every character in the pool is
+# guaranteed (by test) to be outside every registered pack's charset, so it
+# always maps to the <unk> embedding at train/inference time - this mimics
+# real production input (emoji, CJK, foreign symbols) the synthetic data
+# otherwise never contains, and trains the <unk> embedding to be inert.
+P_UNK = 0.12
+
+_UNK_POOL = [
+    # emoji
+    "🙏", "😀", "🔥", "👍", "❤", "🎉", "💸", "✅",
+    # arrows
+    "→", "←",
+    # box/dingbats
+    "★", "✓", "•",
+    # CJK
+    "中", "文",
+    # Cyrillic
+    "д", "ж",
+    # Greek
+    "λ",
+    # other currency/symbols
+    "€", "£", "$", "¥", "§", "¶", "°",
+    # fullwidth punctuation
+    "，", "。", "！",
+]
+
 _CHAT_FRAGMENTS = [
     "arey", "bhai suno", "lol", "haan", "ok done", "kal milte hain", "waise",
     "hmm", "acha theek hai", "btw", "chal", "sahi hai", "kya baat hai",
@@ -459,10 +486,10 @@ def _tokens_to_text_and_labels(tokens):
     return text, cls_per_char
 
 
-def sample_example(pack, rng, max_len=MAX_LEN, phrase_pack=None):
+def sample_example(pack, rng, max_len=MAX_LEN, phrase_pack=None, unk_p=P_UNK):
     for _attempt in range(50):
         try:
-            ex = _sample_example_once(pack, rng, phrase_pack=phrase_pack)
+            ex = _sample_example_once(pack, rng, phrase_pack=phrase_pack, unk_p=unk_p)
         except AssertionError:
             raise
         except Exception:
@@ -643,6 +670,74 @@ def _insert_fillers(pack, rng, text, span_defs):
     return text
 
 
+def _insert_unk_noise(pack, rng, text, span_defs, p_unk=P_UNK):
+    """With probability p_unk, insert a 1-3 char run drawn from _UNK_POOL
+    (chars guaranteed outside every pack's charset -> always <unk>) as
+    O-labelled context. Never touches a span or the 8-char buffer around a
+    bare/currency-dependent span (same protection as _insert_fillers).
+    Placement: start of text, end of text, or a random space position
+    outside protected regions; ~25% of the time glued to the adjacent word
+    with no space. ~15% of runs repeat the same char (mimics JS surrogate
+    pairs, e.g. "🙏🙏")."""
+    if rng.random() >= p_unk:
+        return text
+
+    eligible = []
+    protected_spans = []
+    for _, _, toks in span_defs:
+        seg_text, _ = _tokens_to_text_and_labels(toks)
+        if not seg_text:
+            continue
+        has_unit = any(C.is_unit(c) for c, _ in toks)
+        if has_unit:
+            eligible.append(seg_text)
+        else:
+            protected_spans.append(seg_text)
+
+    def _occupied():
+        occupied = set()
+        for seg in eligible + protected_spans:
+            idx = text.find(seg)
+            if idx == -1:
+                continue
+            occupied.update(range(idx, idx + len(seg)))
+        for seg in protected_spans:
+            idx = text.find(seg)
+            if idx == -1:
+                continue
+            occupied.update(range(max(0, idx - 8), idx))
+            occupied.update(range(idx + len(seg), min(len(text), idx + len(seg) + 8)))
+        return occupied
+
+    n = rng.randint(1, 3)
+    if rng.random() < 0.15:
+        ch = rng.choice(_UNK_POOL)
+        run = ch * n
+    else:
+        run = "".join(rng.choice(_UNK_POOL) for _ in range(n))
+
+    glued = rng.random() < 0.25
+    placement = rng.choice(["start", "end", "middle"])
+
+    if placement == "start":
+        sep = "" if glued else " "
+        return run + sep + text
+    if placement == "end":
+        sep = "" if glued else " "
+        return text + sep + run
+
+    occupied = _occupied()
+    positions = [i for i, ch in enumerate(text) if ch == " " and i not in occupied]
+    if not positions:
+        sep = "" if glued else " "
+        return text + sep + run
+    pos = rng.choice(positions)
+    if glued:
+        # glue to the word that starts right after this space
+        return text[:pos + 1] + run + text[pos + 1:]
+    return text[:pos] + " " + run + text[pos:]
+
+
 def _apply_casing_and_wrap(pack, rng, text):
     if rng.random() < 0.10:
         frag = rng.choice(_CHAT_FRAGMENTS)
@@ -682,7 +777,7 @@ def _build_negative_text(pack, rng):
     return rng.choice(pack.templates["negatives"])
 
 
-def _sample_example_once(pack, rng, phrase_pack=None):
+def _sample_example_once(pack, rng, phrase_pack=None, unk_p=P_UNK):
     """phrase_pack: when set (cross-script mode), the {P}/{P1}/{P2} phrase(s)
     are built from phrase_pack's lexicon while the template, currency
     markers, approximators and filler words still come from `pack`; currency
@@ -775,6 +870,7 @@ def _sample_example_once(pack, rng, phrase_pack=None):
 
     if not truly_bare:
         out = _insert_fillers(pack, rng, out, span_defs)
+        out = _insert_unk_noise(pack, rng, out, span_defs, p_unk=unk_p)
         out = _apply_casing_and_wrap(pack, rng, out)
     return _finalize(pack, rng, out, _recompute_offsets(out, span_defs), is_negative=False, currency_pack=currency_pack)
 
@@ -795,22 +891,22 @@ def _recompute_offsets(out, span_defs):
     return result
 
 
-def generate(pack, n, seed=0, max_len=MAX_LEN):
+def generate(pack, n, seed=0, max_len=MAX_LEN, unk_p=P_UNK):
     rng = random.Random(seed)
     out = []
     for _ in range(n):
-        out.append(sample_example(pack, rng, max_len=max_len))
+        out.append(sample_example(pack, rng, max_len=max_len, unk_p=unk_p))
     return out
 
 
-def generate_multi(packs, weights=None, n=1000, seed=0, cross=0.0, max_len=MAX_LEN):
+def generate_multi(packs, weights=None, n=1000, seed=0, cross=0.0, max_len=MAX_LEN, unk_p=P_UNK):
     """Multi-pack generation: each example picks one pack by `weights` (default
     uniform); a `cross` share of examples instead take a template from one
     pack and build the {P}/{P1}/{P2} phrase(s) from a DIFFERENT pack (currency
     markers/approximators still come from the template's own pack). With a
     single pack this reduces to plain `generate()` behaviour."""
     if len(packs) == 1:
-        return generate(packs[0], n, seed=seed, max_len=max_len)
+        return generate(packs[0], n, seed=seed, max_len=max_len, unk_p=unk_p)
     if weights is None:
         weights = [1.0] * len(packs)
     rng = random.Random(seed)
@@ -820,12 +916,12 @@ def generate_multi(packs, weights=None, n=1000, seed=0, cross=0.0, max_len=MAX_L
         if rng.random() < cross:
             others = [p for p in packs if p is not pack]
             phrase_pack = rng.choice(others) if others else None
-            ex = sample_example(pack, rng, max_len=max_len, phrase_pack=phrase_pack)
+            ex = sample_example(pack, rng, max_len=max_len, phrase_pack=phrase_pack, unk_p=unk_p)
             ex["cross_script"] = True
             if phrase_pack is not None:
                 ex["phrase_lang"] = phrase_pack.id
         else:
-            ex = sample_example(pack, rng, max_len=max_len)
+            ex = sample_example(pack, rng, max_len=max_len, unk_p=unk_p)
             ex["cross_script"] = False
         out.append(ex)
     return out
@@ -839,6 +935,7 @@ def main(argv=None):
     ap.add_argument("--lang", type=str, default="hi_latn", help="comma-separated pack ids, e.g. hi_latn,hi_deva")
     ap.add_argument("--mix", type=str, default=None, help="comma-separated weights matching --lang, e.g. 0.55,0.45")
     ap.add_argument("--cross", type=float, default=0.0, help="share of examples that mix template/phrase across packs")
+    ap.add_argument("--unk-noise", type=float, default=P_UNK, help="probability of inserting an out-of-vocab 'unk noise' run per example (0 disables)")
     args = ap.parse_args(argv)
 
     lang_ids = [x.strip() for x in args.lang.split(",") if x.strip()]
@@ -848,7 +945,7 @@ def main(argv=None):
         rng = random.Random(args.seed)
         with open(args.out, "w", encoding="utf-8") as f:
             for _ in range(args.n):
-                ex = sample_example(packs[0], rng)
+                ex = sample_example(packs[0], rng, unk_p=args.unk_noise)
                 f.write(json.dumps(ex, ensure_ascii=False) + "\n")
         print(f"wrote {args.n} examples to {args.out}", file=sys.stderr)
         return
@@ -859,7 +956,7 @@ def main(argv=None):
     else:
         weights = None
 
-    examples = generate_multi(packs, weights=weights, n=args.n, seed=args.seed, cross=args.cross)
+    examples = generate_multi(packs, weights=weights, n=args.n, seed=args.seed, cross=args.cross, unk_p=args.unk_noise)
     with open(args.out, "w", encoding="utf-8") as f:
         for ex in examples:
             f.write(json.dumps(ex, ensure_ascii=False) + "\n")
