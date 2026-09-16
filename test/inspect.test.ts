@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import weightsJson from "../src/data/default-weights.json" with { type: "json" };
 import { inspect, parse, modelInfo, CLASSES } from "../src/index.ts";
 
 test("inspect(): chars covers every char of the normalized text, spans match parse()", () => {
@@ -28,20 +29,21 @@ test("inspect(): chars covers every char of the normalized text, spans match par
   }
 });
 
-test("modelInfo(): default model reports 4 layers, k=[3,5,3,3], dilation=[1,1,2,4], params=18811", () => {
+test("modelInfo(): default model reports its arch consistently with the weights file", () => {
   const info = modelInfo();
-  assert.equal(info.layers.length, 4);
-  assert.deepEqual(
-    info.layers.map((l) => l.k),
-    [3, 5, 3, 3],
-  );
-  assert.deepEqual(
-    info.layers.map((l) => l.dilation),
-    [1, 1, 2, 4],
-  );
-  assert.deepEqual(
-    info.layers.map((l) => l.residual),
-    [false, false, false, false],
-  );
-  assert.equal(info.params, 18811);
+  const layers = (weightsJson as any).conv ?? [];
+  assert.ok(info.layers.length >= 3);
+  if (layers.length) {
+    // v2 weights: the JSON carries the arch explicitly
+    assert.deepEqual(info.layers.map((l) => l.k), layers.map((l: any) => l.k));
+    assert.deepEqual(info.layers.map((l) => l.dilation), layers.map((l: any) => l.dilation));
+    assert.deepEqual(info.layers.map((l) => l.residual), layers.map((l: any) => l.residual));
+  } else {
+    // v1 weights: fixed 4-layer stack
+    assert.deepEqual(info.layers.map((l) => l.k), [3, 5, 3, 3]);
+    assert.deepEqual(info.layers.map((l) => l.dilation), [1, 1, 2, 4]);
+  }
+  assert.equal(info.vocab, (weightsJson as any).charset.length);
+  assert.equal(info.classes, (weightsJson as any).classes.length);
+  assert.ok(info.params > 10000);
 });

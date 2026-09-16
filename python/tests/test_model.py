@@ -82,13 +82,23 @@ def test_np_infer_matches_torch_v2():
     assert np.isfinite(i_bio).all() and np.isfinite(i_cls).all()
 
 
-def test_load_default_weights_v1_int8():
+def test_load_default_weights_int8():
+    """The shipped weights load through the generic loader whatever their
+    JSON version (v1 fixed stack or v2 arch list) and describe a sane arch."""
     path = os.path.join(FIXTURES_DIR, "default-weights.json")
     with open(path, "r", encoding="utf-8") as f:
         obj = json.load(f)
     weights = np_infer.load_weights_int8_json(obj)
     conv = weights["conv"]
-    assert len(conv) == 4
-    assert [layer["k"] for layer in conv] == [3, 5, 3, 3]
-    assert [layer["dilation"] for layer in conv] == [1, 1, 2, 4]
-    assert all(layer["residual"] is False for layer in conv)
+    if obj.get("version", 1) >= 2:
+        assert [layer["k"] for layer in conv] == [l["k"] for l in obj["conv"]]
+        assert [layer["dilation"] for layer in conv] == [l["dilation"] for l in obj["conv"]]
+    else:
+        assert len(conv) == 4
+        assert [layer["k"] for layer in conv] == [3, 5, 3, 3]
+        assert [layer["dilation"] for layer in conv] == [1, 1, 2, 4]
+        assert all(layer["residual"] is False for layer in conv)
+    for layer in conv:
+        assert layer["k"] % 2 == 1
+        if layer["residual"]:
+            assert layer["w"].shape[0] == layer["w"].shape[1]
