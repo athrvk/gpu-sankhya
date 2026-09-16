@@ -226,7 +226,7 @@ lakhon log aaye</textarea>
   <div class="card">
     <h2>Batch benchmark</h2>
     <p class="tagline" style="margin-bottom:0.6rem;">
-      Parses the 13 example strings repeated to 500 items with <code>parseBatch</code>, on CPU and (if available) WebGPU.
+      Parses 500 varied strings (generated from the 13 examples) with <code>parseBatch</code>, on CPU and (if available) WebGPU, then checks that the results match.
     </p>
     <button id="bench-btn">Run batch benchmark</button>
     <div class="bench-results" id="bench-results"></div>
@@ -398,12 +398,85 @@ lakhon log aaye</textarea>
   input.addEventListener("input", scheduleParse);
   runParse();
 
+  const BATCH_DECORATIONS = [
+    (s, i) => s,
+    (s, i) => s + " #" + i,
+    (s, i) => "ok " + s,
+    (s, i) => s + "!!",
+    (s, i) => "bhai " + s,
+    (s, i) => s + " (" + i + ")",
+    (s, i) => "yaar " + s + " hai",
+    (s, i) => s + " kal",
+  ];
+
+  function makeVariedBatch(n) {
+    const batch = [];
+    for (let i = 0; i < n; i++) {
+      const example = EXAMPLES[i % EXAMPLES.length];
+      const decorate = BATCH_DECORATIONS[i % BATCH_DECORATIONS.length];
+      batch.push(decorate(example, i));
+    }
+    return batch;
+  }
+
+  function spansEqual(a, b) {
+    if (a.start !== b.start || a.end !== b.end) return false;
+    if ((a.value || 0) !== (b.value || 0)) return false;
+    const aRange = a.range ? a.range[0] + "-" + a.range[1] : "";
+    const bRange = b.range ? b.range[0] + "-" + b.range[1] : "";
+    if (aRange !== bRange) return false;
+    if ((a.unit || "") !== (b.unit || "")) return false;
+    if ((a.currency || "") !== (b.currency || "")) return false;
+    if ((a.classes || []).join(" ") !== (b.classes || []).join(" ")) return false;
+    // confidence is allowed to differ by up to 0.02
+    if (Math.abs((a.confidence || 0) - (b.confidence || 0)) > 0.02) {
+      // confidence-only mismatches beyond tolerance still fail, but everything
+      // else above already matched, so this is the sole difference.
+      return false;
+    }
+    return true;
+  }
+
+  function spanLabel(sp) {
+    const valueStr = sp.range ? sp.range[0] + "-" + sp.range[1] : String(sp.value);
+    return "[span=" + valueStr + "]";
+  }
+
+  function compareBatchResults(texts, cpuResults, gpuResults) {
+    const mismatches = [];
+    for (let i = 0; i < texts.length; i++) {
+      const cpuSpans = cpuResults[i] || [];
+      const gpuSpans = gpuResults[i] || [];
+      let ok = cpuSpans.length === gpuSpans.length;
+      if (ok) {
+        const sortedCpu = [...cpuSpans].sort((a, b) => a.start - b.start);
+        const sortedGpu = [...gpuSpans].sort((a, b) => a.start - b.start);
+        for (let j = 0; j < sortedCpu.length; j++) {
+          if (!spansEqual(sortedCpu[j], sortedGpu[j])) {
+            ok = false;
+            break;
+          }
+        }
+      }
+      if (!ok) {
+        const cpuStr = cpuSpans.length
+          ? cpuSpans.map((sp) => spanLabel(sp)).join(", ")
+          : "(no spans)";
+        const gpuStr = gpuSpans.length
+          ? gpuSpans.map((sp) => spanLabel(sp)).join(", ")
+          : "(no spans)";
+        mismatches.push(
+          `${texts[i]} → cpu: ${cpuStr} | gpu: ${gpuStr}`
+        );
+      }
+    }
+    return mismatches;
+  }
+
   benchBtn.addEventListener("click", async () => {
     benchBtn.disabled = true;
     benchResults.innerHTML = "";
-    const repeated = [];
-    while (repeated.length < 500) repeated.push(...EXAMPLES);
-    const batch = repeated.slice(0, 500);
+    const batch = makeVariedBatch(500);
 
     const cpuCol = document.createElement("div");
     cpuCol.className = "bench-col";
@@ -415,12 +488,14 @@ lakhon log aaye</textarea>
     gpuCol.innerHTML = "<h3>WebGPU</h3><div>" + (gpuAvail ? "running&hellip;" : "no adapter") + "</div>";
     benchResults.appendChild(gpuCol);
 
+    let cpuTotal = null;
+    let cpuResults = null;
     try {
       const c0 = performance.now();
-      await parseBatch(batch, { backend: "cpu" });
+      cpuResults = await parseBatch(batch, { backend: "cpu" });
       const c1 = performance.now();
-      const total = c1 - c0;
-      cpuCol.innerHTML = `<h3>CPU</h3><div>${total.toFixed(1)} ms total</div><div>${(total / batch.length).toFixed(3)} ms/string</div>`;
+      cpuTotal = c1 - c0;
+      cpuCol.innerHTML = `<h3>CPU</h3><div>${cpuTotal.toFixed(1)} ms total</div><div>${(cpuTotal / batch.length).toFixed(3)} ms/string</div>`;
     } catch (e) {
       cpuCol.innerHTML = `<h3>CPU</h3><div class="err">${escapeHtml(String(e && e.message ? e.message : e))}</div>`;
     }
@@ -428,10 +503,29 @@ lakhon log aaye</textarea>
     if (gpuAvail) {
       try {
         const g0 = performance.now();
-        await parseBatch(batch, { backend: "webgpu" });
+        const gpuResults = await parseBatch(batch, { backend: "webgpu" });
         const g1 = performance.now();
-        const total = g1 - g0;
-        gpuCol.innerHTML = `<h3>WebGPU</h3><div>${total.toFixed(1)} ms total</div><div>${(total / batch.length).toFixed(3)} ms/string</div>`;
+        const gpuTotal = g1 - g0;
+
+        let extra = "";
+        if (cpuResults) {
+          const mismatches = compareBatchResults(batch, cpuResults, gpuResults);
+          if (mismatches.length === 0) {
+            extra += `<div style="color:#1a7f37;">matches CPU: ${batch.length}/${batch.length}</div>`;
+          } else {
+            extra += `<div style="color:#c0341d;">mismatches: ${mismatches.length}</div>`;
+            const examples = mismatches.slice(0, 5);
+            extra += `<div style="color:#c0341d; font-family:monospace; font-size:0.85em; white-space:pre-wrap;">${examples
+              .map((m) => escapeHtml(m))
+              .join("\n")}</div>`;
+          }
+        }
+        if (cpuTotal != null && gpuTotal > 0) {
+          const speedup = cpuTotal / gpuTotal;
+          extra += `<div>speedup: ${speedup.toFixed(1)}x vs CPU</div>`;
+        }
+
+        gpuCol.innerHTML = `<h3>WebGPU</h3><div>${gpuTotal.toFixed(1)} ms total</div><div>${(gpuTotal / batch.length).toFixed(3)} ms/string</div>${extra}`;
       } catch (e) {
         gpuCol.innerHTML = `<h3>WebGPU</h3><div class="err">${escapeHtml(String(e && e.stack ? e.stack : e))}</div>`;
       }
