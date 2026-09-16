@@ -13,12 +13,14 @@ never predicts the value directly, so the arithmetic can't drift from the
 grammar (prefix semantics, additive descending units, multiplicative
 ascending units like `das hazaar crore` = 10,000 × 1 crore = 1e11, etc).
 
-Ships with a small (~22 KB gzipped) int8-quantized default model inlined
+Ships with a small (27 KB gzipped) int8-quantized default model inlined
 in the package — `import { parse } from "gpu-sankhya"` works with no
 network fetch. Zero runtime dependencies.
 
 Model training lives in `python/` (a separate, actively-trained
 component); this package is the runtime that loads its exported weights.
+See `python/README.md` if you want to train your own weights and load
+them via `createParser({ weights })` instead of the bundled default.
 
 ## Install
 
@@ -35,7 +37,7 @@ parse("sava lakh");
 // [{
 //   span: "sava lakh", start: 0, end: 9,
 //   value: 125000, unit: "lakh", currency: null,
-//   confidence: 0.97, classes: ["PFX_SAVA", "SEP", "UNIT_LAKH"]
+//   confidence: 0.95, classes: ["PFX_SAVA", "SEP", "UNIT_LAKH"]
 // }]
 
 parse("mera budget paune do lakh tak ka hai");
@@ -53,10 +55,15 @@ parse("2-3 lakh");
 parse("das hazaar crore");
 // [{ span: "das hazaar crore", value: 100000000000, unit: "crore", ... }]
 
+parse("sawaa laakh ka budget hai");
+// [{ span: "sawaa laakh", value: 125000, unit: "lakh", ... }] -- spelling
+// variance ("sawaa"/"sava", "laakh"/"lakh") is part of the training data,
+// not special-cased.
+
 // batch (uses WebGPU automatically for large batches in a browser, else CPU)
 const results = await parseBatch(["sava lakh", "dedh crore", "..."]);
 
-// custom / newer trained weights
+// custom / newer trained weights (see python/README.md to train your own)
 const parser = createParser({ weights: myWeightsJson, backend: "cpu" });
 parser.parse("paune do lakh");
 ```
@@ -87,7 +94,8 @@ interface Sankhya {
   dispatch overhead dominates for small batches).
 - **`createParser({ weights?, backend? })`** — build a `Parser` instance
   around a custom weights JSON (float or int8 form, as written by
-  `python/sankhya/export.py`), instead of the bundled default model.
+  `python/sankhya/export.py`), instead of the bundled default model. See
+  `python/README.md` for how to train and export your own weights.
 - **`isWebGPUAvailable()`** — true if `navigator.gpu` exists in the
   current environment.
 
@@ -105,23 +113,166 @@ interface Sankhya {
   the model's 128-char window (the sliding-window path used by `parse` is
   CPU-only for now).
 
+### Why CPU by default
+
+One inference is small — roughly 0.8M multiply-adds through a 4-layer,
+32-channel char CNN — and runs in about 1.5 ms in plain JS. A WebGPU
+dispatch has fixed overhead of a few milliseconds (device/pipeline setup,
+buffer upload, queue submit, readback), which dwarfs that per-string cost.
+So the GPU only pays off once you're amortizing that overhead over a
+batch — hundreds of strings at once — which is exactly what `parseBatch`
+does with `backend: "auto"`/`"webgpu"`; `parse()` stays CPU-only and
+synchronous on purpose.
+
+The WebGPU path is implemented and type-checks, and has been exercised in
+Node (where it falls back to CPU since there's no GPU) — it has **not**
+yet been verified against a real GPU in a browser. Treat it as
+implemented-but-unverified until that happens (see Roadmap).
+
+## Accuracy
+
+The bundled default model: 17,883 parameters, 4 conv layers (kernel sizes
+3/5/3/3, dilations 1/1/2/4, 32 channels), 16-dim char embeddings over a
+56-character vocab. Trained 20 epochs (~9 minutes on 4 CPU cores) on
+150,000 synthetic examples generated from the `hi_latn` language pack's
+grammar (see `python/README.md`).
+
+On synthetic validation data (drawn from the same generator/templates as
+training): 0.97 value accuracy. This number is optimistic — it's testing
+the model on its own distribution.
+
+On a hand-written gold set of 180 sentences / 161 spans
+(`python/tests/gold.jsonl`), written independently of the generator:
+
+| metric | value |
+| --- | --- |
+| value accuracy | 0.95 (153/161) |
+| span precision | 0.90 |
+| span recall | 0.96 |
+| span F1 | 0.93 |
+
+**The gold number is the one to trust.** Known miss categories, in rough
+order of frequency:
+
+- unusual typos the noise model doesn't cover (e.g. "croer" for "crore")
+- possessive apostrophes ("do lakh's")
+- long multi-term ranges ("paanch se sadhe saat lakh")
+- occasional spurious spans triggered by unfamiliar words near number-ish
+  context
+
+Reproduce these numbers yourself with
+`python -m sankhya.eval_gold --gold tests/gold.jsonl --weights-json src/data/default-weights.json --int8`
+from `python/` (see `python/README.md`).
+
+## How it works
+
+1. The input string is lowercased and char-encoded against the model's
+   vocab (unknown chars map to `<unk>`).
+2. A 4-layer dilated conv1d stack (see Accuracy above) produces, per
+   character, a 3-way BIO logit (O/B/I) and a class logit over the
+   semantic token vocabulary (prefix words, cardinals, units, digits,
+   separators, misc).
+3. Decoding turns those per-character predictions into spans and tokens
+   (see Decoding below).
+4. The deterministic arithmetic core (`src/core.ts`, mirrored 1:1 from
+   `python/sankhya/core.py` and unit-tested directly in
+   `test/core.test.ts`) evaluates each span's token sequence into a
+   value: prefix semantics (sava = ×1.25, dedh = ×1.5, paune = subtract
+   1/4 from the next cardinal, ...), additive combination of descending
+   units, multiplicative combination of ascending units, and range
+   handling for `X-Y unit` / `X se Y unit` phrases.
+
+### Decoding
+
+Raw per-character BIO/class predictions are cleaned up before evaluation:
+
+- **Strict BIO decode**: a span starts only at a `B` tag; an `I` that
+  isn't preceded by an open span is treated as `O`.
+- **BIO bridging**: a single-character `O` gap inside what's otherwise a
+  contiguous span is closed (handles a stray misclassified character
+  without splitting the span in two).
+- **Digit-run extension**: a span is extended forward through a trailing
+  run of digit characters it was cut short of.
+- **Class repair**: within a span, per-character classes are smoothed by
+  majority vote over character-type sub-runs (fixes a stray misclassified
+  character inside an otherwise-consistent digit or letter run), plus a
+  few punctuation-specific rules.
+- **Confidence filter**: a span's confidence is the mean of the max BIO
+  softmax probability per character; spans below 0.5 are dropped.
+- Only after all of the above does the deterministic arithmetic core run
+  on the resulting token sequence.
+
+One more detail that matters more than it looks like it should: the
+runtime right-pads the character-id array with 16 pad tokens before
+running the forward pass (mirroring `python/sankhya/np_infer.py`'s
+`pad_ids`/`PAD_TAIL=16`), because training always right-pads every
+example to the model's max length the same way. Running a short, tightly
+cropped input (e.g. the bare 4 characters of `"2.5L"`) without that
+padding measurably corrupts predictions — the model was never trained on
+inputs that end at the literal edge of the array. The padded tail's
+outputs are discarded; only the real characters' predictions are used.
+
 ## Limitations
 
 - **Latin-script Hindi only.** Only Hinglish / romanised Hindi and Indian
   English amount phrases are supported today. Devanagari script and other
   Indian languages are planned via additional language packs (the
   arithmetic core is already language-independent; only the class
-  vocabulary and currency-marker lists are per-language).
+  vocabulary and currency-marker lists are per-language) — see Roadmap.
 - Text longer than 128 characters is processed with a sliding window
   (128-char windows, 16-char overlap) and results are merged/deduplicated
   by span; extremely long inputs may still miss a span that straddles a
   window boundary in an unlucky way.
-- The bundled default weights are from an early training checkpoint (see
-  `python/`) and will be replaced as training progresses; some spec
-  examples (multi-unit multiplicative phrases like `das hazaar crore`,
-  dash-separated ranges like `2-3 lakh`) may not resolve correctly yet —
-  this is a model-quality issue, not a bug in the arithmetic core (which
-  is unit-tested directly in `test/core.test.ts`).
+- Model quality: see Accuracy above. The known miss categories there
+  (unusual typos, possessive apostrophes, long multi-term ranges,
+  occasional spurious spans) are model-quality issues, not bugs in the
+  arithmetic core, which is unit-tested directly and independently of the
+  model in `test/core.test.ts`.
+
+## Repository layout
+
+- `src/` — the JS/TS runtime: char encoding, CPU forward pass
+  (`infer-cpu.ts`), WebGPU forward pass, decode, the arithmetic core
+  (`core.ts`), the public API (`index.ts`), and the bundled default
+  weights (`src/data/default-weights.json`).
+- `test/` — Node test files (`node --test`), including parity fixtures
+  generated from the Python reference implementation
+  (`test/fixtures/parity.jsonl`, `decoded.jsonl` — see
+  `python/README.md`'s "Ship to the npm package" section).
+- `bench/` — `parse()`/`parseBatch()` latency benchmarks.
+- `demo/` — a minimal textarea + live-results HTML demo.
+- `python/sankhya/` — `classes.py` (shared class vocabulary), `core.py`
+  (the deterministic arithmetic core), `langs/` (language packs, e.g.
+  `hi_latn.py`), `noise_latn.py` (typo/spelling-variance injection),
+  `generator.py` (synthetic labelled-data generator), `model.py` (the
+  char CNN), `train.py`, `export.py`, `np_infer.py` (numpy reference
+  forward pass, what the JS port mirrors), `decode.py`, `eval_gold.py`,
+  `make_fixtures.py`.
+- `python/tests/` — `test_core.py`, `test_decode.py`, `test_generator.py`,
+  and `gold.jsonl` (the hand-written gold set).
+- `docs/DATA_GRAMMAR.md` — the data/grammar spec the generator and
+  language packs implement.
+
+## Roadmap
+
+Everything here is scoped to Indian languages — there's no plan to
+support non-Indian numbering/currency shorthand.
+
+1. **Devanagari Hindi pack** (डेढ़ लाख). A new language pack plus a new
+   noise module for Devanagari-specific variance (matra/nukta elision or
+   substitution) and a charset rebuild — no changes needed to `core.ts`/
+   `core.py` or the runtime, since the arithmetic core and BIO/class
+   architecture are already language-independent.
+2. **Other Indian languages as packs**: Marathi (साडे, सव्वा), Gujarati
+   (સવા, દોઢ), Bengali (দেড়, আড়াই), and Tamil/Telugu/Kannada number
+   words. Same shape as (1) — a new pack, a new noise function, a charset
+   rebuild.
+3. **WebGPU browser verification.** The WebGPU path type-checks and has
+   been exercised in Node (falling back to CPU there), but has not yet
+   been run against a real GPU in a browser — needs that verification
+   pass before it should be relied on.
+4. **A WASM SIMD kernel**, if sub-millisecond latency is ever needed
+   beyond what the plain-JS CPU path already gives.
 
 ## Development
 
