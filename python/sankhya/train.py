@@ -182,6 +182,11 @@ def main(argv=None):
 
     import random
     torch.manual_seed(args.seed)
+    # Reproducible GPU runs: cuDNN's default autotuned conv kernels are
+    # nondeterministic, which made the same seed land ~1 gold point apart
+    # across Kaggle runs. The model is tiny, so the speed cost is nil.
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
     np.random.seed(args.seed)
     random.seed(args.seed)
     os.makedirs(args.out, exist_ok=True)

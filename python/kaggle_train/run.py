@@ -173,11 +173,14 @@ def cmd_pull(args):
         ["kaggle", "kernels", "output", KERNEL_SLUG, "-p", str(out_dir)],
         check=True,
     )
-    int8_src = out_dir / "models" / "sankhya.weights.int8.json"
-    if not int8_src.is_file():
-        # kaggle kernels output may flatten the tree; also look one level up
-        alt = out_dir / "sankhya.weights.int8.json"
-        int8_src = alt if alt.is_file() else int8_src
+    # The kernel stages the winner at output/models/; `kaggle kernels output`
+    # preserves that tree under out_dir, but be tolerant of flattening.
+    candidates = [
+        out_dir / "output" / "models" / "sankhya.weights.int8.json",
+        out_dir / "models" / "sankhya.weights.int8.json",
+        out_dir / "sankhya.weights.int8.json",
+    ]
+    int8_src = next((c for c in candidates if c.is_file()), candidates[0])
     if not int8_src.is_file():
         raise SystemExit(f"could not find sankhya.weights.int8.json under {out_dir} after pull")
 
