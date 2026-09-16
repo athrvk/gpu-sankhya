@@ -297,11 +297,24 @@ build`).
 
 ## Releasing
 
+The normal flow: bump the version and push to master.
+
 ```bash
-npm version patch|minor|major   # bumps package.json and creates a git tag
-git push --follow-tags
+npm version patch|minor|major   # bumps package.json and commits + tags locally
+git push --follow-tags origin master
 ```
 
-Then create a GitHub release from that tag — the `publish` workflow
-builds, tests, and publishes to npm (with provenance) automatically.
-The first release was published manually with `npm publish`.
+You can also just edit the `version` field in `package.json` in a PR — no
+need to run `npm version` or create a tag yourself. Either way, once the
+new version lands on master, the `publish` workflow detects that
+`package.json`'s version isn't on npm yet, builds, tests, publishes (with
+provenance), and creates the matching git tag and GitHub release for you.
+
+Publishing a GitHub release directly, or running the workflow manually via
+`workflow_dispatch`, also triggers a publish.
+
+Trusted publishing (OIDC, no `NPM_TOKEN`) must be configured once on
+npmjs.com for this to work: package page -> Settings -> Trusted publisher,
+with Organization/user `athrvk`, Repository `gpu-sankhya`, Workflow
+filename `publish.yml`. The first release was published manually with
+`npm publish`.
