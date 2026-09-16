@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { decodeSpans } from "../src/decode.ts";
+import { decodeSpans, repairClasses } from "../src/decode.ts";
 import { CLASS_TO_ID, CLASSES } from "../src/classes.ts";
 import { evaluate } from "../src/core.ts";
 
@@ -250,4 +250,40 @@ test("digit-extension: last '0' of '15000' mistagged O -> 15000", () => {
   const tokens: Array<[string, string]> = spans[0].tokens.map(([c, t]) => [CLASSES[c], t]);
   const r = evaluate(tokens);
   assert.equal(r.value, 15000);
+});
+
+test("Devanagari letters-run: matras/nukta are treated as letters, not punctuation", () => {
+  // "डेढ़" = ड (base) + े (vowel sign, \p{M}) + ढ (base) + ़ (nukta, \p{M}).
+  // Combining marks are not `\p{L}`, only `\p{M}` -- if charType() only
+  // checked `\p{L}`, each mark would fall into the punctuation branch and
+  // force a SEP mid-word.
+  const text = "डेढ़";
+  assert.equal(text.length, 4, "sanity: 4 UTF-16 code units");
+  const ids = new Array(text.length).fill(cid("PFX_DEDH"));
+  const repaired = repairClasses(text, ids);
+  for (const id of repaired) {
+    assert.notEqual(CLASSES[id], "SEP", `expected no SEP inside "${text}", got repaired=${repaired.map((r) => CLASSES[r])}`);
+  }
+});
+
+test("Devanagari: डेढ़ लाख (\"one and a half lakh\") -> 150000", () => {
+  const text = "डेढ़ लाख";
+  const bio = new Array(text.length).fill(2);
+  bio[0] = 1;
+  const cls = new Array(text.length);
+  let pos = 0;
+  const tag = (chars: string, cls_: string) => {
+    for (let i = 0; i < chars.length; i++) cls[pos + i] = cid(cls_);
+    pos += chars.length;
+  };
+  tag("डेढ़", "PFX_DEDH");
+  tag(" ", "SEP");
+  tag("लाख", "UNIT_LAKH");
+
+  const spans = decodeSpans(text, bio, cls);
+  assert.equal(spans.length, 1, `expected exactly one span, got ${spans.length}`);
+  const tokens: Array<[string, string]> = spans[0].tokens.map(([c, t]) => [CLASSES[c], t]);
+  const r = evaluate(tokens);
+  assert.equal(r.value, 150000);
+  assert.equal(r.unit, "lakh");
 });

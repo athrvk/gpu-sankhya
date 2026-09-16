@@ -65,4 +65,6 @@ def get_pack(lang_id: str) -> LanguagePack:
         # lazy-load known packs
         if lang_id == "hi_latn":
             from . import hi_latn  # noqa: F401
+        elif lang_id == "hi_deva":
+            from . import hi_deva  # noqa: F401
     return registry[lang_id]

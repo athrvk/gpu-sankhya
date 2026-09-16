@@ -210,21 +210,36 @@ export function evaluate(rawTokens: Tok[]): Result {
   }
 }
 
+/** Merge one or more LangPacks' marker lists into a single pack, de-duped,
+ * sorted longest-first so `detectCurrency` tries the longest (most
+ * specific) marker before a shorter one that might be its prefix (e.g.
+ * "Rs." before "Rs", "रुपये" before a shorter overlapping marker). */
+export function mergeLangPacks(...packs: LangPack[]): LangPack {
+  const byLenDesc = (a: string, b: string) => b.length - a.length;
+  const dedupe = (lists: string[][]) => [...new Set(lists.flat())].sort(byLenDesc);
+  return {
+    currency_markers_before: dedupe(packs.map((p) => p.currency_markers_before ?? [])),
+    currency_words_after: dedupe(packs.map((p) => p.currency_words_after ?? [])),
+  };
+}
+
 export function detectCurrency(text: string, start: number, end: number, pack: LangPack): "INR" | null {
   const before = text.slice(Math.max(0, start - 4), start);
   const after = text.slice(end, end + 6);
 
   const beforeStripped = before.replace(/\s+$/, "");
-  for (const marker of pack.currency_markers_before ?? []) {
+  const bs = beforeStripped.toLowerCase();
+  const markersBefore = [...(pack.currency_markers_before ?? [])].sort((a, b) => b.length - a.length);
+  for (const marker of markersBefore) {
     const m = marker.replace(/\.+$/, "").toLowerCase();
-    const bs = beforeStripped.toLowerCase();
     if (bs.endsWith(marker.toLowerCase()) || bs.endsWith(m)) return "INR";
   }
 
   const afterStripped = after.replace(/^\s+/, "");
-  for (const word of pack.currency_words_after ?? []) {
+  const a = afterStripped.toLowerCase();
+  const wordsAfter = [...(pack.currency_words_after ?? [])].sort((x, y) => y.length - x.length);
+  for (const word of wordsAfter) {
     const w = word.toLowerCase();
-    const a = afterStripped.toLowerCase();
     if (a.startsWith(w)) return "INR";
   }
 

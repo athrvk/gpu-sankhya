@@ -34,6 +34,7 @@ from .decode import decode_spans
 from .langs.base import get_pack
 from .train import MAX_LEN, build_char_to_id, load_jsonl
 from . import np_infer
+from .charset import normalize_text
 
 
 def run(weights_path: str, examples: list, lang: str = "hi_latn"):
@@ -45,13 +46,15 @@ def run(weights_path: str, examples: list, lang: str = "hi_latn"):
     weights = np_infer.load_weights_int8_json(obj)
     char_to_id = build_char_to_id(vocab)
     unk = char_to_id.get("<unk>", 1)
-    pack = get_pack(lang)
+    lang_ids = [x.strip() for x in lang.split(",") if x.strip()]
+    packs = [get_pack(l) for l in lang_ids]
+    pack = packs if len(packs) > 1 else packs[0]
 
     parity_rows = []
     decoded_rows = []
 
     for ex in examples:
-        text = ex["text"].lower()[:MAX_LEN]
+        text = normalize_text(ex["text"])[:MAX_LEN]
         L = len(text)
         ids = np_infer.pad_ids(np.array([char_to_id.get(c, unk) for c in text], dtype=np.int64))
         bio_logits, cls_logits = np_infer.forward(weights, ids, dilation=2, layers=layers)
@@ -85,13 +88,17 @@ def run(weights_path: str, examples: list, lang: str = "hi_latn"):
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--weights", default="../src/data/default-weights.json")
-    ap.add_argument("--gold", default="tests/gold.jsonl")
+    ap.add_argument("--gold", default=["tests/gold.jsonl"], nargs="+",
+                     help="one or more gold jsonl files, concatenated")
     ap.add_argument("--out-parity", default="../test/fixtures/parity.jsonl")
     ap.add_argument("--out-decoded", default="../test/fixtures/decoded.jsonl")
-    ap.add_argument("--lang", default="hi_latn")
+    ap.add_argument("--lang", default="hi_latn,hi_deva")
     args = ap.parse_args(argv)
 
-    examples = load_jsonl(args.gold)
+    gold_files = args.gold if isinstance(args.gold, list) else [args.gold]
+    examples = []
+    for path in gold_files:
+        examples.extend(load_jsonl(path))
     parity_rows, decoded_rows = run(args.weights, examples, lang=args.lang)
 
     with open(args.out_parity, "w", encoding="utf-8") as f:

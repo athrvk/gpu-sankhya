@@ -1,6 +1,7 @@
 """Decode per-char BIO + class predictions into spans."""
 from __future__ import annotations
 
+import unicodedata
 from typing import List, Optional, Sequence
 
 from . import classes as C
@@ -20,7 +21,14 @@ def _is_vote_worthy(cls_name: str) -> bool:
 
 
 def _char_type(ch: str) -> str:
-    if ch.isalpha():
+    # Devanagari combining marks (matras, nukta, virama/halant, anusvara,
+    # chandrabindu -- Unicode category Mn/Mc/Me) are not alphabetic per
+    # ch.isalpha(), but must count as "letter" for run-splitting or every
+    # matra (e.g. the -f in dedh) would be forced into its own run,
+    # splitting a single word mid-character. Match category L* or M*
+    # (mirrors the JS side's \p{L}|\p{M}).
+    cat = unicodedata.category(ch)
+    if cat.startswith("L") or cat.startswith("M"):
         return "letter"
     if ch.isdigit():
         return "digit"

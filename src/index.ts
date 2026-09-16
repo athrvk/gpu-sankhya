@@ -1,16 +1,18 @@
 import type { Sankhya, ParseOptions, WeightsJson } from "./types.ts";
 import { loadWeights, type LoadedWeights } from "./weights.ts";
-import { buildCharToId, encodeChars, makeWindows, MAX_LEN, PADDED_MAX, paddedLength } from "./charset.ts";
+import { buildCharToId, encodeChars, makeWindows, normalizeText, MAX_LEN, PADDED_MAX, paddedLength } from "./charset.ts";
 import { forward, softmaxRow, argmaxRow, Scratch } from "./infer-cpu.ts";
 import { decodeSpans } from "./decode.ts";
-import { evaluate, detectCurrency } from "./core.ts";
+import { evaluate, detectCurrency, mergeLangPacks } from "./core.ts";
 import { HI_LATN } from "./lang-hi-latn.ts";
+import { HI_DEVA } from "./lang-hi-deva.ts";
 import { CLASSES } from "./classes.ts";
 import { WebGPUBackend, probeWebGPU } from "./infer-webgpu.ts";
 import defaultWeightsJson from "./data/default-weights.json" with { type: "json" };
 
 export type { Sankhya, ParseOptions } from "./types.ts";
 export { isWebGPUAvailable, probeWebGPU } from "./infer-webgpu.ts";
+export { normalizeText } from "./charset.ts";
 
 export interface CreateParserOptions {
   weights?: WeightsJson;
@@ -38,34 +40,57 @@ export class Parser {
     this.scratch = new Scratch(this.weights);
   }
 
-  /** Synchronous CPU parse of a single string. */
+  /** Synchronous CPU parse of a single string.
+   *
+   * The returned spans/offsets (`start`, `end`, and `span` when the
+   * normalized string's length differs from the input's) are indices into
+   * `normalizeText(text)`, not the raw `text` argument -- see
+   * normalizeText() in charset.ts. For the overwhelming majority of real
+   * input, which already arrives in NFC form, normalization never changes
+   * string length, so offsets and `span` are identical either way. */
   parse(text: string, opts: ParseOptions = {}): Sankhya[] {
+    const original = text;
+    text = normalizeText(text);
+    const useOriginalSpan = original.length === text.length;
+    let results: Sankhya[];
     const windows = makeWindows(text.length);
     if (windows.length === 1 && windows[0].length === text.length) {
       // fast path: no window offset bookkeeping / merge-dedup needed
       const padLen = paddedLength(text.length);
       const ids = encodeChars(text, this.charToId, this.idsScratch, padLen);
       const fw = forward(this.weights, ids, this.scratch);
-      return this.decodeForward(text, fw, 0, text.length);
-    }
-    const merged: Sankhya[] = [];
-    const seen = new Set<string>();
-    for (const win of windows) {
-      const sub = text.slice(win.offset, win.offset + win.length);
-      const padLen = paddedLength(sub.length);
-      const ids = encodeChars(sub, this.charToId, this.idsScratch, padLen);
-      const fw = forward(this.weights, ids, this.scratch);
-      const results = this.decodeForward(sub, fw, win.offset, sub.length);
-      for (const r of results) {
-        const key = `${r.start}:${r.end}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          merged.push(r);
+      results = this.decodeForward(text, fw, 0, text.length);
+    } else {
+      const merged: Sankhya[] = [];
+      const seen = new Set<string>();
+      for (const win of windows) {
+        const sub = text.slice(win.offset, win.offset + win.length);
+        const padLen = paddedLength(sub.length);
+        const ids = encodeChars(sub, this.charToId, this.idsScratch, padLen);
+        const fw = forward(this.weights, ids, this.scratch);
+        const winResults = this.decodeForward(sub, fw, win.offset, sub.length);
+        for (const r of winResults) {
+          const key = `${r.start}:${r.end}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            merged.push(r);
+          }
         }
       }
+      merged.sort((a, b) => a.start - b.start);
+      results = merged;
     }
-    merged.sort((a, b) => a.start - b.start);
-    return merged;
+    // `span` is a substring of the ORIGINAL input when normalization did
+    // not change the string's length (the overwhelming majority case,
+    // including all pure lowercasing/digit-mapping with no NFC
+    // recomposition), so callers see the real casing/original characters
+    // rather than the lowercased/normalized form; otherwise (a rare NFC
+    // length change) it falls back to the normalized string, since
+    // `start`/`end` only index consistently into that string.
+    if (useOriginalSpan) {
+      for (const r of results) r.span = original.slice(r.start, r.end);
+    }
+    return results;
   }
 
   /** `fw` may cover a padded length (PAD_TAIL right-padding, see charset.ts);
@@ -88,7 +113,7 @@ export class Parser {
     for (const span of spans) {
       const tokens: Array<[string, string]> = span.tokens.map(([cid, txt]) => [CLASSES[cid], txt]);
       const res = evaluate(tokens);
-      const currency = detectCurrency(sub, span.start, span.end, HI_LATN);
+      const currency = detectCurrency(sub, span.start, span.end, CURRENCY_PACK);
       out.push({
         span: span.text,
         start: span.start + offset,
@@ -116,20 +141,23 @@ export class Parser {
       return texts.map((t) => this.parse(t, { backend: "cpu" }));
     }
 
+    const originals = texts;
+    const norm = texts.map(normalizeText);
+
     // WebGPU path: batch texts that fit a single window; texts needing a
     // sliding window fall back to CPU (kept correct, still simple).
     const results: Sankhya[][] = new Array(texts.length);
     const gpuIdx: number[] = [];
     const cpuIdx: number[] = [];
-    for (let i = 0; i < texts.length; i++) {
-      if (texts[i].length <= 128) gpuIdx.push(i);
+    for (let i = 0; i < norm.length; i++) {
+      if (norm[i].length <= 128) gpuIdx.push(i);
       else cpuIdx.push(i);
     }
-    for (const i of cpuIdx) results[i] = this.parse(texts[i], { backend: "cpu" });
+    for (const i of cpuIdx) results[i] = this.parse(originals[i], { backend: "cpu" });
 
     if (gpuIdx.length > 0) {
       if (!this.gpu) this.gpu = new WebGPUBackend(this.weights);
-      const maxRealLen = Math.max(...gpuIdx.map((i) => texts[i].length), 1);
+      const maxRealLen = Math.max(...gpuIdx.map((i) => norm[i].length), 1);
       // row length includes PAD_TAIL right-padding beyond the longest real
       // text in the batch (see charset.ts) -- without it the longest row
       // would have zero pad context, same distribution-mismatch bug as an
@@ -140,14 +168,17 @@ export class Parser {
       const padId = this.charToId.get("<pad>") ?? 0;
       charIds.fill(padId);
       for (let bi = 0; bi < batch; bi++) {
-        const text = texts[gpuIdx[bi]];
+        const text = norm[gpuIdx[bi]];
         const ids = encodeChars(text, this.charToId);
         charIds.set(ids, bi * rowLen);
       }
       const { bio, cls } = await this.gpu.run(charIds, batch, rowLen);
       const nCls = this.weights.cls.w.shape[0];
       for (let bi = 0; bi < batch; bi++) {
-        const text = texts[gpuIdx[bi]];
+        const idx = gpuIdx[bi];
+        const text = norm[idx];
+        const original = originals[idx];
+        const useOriginalSpan = original.length === text.length;
         const L = text.length;
         const bioLogits = new Float32Array(L * 3);
         const clsLogits = new Float32Array(L * nCls);
@@ -156,7 +187,11 @@ export class Parser {
           clsLogits.set(cls.subarray((bi * rowLen + t) * nCls, (bi * rowLen + t) * nCls + nCls), t * nCls);
         }
         const fw = { bioLogits, clsLogits, length: L, nCls };
-        results[gpuIdx[bi]] = this.decodeForward(text, fw, 0, L);
+        const decoded = this.decodeForward(text, fw, 0, L);
+        if (useOriginalSpan) {
+          for (const r of decoded) r.span = original.slice(r.start, r.end);
+        }
+        results[idx] = decoded;
       }
     }
     return results;
@@ -185,3 +220,9 @@ export function parseBatch(texts: string[], opts: ParseOptions = {}): Promise<Sa
 export function createParser(opts: CreateParserOptions = {}): Parser {
   return new Parser(opts);
 }
+
+// Union of the hi_latn and hi_deva currency marker lists, longest-match
+// first (see core.mergeLangPacks) -- used for currency detection so a
+// mixed-script input ("₹2 lakh" or "2 लाख रुपये") is handled the same way
+// regardless of which script wrote the currency marker.
+const CURRENCY_PACK = mergeLangPacks(HI_LATN, HI_DEVA);
