@@ -71,6 +71,13 @@ weights were kept. Two fixes were needed to get there: `--device auto`
 exists only on this branch (v1 cloned master and failed), and the bio
 loss class weight had to be created on the training device (v2).
 
+Kernel v4 (N_TRAIN=500000, N_VAL=10000, EPOCHS=30, ~13 min wall):
+int8 gold Hinglish 0.907 value acc / 0.894 F1, Devanagari 0.965 /
+0.958. Devanagari matches shipped but Hinglish drops, so shipped
+weights were kept again. Take-away: more data/epochs alone does not
+beat the shipped run; gold variance across seeds is ~±2-3 points, so
+compare several TRAIN_SEED values before adopting any new weights.
+
 ## Known misses / small follow-ups
 
 - Hinglish: `croer` (typo), `do lakh's` (apostrophe), long ranges like
