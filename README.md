@@ -1,5 +1,10 @@
 # gpu-sankhya
 
+[![npm version](https://img.shields.io/npm/v/gpu-sankhya.svg)](https://www.npmjs.com/package/gpu-sankhya)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/gpu-sankhya)](https://bundlephobia.com/package/gpu-sankhya)
+[![license](https://img.shields.io/npm/l/gpu-sankhya.svg)](./LICENSE)
+[![demo](https://img.shields.io/badge/demo-live-brightgreen)](https://athrvk.github.io/gpu-sankhya/)
+
 Parses Indian informal number/currency shorthand — Hinglish (romanised
 Hindi) and Indian-English amount phrases like `sava lakh`, `dedh crore`,
 `2.5L`, `20k`, `2-3 lakh` — into a clean numeric value, with the span,
