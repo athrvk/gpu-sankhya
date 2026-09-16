@@ -1,6 +1,2 @@
-data/
-models/
-__pycache__/
-*.pyc
 node_modules/
 dist/
