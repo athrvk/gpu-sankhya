@@ -56,4 +56,76 @@ export interface WeightsJsonInt8 {
   cls: { w: { shape: number[]; scale: number; data_b64: string }; b: number[] };
 }
 
-export type WeightsJson = WeightsJsonFloat | WeightsJsonInt8;
+/** v2 conv layer entry, float form. */
+export interface ConvLayerJsonFloat {
+  k: number;
+  dilation: number;
+  residual: boolean;
+  w: { shape: number[]; data: number[] };
+  b: { shape: number[]; data: number[] };
+}
+
+/** v2 conv layer entry, int8 form. */
+export interface ConvLayerJsonInt8 {
+  k: number;
+  dilation: number;
+  residual: boolean;
+  w: { shape: number[]; scale: number; data_b64: string };
+  b: number[];
+}
+
+/** Weights JSON version 2, float form: an explicit ordered `conv` layer list
+ * instead of the hard-coded conv1..conv4 fields. See CONTRACT.md section 2. */
+export interface WeightsJsonV2Float {
+  version: 2;
+  charset: string[];
+  classes: string[];
+  embed_dim?: number;
+  channels?: number;
+  embed: { shape: number[]; data: number[] };
+  conv: ConvLayerJsonFloat[];
+  bio: { w: { shape: number[]; data: number[] }; b: { shape: number[]; data: number[] } };
+  cls: { w: { shape: number[]; data: number[] }; b: { shape: number[]; data: number[] } };
+}
+
+/** Weights JSON version 2, int8 form. */
+export interface WeightsJsonV2Int8 {
+  version: 2;
+  quantized: string;
+  charset: string[];
+  classes: string[];
+  embed_dim?: number;
+  channels?: number;
+  embed: { shape: number[]; scale: number; data_b64: string };
+  conv: ConvLayerJsonInt8[];
+  bio: { w: { shape: number[]; scale: number; data_b64: string }; b: number[] };
+  cls: { w: { shape: number[]; scale: number; data_b64: string }; b: number[] };
+}
+
+export type WeightsJson = WeightsJsonFloat | WeightsJsonInt8 | WeightsJsonV2Float | WeightsJsonV2Int8;
+
+export interface CharTag {
+  ch: string;
+  bio: 0 | 1 | 2;
+  bioProb: [number, number, number];
+  cls: string;
+  clsId: number;
+}
+
+export interface Inspection {
+  /** normalized text (see normalizeText()) */
+  text: string;
+  chars: CharTag[];
+  spans: Sankhya[];
+  ms: number;
+}
+
+export interface ModelInfo {
+  version: number;
+  params: number;
+  channels: number;
+  embedDim: number;
+  vocab: number;
+  classes: number;
+  layers: Array<{ k: number; dilation: number; residual: boolean }>;
+}

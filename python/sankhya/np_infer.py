@@ -17,12 +17,12 @@ UNIT_HAZAAR/UNIT_BILLION/UNIT_CRORE when run tight/unpadded).
 
 The fix used everywhere in this repo (Python AND the JS port MUST mirror
 this exactly): before calling forward(), right-pad the char-id array with at
-least PAD_TAIL=16 copies of pad id 0 via pad_ids() -- 16 is comfortably past
-the 4-layer network's receptive field (+/-9 chars) so the padded tail fully
-reproduces the training-time context. Run forward() on the padded array,
-then slice bio_logits/cls_logits back down to the ORIGINAL (unpadded) text
-length before argmax/decode -- the padded tail's outputs are discarded, only
-used to give the real tokens correct right-context.
+least PAD_TAIL=24 copies of pad id 0 via pad_ids() -- 24 is comfortably past
+the widest arch's receptive field (v2's is +/-17 chars) so the padded tail
+fully reproduces the training-time context. Run forward() on the padded
+array, then slice bio_logits/cls_logits back down to the ORIGINAL (unpadded)
+text length before argmax/decode -- the padded tail's outputs are discarded,
+only used to give the real tokens correct right-context.
 """
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ import base64
 
 import numpy as np
 
-PAD_TAIL = 16
+PAD_TAIL = 24
 
 
 def pad_ids(ids, tail: int = PAD_TAIL):
@@ -73,20 +73,25 @@ def softmax(logits: np.ndarray, axis: int = -1) -> np.ndarray:
     return exp / np.sum(exp, axis=axis, keepdims=True)
 
 
-def forward(weights: dict, char_ids: np.ndarray, dilation: int = 2, layers: int = 3):
+def forward(weights: dict, char_ids: np.ndarray, dilation=None, layers=None):
     """char_ids: (L,) int array of char ids (single example, no batch/padding needed
-    -- caller may pass a full length row). Returns (bio_logits (L,3), cls_logits (L,n_cls))."""
-    embed = weights["embed"]  # (V, 16)
-    x = embed[char_ids].T.astype(np.float32)  # (16, L)
+    -- caller may pass a full length row). Returns (bio_logits (L,3), cls_logits (L,n_cls)).
 
-    x = _relu(_conv1d(x, weights["conv1"]["w"], weights["conv1"]["b"], padding=1, dilation=1))
-    x = _relu(_conv1d(x, weights["conv2"]["w"], weights["conv2"]["b"], padding=2, dilation=1))
-    pad3 = dilation * (3 - 1) // 2
-    x = _relu(_conv1d(x, weights["conv3"]["w"], weights["conv3"]["b"], padding=pad3, dilation=dilation))
-    if layers == 4:
-        dilation4 = 4
-        pad4 = dilation4 * (3 - 1) // 2
-        x = _relu(_conv1d(x, weights["conv4"]["w"], weights["conv4"]["b"], padding=pad4, dilation=dilation4))
+    `dilation`/`layers` are accepted-but-ignored (kept for one release so old
+    call sites don't break) -- the arch is now fully described by
+    weights["conv"], an ordered list of {k, dilation, residual, w, b}.
+    """
+    embed = weights["embed"]  # (V, E)
+    x = embed[char_ids].T.astype(np.float32)  # (E, L)
+
+    for layer in weights["conv"]:
+        k = layer["k"]
+        d = layer["dilation"]
+        pad = d * (k - 1) // 2
+        y = _relu(_conv1d(x, layer["w"], layer["b"], padding=pad, dilation=d))
+        if layer["residual"]:
+            y = y + x
+        x = y
 
     # x: (C, L) -> (L, C)
     xt = x.T
@@ -95,20 +100,46 @@ def forward(weights: dict, char_ids: np.ndarray, dilation: int = 2, layers: int 
     return bio_logits, cls_logits
 
 
+def _v1_conv_specs(obj):
+    """v1 file -> ordered list of (json_key, k, dilation, residual)."""
+    layers = obj.get("layers", 3)
+    dilation = obj.get("dilation", 2)
+    specs = [("conv1", 3, 1, False), ("conv2", 5, 1, False), ("conv3", 3, dilation, False)]
+    if layers == 4:
+        specs.append(("conv4", 3, 4, False))
+    return specs
+
+
 def load_weights_json(obj: dict) -> dict:
-    """Load a float weights JSON (as written by export.py) into numpy arrays."""
+    """Load a float weights JSON (as written by export.py) into numpy arrays.
+    Accepts both v1 (conv1..conv4 top-level keys) and v2 (weights["conv"]
+    list) files and normalises to {"embed", "conv": [...], "bio", "cls"}."""
     def arr(t):
         return np.array(t["data"], dtype=np.float32).reshape(t["shape"])
 
     out = {"embed": arr(obj["embed"])}
-    names = ["conv1", "conv2", "conv3"] + (["conv4"] if obj.get("layers", 3) == 4 else []) + ["bio", "cls"]
-    for name in names:
-        out[name] = {"w": arr(obj[name]["w"]), "b": arr(obj[name]["b"])}
+    if obj.get("version", 1) >= 2 and "conv" in obj:
+        conv = []
+        for layer in obj["conv"]:
+            conv.append({
+                "k": layer["k"], "dilation": layer["dilation"], "residual": layer["residual"],
+                "w": arr(layer["w"]), "b": arr(layer["b"]),
+            })
+        out["conv"] = conv
+    else:
+        conv = []
+        for key, k, d, residual in _v1_conv_specs(obj):
+            conv.append({"k": k, "dilation": d, "residual": residual, "w": arr(obj[key]["w"]), "b": arr(obj[key]["b"])})
+        out["conv"] = conv
+    out["bio"] = {"w": arr(obj["bio"]["w"]), "b": arr(obj["bio"]["b"])}
+    out["cls"] = {"w": arr(obj["cls"]["w"]), "b": arr(obj["cls"]["b"])}
     return out
 
 
 def load_weights_int8_json(obj: dict) -> dict:
-    """Load an int8-quantized weights JSON and dequantize to float32 numpy arrays."""
+    """Load an int8-quantized weights JSON and dequantize to float32 numpy
+    arrays. Accepts both v1 and v2 files, same normalisation as
+    load_weights_json."""
     def dequant(t):
         raw = base64.b64decode(t["data_b64"])
         arr = np.frombuffer(raw, dtype=np.int8).astype(np.float32).reshape(t["shape"])
@@ -118,7 +149,19 @@ def load_weights_int8_json(obj: dict) -> dict:
         return np.array(t, dtype=np.float32)
 
     out = {"embed": dequant(obj["embed"])}
-    names = ["conv1", "conv2", "conv3"] + (["conv4"] if obj.get("layers", 3) == 4 else []) + ["bio", "cls"]
-    for name in names:
-        out[name] = {"w": dequant(obj[name]["w"]), "b": bias(obj[name]["b"])}
+    if obj.get("version", 1) >= 2 and "conv" in obj:
+        conv = []
+        for layer in obj["conv"]:
+            conv.append({
+                "k": layer["k"], "dilation": layer["dilation"], "residual": layer["residual"],
+                "w": dequant(layer["w"]), "b": bias(layer["b"]),
+            })
+        out["conv"] = conv
+    else:
+        conv = []
+        for key, k, d, residual in _v1_conv_specs(obj):
+            conv.append({"k": k, "dilation": d, "residual": residual, "w": dequant(obj[key]["w"]), "b": bias(obj[key]["b"])})
+        out["conv"] = conv
+    out["bio"] = {"w": dequant(obj["bio"]["w"]), "b": bias(obj["bio"]["b"])}
+    out["cls"] = {"w": dequant(obj["cls"]["w"]), "b": bias(obj["cls"]["b"])}
     return out

@@ -9,7 +9,7 @@
 // output position, which lets V8 keep the whole accumulation in registers
 // and roughly triples throughput over the naive "for tap { for t }" form.
 
-import type { ConvLayer, LoadedWeights, Tensor } from "./weights.ts";
+import type { ConvLayer, HeadLayer, LoadedWeights, Tensor } from "./weights.ts";
 import { PADDED_MAX } from "./charset.ts";
 
 export interface ForwardResult {
@@ -28,11 +28,13 @@ export class Scratch {
   readonly clsBuf: Float32Array;
 
   constructor(weights: LoadedWeights) {
-    const layers = [weights.conv1, weights.conv2, weights.conv3, ...(weights.layers === 4 && weights.conv4 ? [weights.conv4] : [])];
+    const layers = weights.conv;
     const maxC = Math.max(weights.embed.shape[1], ...layers.map((l) => l.w.shape[0]));
+    // Ping-pong pair only needs 2 buffers: conv1dRelu never reads and writes
+    // the same buffer (residual reads the *previous* activation, a
+    // different buffer than the one being written).
     this.buffers = [new Float32Array(maxC * PADDED_MAX), new Float32Array(maxC * PADDED_MAX)];
-    // Max padding across layers this model uses is small (dilation*(k-1)/2, dilation<=4, k<=5) -- 8 is a safe ceiling.
-    const maxPad = 8;
+    const maxPad = layers.length ? Math.max(...layers.map((l) => l.padding)) : 0;
     this.padded = new Float32Array(maxC * (PADDED_MAX + 2 * maxPad));
     this.bioBuf = new Float32Array(weights.bio.w.shape[0] * PADDED_MAX);
     this.clsBuf = new Float32Array(weights.cls.w.shape[0] * PADDED_MAX);
@@ -57,8 +59,6 @@ function conv1dRelu(
   cIn: number,
   L: number,
   layer: ConvLayer,
-  padding: number,
-  dilation: number,
   out: Float32Array,
   padBuf: Float32Array,
 ): number {
@@ -66,6 +66,8 @@ function conv1dRelu(
   if (cInW !== cIn) throw new Error(`channel mismatch: expected ${cIn}, got ${cInW}`);
   const w = layer.w.data;
   const b = layer.b;
+  const padding = layer.padding;
+  const dilation = layer.dilation;
 
   const padded = L + 2 * padding;
   for (let c = 0; c < cIn; c++) {
@@ -121,16 +123,25 @@ function conv1dRelu(
       }
     }
 
-    for (let t = 0; t < L; t++) {
-      const v = out[outBase + t];
-      out[outBase + t] = v > 0 ? v : 0;
+    if (layer.residual) {
+      // residual requires cIn === cOut (same channel, same position of the
+      // layer's own input `x`), added AFTER relu.
+      for (let t = 0; t < L; t++) {
+        const v = out[outBase + t];
+        out[outBase + t] = (v > 0 ? v : 0) + x[outBase + t];
+      }
+    } else {
+      for (let t = 0; t < L; t++) {
+        const v = out[outBase + t];
+        out[outBase + t] = v > 0 ? v : 0;
+      }
     }
   }
   return cOut;
 }
 
 /** Dense matmul: xt (L, C) @ w^T (C, nOut) + b -> (L, nOut), row-major flat into `out`. w is (nOut, C). */
-function headMatmul(xChannelsMajor: Float32Array, cIn: number, L: number, layer: ConvLayer, out: Float32Array): number {
+function headMatmul(xChannelsMajor: Float32Array, cIn: number, L: number, layer: HeadLayer, out: Float32Array): number {
   const [nOut, cInW] = layer.w.shape;
   if (cInW !== cIn) throw new Error(`head channel mismatch: expected ${cIn}, got ${cInW}`);
   const w = layer.w.data;
@@ -173,26 +184,12 @@ export function forward(weights: LoadedWeights, charIds: Int32Array | number[], 
   let cIn = embedDim;
   const padBuf = scratch.paddedBuf();
 
-  let out = scratch.buf(1);
-  cIn = conv1dRelu(x, cIn, L, weights.conv1, 1, 1, out, padBuf);
-  x = out;
-
-  out = scratch.buf(2);
-  cIn = conv1dRelu(x, cIn, L, weights.conv2, 2, 1, out, padBuf);
-  x = out;
-
-  const dilation = weights.dilation;
-  const pad3 = Math.floor((dilation * (3 - 1)) / 2);
-  out = scratch.buf(3);
-  cIn = conv1dRelu(x, cIn, L, weights.conv3, pad3, dilation, out, padBuf);
-  x = out;
-
-  if (weights.layers === 4 && weights.conv4) {
-    const dilation4 = 4;
-    const pad4 = Math.floor((dilation4 * (3 - 1)) / 2);
-    out = scratch.buf(4);
-    cIn = conv1dRelu(x, cIn, L, weights.conv4, pad4, dilation4, out, padBuf);
+  let bufIdx = 1;
+  for (const layer of weights.conv) {
+    const out = scratch.buf(bufIdx);
+    cIn = conv1dRelu(x, cIn, L, layer, out, padBuf);
     x = out;
+    bufIdx++;
   }
 
   headMatmul(x, cIn, L, weights.bio, scratch.bioBuf);
