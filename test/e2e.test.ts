@@ -45,6 +45,17 @@ test("2-3 lakh", () => {
   assert.deepEqual(r[0].range, [200000, 300000]);
 });
 
+test("unnasi", () => {
+  // raw model output tags "unnasi" B I I O I O -- two low-confidence O's
+  // (at positions 3 and 5) split what should be one CARD_79 span
+  // mid-word; extendWordIntegrityBio merges the whole letter run back
+  // into a single span since every char raw-predicts CARD_79.
+  const r = parse("unnasi");
+  assert.equal(r.length, 1);
+  assert.equal(r[0].span, "unnasi");
+  assert.equal(r[0].value, 79);
+});
+
 test("das hazaar crore", () => {
   // Similarly recovered by class-repair's letter-run majority vote/fallback.
   const r = parse("das hazaar crore");

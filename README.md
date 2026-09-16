@@ -303,6 +303,15 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   `UNIT_LAKH`). A one-character symbol unit (`k`/`K`/`l`/`L`) is additionally
   only valid when the next character isn't a letter, so `"20k logon"`
   keeps its `k` but `"10 km"`'s `k` doesn't survive alone either.
+  Before that drop check runs, a BIO repair pass looks at the letter-word's
+  *raw* per-character classes: if they unambiguously agree on one word
+  class (trusting only direct evidence — a same-class run of 3+ characters,
+  or a short stray adopting a qualifying neighbour's class, never a diffuse
+  whole-run majority vote alone), the span's BIO is extended to cover the
+  whole word instead of being left partial — this also re-merges a span
+  that a low-confidence internal `O` gap had split in two (e.g. `"unnasi"`
+  raw-tagged `B I I O I O`, all six characters `CARD_79`, becomes one span
+  `"unnasi"` = 79 instead of dropping).
 - **Bare-digits gate**: a span whose only meaningful tokens are digits (no
   unit/prefix/cardinal word at all) with no detected currency marker is
   dropped only when it's short and ungrouped (≤4 digits, no comma — route

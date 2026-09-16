@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { decodeSpans, repairClasses, repairWordIntegrity, letterRuns } from "../src/decode.ts";
+import { decodeSpans, repairClasses, repairWordIntegrity, letterRuns, extendWordIntegrityBio } from "../src/decode.ts";
 import { CLASS_TO_ID, CLASSES } from "../src/classes.ts";
 import { evaluate } from "../src/core.ts";
 
@@ -303,6 +303,43 @@ test("R2: word integrity -- a whole-run single-char symbol unit is kept", () => 
   const cls = [cid("DIGITS"), cid("DIGITS"), cid("UNIT_HAZAAR")];
   const out = repairWordIntegrity(text, 0, text.length, cls, letterRuns(text));
   assert.equal(CLASSES[out[2]], "UNIT_HAZAAR");
+});
+
+test("extendWordIntegrityBio: merges a run split by internal O gaps when raw classes are unanimous", () => {
+  // synthetic 6-char word, all raw chars CARD_79, BIO B I I O I O (two
+  // low-confidence O's split what should be one span mid-word) -- since
+  // every char in the run raw-predicts the SAME word class, the whole
+  // run's BIO is extended/merged into a single span.
+  const text = "unnasi";
+  const CARD_79 = cid("CARD_79");
+  const bio = [1, 2, 2, 0, 2, 0];
+  const cls = new Array(6).fill(CARD_79);
+  const out = extendWordIntegrityBio(bio, cls, letterRuns(text));
+  assert.deepEqual(out, [1, 2, 2, 2, 2, 2]);
+
+  const spans = decodeSpans(text, bio, cls);
+  assert.equal(spans.length, 1);
+  assert.equal(spans[0].start, 0);
+  assert.equal(spans[0].end, 6);
+  assert.equal(spans[0].text, "unnasi");
+  assert.deepEqual(spans[0].tokens.map(([c]) => CLASSES[c]), ["CARD_79"]);
+});
+
+test("extendWordIntegrityBio: disagreeing raw classes across the run are left alone (R2 still drops)", () => {
+  // counter-case: same shape (6-char run, partial BIO coverage) but the
+  // run's RAW classes disagree -- first 3 chars CARD_79, rest O -- so no
+  // unanimous word class exists and the run is left alone; the existing
+  // R2 drop behaviour still applies (span drops entirely).
+  const text = "unnasi";
+  const CARD_79 = cid("CARD_79");
+  const O = cid("O");
+  const bio = [1, 2, 2, 0, 2, 0];
+  const cls = [CARD_79, CARD_79, CARD_79, O, O, O];
+  const out = extendWordIntegrityBio(bio, cls, letterRuns(text));
+  assert.deepEqual(out, bio);
+
+  const spans = decodeSpans(text, bio, cls);
+  assert.deepEqual(spans, []);
 });
 
 test("R2: word integrity -- 'dedhlakh' joined compound (both sub-runs meaningful) stays untouched", () => {
