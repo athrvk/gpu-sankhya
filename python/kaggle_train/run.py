@@ -19,7 +19,14 @@ any other env var name.
 
 Overrides: pass `--set KEY=VALUE` (repeatable) to change a training config
 default (REPO_URL, GIT_REF, N_TRAIN, N_VAL, LANGS, MIX, CROSS, EPOCHS,
-CHANNELS, LAYERS, DILATION, TRAIN_SEED, VAL_SEED) before push. Kaggle
+CHANNELS, LAYERS, DILATION, TRAIN_SEED, VAL_SEED, MATRIX) before push.
+MATRIX is a comma-separated `arch:channels:seed` list (default "v1:32:0")
+that runs a whole matrix of training configs in one kernel invocation --
+e.g. `--set MATRIX=v1:32:0,v2:32:0,v2:32:1` -- and stages the winning
+run's models/metrics the same way a single-config run would (plus
+`output/matrix.json` / `output/matrix.md` with every entry's numbers).
+CHANNELS/LAYERS/DILATION are still accepted but only matter if MATRIX is
+left at a single legacy-shaped entry. Kaggle
 "script" kernels allow exactly one code_file, so there's nowhere to ship a
 second config file alongside it -- `push` rewrites the literal defaults
 inside the `# === CONFIG START ===` / `# === CONFIG END ===` block of
@@ -48,7 +55,7 @@ CONFIG_KEYS = {
     "REPO_URL": str, "GIT_REF": str, "N_TRAIN": int, "N_VAL": int,
     "LANGS": str, "MIX": str, "CROSS": float, "EPOCHS": int,
     "CHANNELS": int, "LAYERS": int, "DILATION": int,
-    "TRAIN_SEED": int, "VAL_SEED": int,
+    "TRAIN_SEED": int, "VAL_SEED": int, "MATRIX": str,
 }
 
 AUTH_ENV_HINT = (

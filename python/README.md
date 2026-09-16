@@ -124,6 +124,45 @@ python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl \
 # to check the quantized weights specifically
 ```
 
+Besides the overall precision/recall/F1/value_acc, `eval_gold.py` also
+prints a per-category breakdown (digits vs. word-numerals, prefix forms,
+ranges, currency, multi-unit, symbol units like "20k"/"1.5cr", mixed-script
+spans, long spans) and negatives (zero-gold-span examples) with their
+false-positive rate. `--json-out` includes `categories` and `negatives` for
+both per-file and combined results. Pass `--quiet` to suppress the
+missed/spurious/wrong-value/wrong-boundary listings and keep just the
+tables.
+
+### Comparing multiple models/configs (`eval_matrix.py`)
+
+`python -m sankhya.eval_matrix run` evaluates several checkpoints/weights
+files against the gold sets in one process and prints a single comparison
+table (value_acc/F1 per gold file, combined, negatives FP rate) plus a
+per-category table:
+
+```bash
+python -m sankhya.eval_matrix run \
+  --models v1=models_v1_32_s0/sankhya.weights.int8.json \
+           v2=models_v2_32_s0/sankhya.weights.int8.json \
+  --json-out output/eval_matrix.json
+# --gold defaults to every tests/gold*.jsonl file found (language inferred
+# from the filename, e.g. a future tests/gold_mr_deva.jsonl "just works")
+```
+
+A model path ending `.pt` runs the torch checkpoint, `.int8.json` runs the
+quantized JSON weights, and any other `.json` runs the float32 JSON weights.
+
+`python -m sankhya.eval_matrix compare` groups a set of metrics-json files
+(from `eval_gold.py --json-out`, `eval_matrix.py run --json-out`, or a
+Kaggle `matrix.json`/`metrics.json`) by a config label and prints mean ±
+std for combined int8 value_acc/F1 and per-file value_acc, to see seed
+variance:
+
+```bash
+python -m sankhya.eval_matrix compare --runs output/run_seed0.json output/run_seed1.json \
+  --group-key config   # dotted path into each JSON; default "config"
+```
+
 ### Gold results (bundled channels=32 model, torch checkpoint)
 
 | gold set          | examples | spans | precision | recall | F1     | value_acc |
@@ -264,7 +303,31 @@ python -m kaggle_train.run all                # push, then status, then pull
 Override a training default with `--set KEY=VALUE` (repeatable) before
 `push`/`all`, e.g. `--set EPOCHS=30 --set GIT_REF=my-branch`. Valid keys:
 `REPO_URL`, `GIT_REF`, `N_TRAIN`, `N_VAL`, `LANGS`, `MIX`, `CROSS`,
-`EPOCHS`, `CHANNELS`, `LAYERS`, `DILATION`, `TRAIN_SEED`, `VAL_SEED`.
+`EPOCHS`, `CHANNELS`, `LAYERS`, `DILATION`, `TRAIN_SEED`, `VAL_SEED`,
+`MATRIX`.
+
+### Training a matrix of configs
+
+`MATRIX` (default `"v1:32:0"`) is a comma-separated list of
+`arch:channels:seed` entries. The kernel generates the data once, then for
+each entry trains (`--arch --channels --seed --device auto`), exports, and
+evaluates on gold (float32 + int8), writing `output/matrix.json` (every
+entry's val + gold metrics) and `output/matrix.md` (a markdown table,
+printed at the end of the kernel log too). It picks a winning **config**
+(arch:channels) by mean int8 combined gold value_acc across its seeds, and
+within that config the seed with the best val value_acc; that run's
+`models/` and metrics are staged at `output/models/` /
+`output/metrics.json` exactly as a single-config run would be (plus a
+`matrix_winner` field), so `run.py pull` needs no changes:
+
+```bash
+python -m kaggle_train.run push --set MATRIX=v1:32:0,v2:32:0,v2:32:1
+```
+
+`SMOKE=1` (tiny local dry run against a filesystem `REPO_URL`) still works
+and now copies your **working tree** (including uncommitted changes) on
+top of the git clone, not just the committed history — useful when testing
+against in-progress local edits.
 
 Expected wall time: roughly 15-30 minutes on a Kaggle T4/P100 for the
 default 200k-example recipe (vs. ~12 minutes on 4 CPU cores at the same
