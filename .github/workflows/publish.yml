@@ -1,0 +1,64 @@
+# Publishes gpu-sankhya to npm using npm's trusted publishing (OIDC) —
+# no NPM_TOKEN secret is stored or used.
+#
+# One-time setup:
+#   1. Publish the package to npm manually once from a local machine:
+#        npm publish
+#      (trusted publishing can only be configured for a package that
+#      already exists on the registry).
+#   2. On npmjs.com, open the package page -> Settings -> Trusted
+#      publisher, and add a GitHub Actions publisher with:
+#        Organization or user: athrvk
+#        Repository:           gpu-sankhya
+#        Workflow filename:    publish.yml
+#        Environment:          (leave blank)
+#
+# After that, publishing is fully automatic: create a GitHub release
+# with tag vX.Y.Z (matching the version in package.json) and this
+# workflow builds, tests, and publishes with provenance.
+
+name: publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing (OIDC) requires npm >= 11.5.
+      - run: npm install -g npm@latest
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - run: npm test
+
+      - name: Verify release tag matches package.json version
+        if: github.event_name == 'release'
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG_VERSION" ]; then
+            echo "::error::Release tag ($GITHUB_REF_NAME) does not match package.json version (v$PKG_VERSION)."
+            exit 1
+          fi
+
+      # No auth token here: npm authenticates via OIDC trusted publishing.
+      # publishConfig in package.json already sets access=public and
+      # provenance=true.
+      - run: npm publish

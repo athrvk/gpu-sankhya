@@ -294,3 +294,14 @@ npm run size    # gzipped dist/index.js size
 See `demo/index.html` for a minimal textarea + live-results demo that
 imports `dist/index.js` directly (no build step needed beyond `npm run
 build`).
+
+## Releasing
+
+```bash
+npm version patch|minor|major   # bumps package.json and creates a git tag
+git push --follow-tags
+```
+
+Then create a GitHub release from that tag — the `publish` workflow
+builds, tests, and publishes to npm (with provenance) automatically.
+The first release was published manually with `npm publish`.
