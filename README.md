@@ -1,7 +1,7 @@
 # gpu-sankhya
 
 [![npm version](https://img.shields.io/npm/v/gpu-sankhya.svg)](https://www.npmjs.com/package/gpu-sankhya)
-[![bundle size](https://img.shields.io/badge/bundle-27%20KB%20gzipped-blue)](https://www.npmjs.com/package/gpu-sankhya?activeTab=code)
+[![bundle size](https://img.shields.io/badge/bundle-47.2%20KB%20gzipped-blue)](https://www.npmjs.com/package/gpu-sankhya?activeTab=code)
 [![license](https://img.shields.io/npm/l/gpu-sankhya.svg)](./LICENSE)
 [![demo](https://img.shields.io/badge/demo-live-brightgreen)](https://athrvk.github.io/gpu-sankhya/)
 
@@ -21,9 +21,10 @@ never predicts the value directly, so the arithmetic can't drift from the
 grammar (prefix semantics, additive descending units, multiplicative
 ascending units like `das hazaar crore` = 10,000 × 1 crore = 1e11, etc).
 
-Ships with a small (27 KB gzipped) int8-quantized default model inlined
-in the package — `import { parse } from "gpu-sankhya"` works with no
-network fetch. Zero runtime dependencies.
+Ships with a small (47.2 KB gzipped, 80.8 KB raw `dist/index.js`)
+int8-quantized default model inlined in the package — `import { parse }
+from "gpu-sankhya"` works with no network fetch. Zero runtime
+dependencies.
 
 Model training lives in `python/` (a separate, actively-trained
 component); this package is the runtime that loads its exported weights.
@@ -129,6 +130,19 @@ interface Sankhya {
   actually obtained. Result is cached, so repeated calls only probe once.
   `parseBatch`'s `"auto"` backend uses this (not `isWebGPUAvailable()`)
   to decide whether to try the GPU path.
+- **`inspect(text) => Inspection`** — synchronous CPU inspection of the
+  raw model output before decode/repair: `{ text, chars: [{ch, bio,
+  bioProb, cls, clsId}], spans, ms }`, one entry per character with its
+  argmax BIO tag, BIO softmax probability, and predicted class. Useful
+  for debugging misclassifications or building a "what did the model
+  actually see" view (this is what powers the demo's per-character
+  panel); `parse()`'s decoded spans are the thing to use for normal
+  consumption.
+- **`modelInfo() => ModelInfo`** — info about the currently loaded
+  default model: `{ version, params, channels, embedDim, vocab, classes,
+  layers: [{k, dilation, residual}] }`.
+- **`CLASSES`** — the exported array of semantic token class names (the
+  same strings that appear in `Sankhya.classes` and `Inspection.chars[].cls`).
 - **`normalizeText(text) => string`** — the exact normalization
   `parse`/`parseBatch` apply before char-encoding (Unicode NFC, then
   Devanagari digits U+0966-U+096F mapped 1:1 to ASCII `"0"`-`"9"`, then
@@ -156,44 +170,69 @@ interface Sankhya {
 
 ### Why CPU by default
 
-One inference is small — roughly 0.8M multiply-adds through a 4-layer,
-32-channel char CNN — and runs in about 1.5 ms in plain JS. A WebGPU
-dispatch has fixed overhead of a few milliseconds (device/pipeline setup,
-buffer upload, queue submit, readback), which dwarfs that per-string cost.
-So the GPU only pays off once you're amortizing that overhead over a
-batch — hundreds of strings at once — which is exactly what `parseBatch`
-does with `backend: "auto"`/`"webgpu"`; `parse()` stays CPU-only and
-synchronous on purpose.
+One inference is small — a 5-layer, 48-channel dilated/residual char
+CNN, 39,579 parameters — and `parse()` runs in about 3.6 ms p50 (60-char
+input) in plain JS; `parseBatch` on CPU averages about 4.0 ms/string over
+500 strings. A WebGPU dispatch has fixed overhead of a few milliseconds
+(device/pipeline setup, buffer upload, queue submit, readback), which
+dwarfs that per-string cost. So the GPU only pays off once you're
+amortizing that overhead over a batch — hundreds of strings at once —
+which is exactly what `parseBatch` does with `backend: "auto"`/`"webgpu"`;
+`parse()` stays CPU-only and synchronous on purpose.
 
-The WebGPU path has been verified on a real GPU in desktop Chrome: on the
-demo page's batch benchmark (500 varied strings) it matches the CPU
-backend span-for-span (500/500) and runs about 1.6x faster. The demo's
-benchmark re-runs that comparison on every click, so any regression shows
-up as a mismatch count rather than a silent wrong answer.
+The WebGPU path's plain (non-residual) conv layers have been verified on
+a real GPU in desktop Chrome, matching the CPU backend span-for-span on
+the demo page's batch benchmark. The current shipped model (arch `v2`)
+adds a residual connection (`y = relu(conv(x)) + x`) on four of its five
+layers; the WGSL shader's residual path is covered by unit tests that
+check its structure but has not yet been re-verified against a real GPU
+adapter in a browser — run the demo's batch benchmark yourself and check
+for a 0 mismatch count before relying on it. The demo's benchmark re-runs
+the CPU/WebGPU comparison on every click, so any regression shows up as a
+mismatch count rather than a silent wrong answer.
 
 ## Accuracy
 
-The bundled default model: 18,811 parameters, 4 conv layers (kernel sizes
-3/5/3/3, dilations 1/1/2/4, 32 channels), 16-dim char embeddings over a
-114-character vocab (union of the `hi_latn` and `hi_deva` packs). Trained
-20 epochs (~12 minutes on 4 CPU cores) on 200,000 synthetic examples
-generated from both language packs' grammars, mixed 0.55/0.45 with a 10%
-cross-pack share (see `python/README.md`).
+The bundled default model (arch `v2`): 39,579 parameters, 5 conv layers
+over 16-dim char embeddings — a plain kernel-5 layer, then four residual
+kernel-3 layers with dilations 1/2/4/8 (`y = relu(conv(x)) + x`), 48
+channels, ±17-character receptive field — over a 114-character vocab
+(union of the `hi_latn` and `hi_deva` packs), 120 output classes. Trained
+20 epochs on 200,000 synthetic examples generated from both language
+packs' grammars, mixed 0.55/0.45 with a 10% cross-pack share, plus
+out-of-vocab "unk noise" augmentation so the model has actually seen
+`<unk>` characters (emoji, CJK, Cyrillic, other symbols) during training
+(see `python/README.md`). An older `v1` preset (the previously shipped
+4-layer, non-residual, 32-channel stack) is still loadable by both the
+Python and JS runtimes for anyone using older exported weights.
 
 On synthetic validation data (drawn from the same generator/templates as
-training): 0.92 value accuracy. This number is optimistic — it's testing
+training): 0.932 value accuracy. This number is optimistic — it's testing
 the model on its own distribution.
 
 On two hand-written gold sets, written independently of the generator —
-`python/tests/gold.jsonl` (romanised Hindi, 180 sentences / 161 spans) and
-`python/tests/gold_deva.jsonl` (Devanagari Hindi, 166 sentences / 141
+`python/tests/gold.jsonl` (romanised Hindi, 184 sentences / 168 spans)
+and `python/tests/gold_deva.jsonl` (Devanagari Hindi, 169 sentences / 141
 spans) — evaluated against the shipped int8-quantized weights:
 
 | gold set | examples | spans | value accuracy | span precision | span recall | span F1 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| gold.jsonl (romanised) | 180 | 161 | 0.9441 | 0.9222 | 0.9565 | 0.9390 |
-| gold_deva.jsonl (Devanagari) | 166 | 141 | 0.9645 | 0.9580 | 0.9716 | 0.9648 |
-| combined | 346 | 302 | 0.9536 | 0.9387 | 0.9636 | 0.9510 |
+| gold.jsonl (romanised) | 184 | 168 | 0.9515 | 0.8971 | 0.9515 | 0.9235 |
+| gold_deva.jsonl (Devanagari) | 169 | 141 | 0.9861 | 0.9662 | 0.9931 | 0.9795 |
+| combined | 353 | 309 | 0.9676 | 0.9288 | 0.9709 | 0.9494 |
+
+Negatives (zero-gold-span examples, 55 total): 4 false positives (7.3%).
+Per-category value accuracy: digits 0.977, words 0.964, prefix 0.948,
+range 0.917, currency 0.979, multi_unit 1.0, symbol_unit 1.0,
+mixed_script 1.0, long 0.75.
+
+Compared to the previously shipped `v1` model (0.9441 / 0.9645 / 0.9536
+combined value acc, F1 0.9510, 2/55 negatives false positives): this
+model gains about 1.4 points of value accuracy and is materially more
+robust to input containing characters outside its training vocabulary,
+at the cost of slightly lower span precision — it produces a few more
+spurious spans on unfamiliar words. That's a known, measured trade-off,
+not an oversight.
 
 **The gold numbers are the ones to trust.** Known miss categories, in rough
 order of frequency:
@@ -215,7 +254,7 @@ from `python/` (see `python/README.md`).
    Devanagari digits U+0966-U+096F mapped to ASCII `"0"`-`"9"`, then
    lowercased — byte-identical to the Python reference) and char-encoded
    against the model's vocab (unknown chars map to `<unk>`).
-2. A 4-layer dilated conv1d stack (see Accuracy above) produces, per
+2. A dilated/residual conv1d stack (see Accuracy above) produces, per
    character, a 3-way BIO logit (O/B/I) and a class logit over the
    semantic token vocabulary (prefix words, cardinals, units, digits,
    separators, misc).
@@ -250,9 +289,9 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   on the resulting token sequence.
 
 One more detail that matters more than it looks like it should: the
-runtime right-pads the character-id array with 16 pad tokens before
+runtime right-pads the character-id array with 24 pad tokens before
 running the forward pass (mirroring `python/sankhya/np_infer.py`'s
-`pad_ids`/`PAD_TAIL=16`), because training always right-pads every
+`pad_ids`/`PAD_TAIL=24`), because training always right-pads every
 example to the model's max length the same way. Running a short, tightly
 cropped input (e.g. the bare 4 characters of `"2.5L"`) without that
 padding measurably corrupts predictions — the model was never trained on
@@ -296,7 +335,10 @@ outputs are discarded; only the real characters' predictions are used.
   (`test/fixtures/parity.jsonl`, `decoded.jsonl` — see
   `python/README.md`'s "Ship to the npm package" section).
 - `bench/` — `parse()`/`parseBatch()` latency benchmarks.
-- `demo/` — a minimal textarea + live-results HTML demo.
+- `demo/` — an interactive demo: live parse as you type, a per-character
+  model-internals view (`inspect()`), batch benchmark controls (CPU vs
+  WebGPU), a raw-JSON view of results, a theme toggle, and shareable
+  state via URL hash.
 - `python/sankhya/` — `classes.py` (shared class vocabulary), `core.py`
   (the deterministic arithmetic core), `langs/` (language packs, e.g.
   `hi_latn.py`), `noise_latn.py` (typo/spelling-variance injection),
@@ -337,9 +379,11 @@ npm run bench   # parse() and parseBatch() latency
 npm run size    # gzipped dist/index.js size
 ```
 
-See `demo/index.html` for a minimal textarea + live-results demo that
-imports `dist/index.js` directly (no build step needed beyond `npm run
-build`).
+See `demo/index.html` for the full interactive demo (live parse,
+per-character model view, benchmark controls, JSON view, theme toggle,
+shareable hash) — it imports `dist/index.js` directly (no build step
+needed beyond `npm run build`). Live at
+https://athrvk.github.io/gpu-sankhya/.
 
 ## Releasing
 

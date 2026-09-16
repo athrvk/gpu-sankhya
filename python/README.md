@@ -13,8 +13,10 @@ Everything below is run from inside `python/`.
 pip install torch numpy onnx onnxruntime
 ```
 
-CPU-only torch is fine — training the current multi-pack default model
-(18,811 params) takes about 12 minutes on 4 CPU cores for 200k examples.
+CPU-only torch is fine — training the current shipped multi-pack default
+model (arch `v2`, channels 48, 39,579 params) takes roughly 2x as long as
+the previous `v1:32` model's ~12 minutes on 4 CPU cores for 200k examples
+(a Kaggle GPU run of the same config is ~3 minutes).
 
 ## Generate data
 
@@ -67,16 +69,26 @@ passed to `sankhya.generator` (0 disables).
 python -m sankhya.train \
   --train data/train.jsonl --val data/val.jsonl \
   --epochs 20 --batch 128 --lr 3e-3 \
-  --channels 32 --layers 4 --dilation 2 \
+  --arch v2 --channels 48 --seed 0 \
   --lang hi_latn,hi_deva \
   --out models/
 ```
 
-This is the exact recipe used for the bundled default weights: 4 conv
-layers (kernel sizes 3/5/3/3, dilations 1/1/2/4), 32 channels, 16-dim char
-embeddings over the 114-character `hi_latn,hi_deva` union vocab — 18,811
-parameters total. Writes `models/sankhya.pt` (a torch checkpoint carrying
-`vocab`, `classes`, `dilation`, `channels`, `layers`, `state_dict`).
+This is the exact recipe used for the bundled default weights: arch `v2`
+(`sankhya.model.ARCHS["v2"]`) is 5 conv layers over 16-dim char
+embeddings — a plain kernel-5 layer, then four residual kernel-3 layers
+(`y = relu(conv(x)) + x`) with dilations 1/2/4/8 — at 48 channels, over
+the 114-character `hi_latn,hi_deva` union vocab: 39,579 parameters total.
+Writes `models/sankhya.pt` (a torch checkpoint carrying `vocab`,
+`classes`, `arch`, `channels`, `state_dict`).
+
+`--arch` selects a preset from `sankhya.model.ARCHS` (`v1`: the older
+4-layer, non-residual, kernel 3/5/3/3, dilation 1/1/2/4 stack; `v2`: the
+5-layer residual stack above). Both remain loadable by every runtime
+(torch, numpy reference, JS CPU, JS WebGPU) regardless of which is
+shipped — weights JSON version 2 carries the arch spec, so old `v1`
+weights keep working. The legacy `--layers`/`--dilation` flags still work
+and reconstruct the `v1` shape for old call sites.
 
 `--lang` accepts a comma-separated pack list; when more than one pack is
 given, `train.py` builds the charset as the multi-pack union
@@ -85,10 +97,18 @@ this matters most for `hi_deva`, whose Devanagari characters would
 otherwise all collapse to `<unk>` if the charset were built from a single
 (e.g. `hi_latn`-only) pack.
 
-A channels=48 variant was also trained and compared on gold: it scored
-marginally higher val value_acc (0.929 vs 0.919) but a *lower* combined
-gold span F1 (0.942 vs 0.953) at ~1.9x the parameters (35,691), so
-channels=32 remains the shipped default.
+`--unk-noise FLOAT` (also read by `sankhya.generator`, see above) tunes
+the out-of-vocab noise augmentation rate; the shipped model was trained
+with the generator's default `P_UNK=0.12` so the `<unk>` embedding
+actually gets gradient signal.
+
+A sweep across `arch`/`channels`/`seed` (see "Comparing multiple
+models/configs" and the Kaggle matrix below) is how `v2`/48 channels was
+chosen over `v1`/32 and other configs — always compare by **mean int8
+combined gold value_acc over >= 3 seeds**, not a single run: seed-to-seed
+spread is +/-1-2 points, so a single lucky or unlucky seed is not a
+reliable signal. `--seed` sets the training seed (with deterministic
+cuDNN, a given seed reproduces the same result).
 
 Other flags: `--label-smoothing`, `--grad-clip`, `--num-train` (subsample
 the training set).
@@ -115,9 +135,10 @@ vs. the torch model) before writing, so a broken export fails loudly.
 
 ## Evaluate on gold
 
-The hand-written gold sets (`tests/gold.jsonl`, 180 sentences / 161 spans,
-romanised; `tests/gold_deva.jsonl`, 166 sentences / 141 spans, Devanagari)
-are the only numbers to trust for real-world quality — synthetic validation
+The hand-written gold sets (`tests/gold.jsonl`, 184 sentences / 168 spans,
+romanised; `tests/gold_deva.jsonl`, 169 sentences / 141 spans, Devanagari
+— both grew by 7 foreign-character examples exercising the `<unk>`-noise
+training) are the only numbers to trust for real-world quality — synthetic validation
 accuracy is optimistic because it's drawn from the same generator/templates
 the model was trained on. `--gold` accepts multiple files; per-file and
 combined metrics are printed.
@@ -175,29 +196,63 @@ python -m sankhya.eval_matrix compare --runs output/run_seed0.json output/run_se
   --group-key config   # dotted path into each JSON; default "config"
 ```
 
-### Gold results (bundled channels=32 model, torch checkpoint)
+### Gold results (bundled `v2`/48-channel model, int8 JSON weights — what the JS runtime ships)
+
+```
+python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl \
+  --weights-json ../src/data/default-weights.json --int8
+```
 
 | gold set          | examples | spans | precision | recall | F1     | value_acc |
 |--------------------|---------:|------:|----------:|-------:|-------:|----------:|
-| gold.jsonl          |      180 |   161 |    0.9222 | 0.9565 | 0.9390 |    0.9441 |
-| gold_deva.jsonl      |      166 |   141 |    0.9583 | 0.9787 | 0.9684 |    0.9645 |
-| combined             |      346 |   302 |    0.9389 | 0.9669 | 0.9527 |    0.9536 |
+| gold.jsonl          |      184 |   168 |    0.8971 | 0.9515 | 0.9235 |    0.9515 |
+| gold_deva.jsonl      |      169 |   141 |    0.9662 | 0.9931 | 0.9795 |    0.9861 |
+| combined             |      353 |   309 |    0.9288 | 0.9709 | 0.9494 |    0.9676 |
 
-int8-quantized JSON weights (what the JS runtime actually ships):
+Negatives: 55 examples, 4 false positives (7.3%). Miss summary: 0 missed,
+13 spurious, 1 wrong value, 9 wrong boundary. Per-category value_acc:
+digits 0.977, words 0.964, prefix 0.948, range 0.917, currency 0.979,
+multi_unit 1.0, symbol_unit 1.0, mixed_script 1.0, long 0.75.
 
-| gold set          | examples | spans | precision | recall | F1     | value_acc |
-|--------------------|---------:|------:|----------:|-------:|-------:|----------:|
-| gold.jsonl          |      180 |   161 |    0.9222 | 0.9565 | 0.9390 |    0.9441 |
-| gold_deva.jsonl      |      166 |   141 |    0.9580 | 0.9716 | 0.9648 |    0.9645 |
-| combined             |      346 |   302 |    0.9387 | 0.9636 | 0.9510 |    0.9536 |
+For comparison, the previously shipped `v1`/32-channel model scored
+0.9441 (romanised) / 0.9645 (Devanagari) / 0.9536 (combined) value_acc,
+0.9510 combined F1, 2/55 (3.6%) negatives false positives on the older
+346-example gold set. `v2` gains about 1.4 points of combined value_acc
+and handles unfamiliar (out-of-vocab) characters much better, at a small
+cost in span precision (a few more spurious spans on unfamiliar words) —
+see the sweep evidence below for why `v2`/48 was chosen.
 
-Known miss categories (24 misses, torch, combined gold): unusual typos
-("croer", "five and a half crore" without a unit-noun boundary marker),
-possessive apostrophes ("do lakh's"), long multi-term/mixed-numeral
-constructs ("three n half lakh", "50M"), multi-number range phrases
-("तीस पैंतीस हज़ार", "paanch se sadhe saat lakh"), and occasional spurious
-spans or off-by-a-word boundaries on unfamiliar surrounding words
-("mil", "poora", "raato raat").
+Known miss categories: unusual typos ("croer", "five and a half crore"
+without a unit-noun boundary marker), possessive apostrophes
+("do lakh's"), long multi-term/mixed-numeral constructs ("three n half
+lakh", "50M"), multi-number range phrases ("तीस पैंतीस हज़ार", "paanch se
+sadhe saat lakh"), and occasional spurious spans or off-by-a-word
+boundaries on unfamiliar surrounding words ("mil", "poora", "raato raat").
+
+### Sweep evidence: why `v2`/48 channels is shipped
+
+Config/seed sweeps were run on the Kaggle GPU matrix kernel (deterministic
+cuDNN, int8 combined gold value_acc on the older 346-example gold set,
+before the `<unk>`-noise generator change):
+
+| config      | seed 0 | seed 1 | seed 2 | mean  |
+|-------------|-------:|-------:|-------:|------:|
+| v1:32       | 0.940  | 0.934  | 0.934  | 0.936 |
+| v2:32       | 0.947  | 0.957  | 0.944  | 0.949 |
+
+(the previously *shipped* `v1:32` weights, at 0.954, were a lucky seed —
+0.936 is the honest mean for that config.) `v2:48` across five seeds:
+0.950 / 0.957 / 0.964 / 0.944 / 0.940 (mean 0.951). After adding
+`<unk>`-noise augmentation, `v2:48` seeds 0-2 on the newer 353-example
+gold set scored 0.968 / 0.948 / 0.951.
+
+**The rule this implies, and what `eval_matrix.select_matrix_winner` /
+the Kaggle MATRIX kernel actually do:** pick the winning **config**
+(arch:channels) by highest **mean** int8 combined gold value_acc across
+its seeds (seed-to-seed spread is +/-1-2 points, so never compare configs
+by a single seed); within the winning config, pick the **seed** by val
+value_acc within a 0.005 tie band, then higher int8 combined gold F1,
+then lower negatives false-positive rate.
 
 ## Ship to the npm package
 
@@ -282,9 +337,14 @@ above, runs fine on Colab's CPU runtime).
 
 `python/kaggle_train/` wraps a Kaggle "script" kernel that runs the full
 multi-pack recipe above (`--lang hi_latn,hi_deva --mix 0.55,0.45 --cross
-0.10`, 200k train / 6k val, `--epochs 20 --channels 32 --layers 4
---dilation 2`) on a Kaggle GPU, then evaluates on both gold sets and
-stages `models/` + `metrics.json` for download.
+0.10`, 200k train / 6k val, 20 epochs, batch 128, lr 3e-3) on a Kaggle
+GPU, then evaluates on both gold sets and stages `models/` +
+`metrics.json` for download. The default `MATRIX` (below) trains
+`arch:channels:seed` configs — the shipped default is `v2:48`; legacy
+`CHANNELS`/`LAYERS`/`DILATION` overrides still exist for the non-MATRIX
+single-run path (which defaults to the `v1` arch shape). Training on the
+GPU takes about 3 minutes per model for this recipe (vs. roughly 12
+minutes on 4 CPU cores for `v1:32`, about 2x that for `v2:48` on CPU).
 
 ### Prerequisites
 

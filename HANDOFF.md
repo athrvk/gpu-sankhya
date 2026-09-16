@@ -11,13 +11,33 @@ unmerged work is on branch `claude/busy-tesla-nt8ytr` (this file and
   Auto-publishes when `package.json` version changes on `master`
   (`.github/workflows/publish.yml`, npm trusted publishing, no token).
 - **Demo**: https://athrvk.github.io/gpu-sankhya/ (deploys on push to
-  master via `.github/workflows/pages.yml`). Its batch benchmark compares
-  WebGPU vs CPU span-for-span; last run 500/500 match, ~1.5x speedup.
-- **Model**: 4-layer dilated char CNN, 32 ch, 18,811 params, vocab 114.
-  Gold (int8, what ships): Hinglish value acc 0.944 / span F1 0.939;
-  Devanagari 0.965 / 0.965. JS and Python agree on all 346 gold texts
-  (`test/fixtures/parity.jsonl`, `decoded.jsonl`).
-- **Tests**: `npm test` (63) at root; `python -m pytest tests/` (65) in
+  master via `.github/workflows/pages.yml`), rewritten for live parse, a
+  per-character model-internals view (`inspect()`), batch benchmark
+  controls, a JSON view, a theme toggle, and shareable state via URL
+  hash. Its batch benchmark compares WebGPU vs CPU span-for-span; the
+  residual layers in arch `v2` (now shipped) have not been re-verified
+  on a real GPU adapter since the model changed — see Known misses.
+- **Model**: arch `v2`, 5 conv layers over 16-dim char embeddings — a
+  plain k5 layer, then four residual k3 layers (dilations 1/2/4/8,
+  `y = relu(conv(x)) + x`) — 48 channels, 39,579 params, vocab 114, 120
+  classes, ±17-char receptive field. int8 bundle: `dist/index.js` 80.8 KB
+  raw / 47.2 KB gzipped. An older `v1` preset (4-layer, non-residual, 32
+  ch, 18,811 params) is still loadable by every runtime; weights JSON v2
+  carries the arch spec so both load unchanged. Gold (int8, what ships):
+  romanised value acc 0.9515 / span F1 0.9235; Devanagari 0.9861 /
+  0.9795; combined 0.9676 / 0.9494 (353 examples / 309 spans — grew by 7
+  foreign-character examples this round). Negatives: 4/55 false
+  positives. JS and Python agree on all gold texts (`test/fixtures/
+  parity.jsonl`, `decoded.jsonl`). Trained with a new `--unk-noise`
+  generator augmentation (out-of-vocab chars as O context) so `<unk>` is
+  actually trained, fixing cases like "🙏 sava lakh" returning nothing.
+  Latency: `parse()` p50 (60-char input) ~3.6 ms; `parseBatch` CPU ~4.0
+  ms/string over 500 strings (both roughly 2x the prior `v1` model's,
+  the cost of the larger stack). `PAD_TAIL` is 24 (was 16) on both
+  sides. See `python/README.md`'s sweep-evidence section for why `v2`/48
+  was chosen over `v1`/32 and other configs (mean gold value_acc over
+  >= 3 seeds, not a single seed).
+- **Tests**: `npm test` (69) at root; `python -m pytest tests/` (86) in
   `python/`.
 
 ## Architecture in one paragraph
@@ -39,53 +59,66 @@ identical in `charset.py` and `src/charset.ts`; keep them in sync.
 Strict BIO (span starts only at B), bridge single O gaps, extend digit
 runs, class repair (sub-run smoothing >= 3 chars, punctuation rules,
 Unicode letters+marks count as letters), confidence gate 0.5, and the
-runtime right-pads input with 16 pad tokens to match training padding.
+runtime right-pads input with 24 pad tokens to match training padding.
 
-## Kaggle training (verified on Kaggle 2026-09-16)
+## Kaggle training
 
 `python/kaggle_train/`: `kernel-metadata.json`, `train_kernel.py`
-(clones repo at GIT_REF, generates data, trains on GPU, exports, evals
-both gold files, writes `output/`), `run.py` (push/status/pull/all).
-Smoke-tested locally on CPU only. Needs `KAGGLE_API_TOKEN` in the
-session env (new sessions see env vars; a running session does not).
+(clones repo at GIT_REF, generates data once, then trains/exports/evals a
+MATRIX of `arch:channels:seed` configs on GPU, picks a winner, writes
+`output/`), `run.py` (push/status/pull/all). Needs `KAGGLE_API_TOKEN` in
+the session env (new sessions see env vars; a running session does not).
 From `python/`:
 
-    python -m kaggle_train.run push --set GIT_REF=<branch with --device flag>
-    # GIT_REF=master fails until this branch merges: master's train.py
-    # has no --device flag (Kaggle run v1, 2026-09-16, exit 2).
+    python -m kaggle_train.run push --set GIT_REF=<branch> \
+      --set MATRIX=v2:48:0,v2:48:1,v2:48:2
     python -m kaggle_train.run status --timeout 3600
     python -m kaggle_train.run pull      # weights -> src/data, regen fixtures
     cd .. && npm test                    # must pass before committing weights
 
+Winner selection (`sankhya.eval_matrix.select_matrix_winner`, shared by
+the kernel and `eval_matrix.py`): config (arch:channels) by highest mean
+int8 combined gold value_acc across its seeds; seed within that config by
+val value_acc inside a 0.005 tie band, then int8 combined gold F1, then
+negatives FP rate. Every matrix entry (not just the winner) is staged at
+`output/entries/<arch>_<channels>_s<seed>/`, so picking a different seed
+afterwards doesn't need a full re-run. See `python/README.md`'s "Sweep
+evidence" section for the actual numbers behind the `v2`/48-channel
+choice — seed-to-seed spread is ~1-2 points, so never trust a single
+seed's result.
+
 Gotchas learned: the CLI validates the token by POSTing it in a request
-body, so proxy header injection cannot replace it; the previously
-pasted token returned 401 and is exposed — use a freshly generated one.
-
-Verified run (kernel v3, this branch, default config = shipped recipe):
-clone + pip 10s, data gen 50s, training 172s on the Kaggle GPU (vs ~12
-min on CPU), export + gold eval ~25s; ~4.5 min wall total. Result:
-int8 gold Hinglish 0.938 value acc / 0.927 F1, Devanagari 0.943 /
-0.944, val value acc 0.917 — same recipe as shipped, so this is
-run-to-run variance (a hair below the shipped 0.944 / 0.965). Shipped
-weights were kept. Two fixes were needed to get there: `--device auto`
-exists only on this branch (v1 cloned master and failed), and the bio
-loss class weight had to be created on the training device (v2).
-
-Kernel v4 (N_TRAIN=500000, N_VAL=10000, EPOCHS=30, ~13 min wall):
-int8 gold Hinglish 0.907 value acc / 0.894 F1, Devanagari 0.965 /
-0.958. Devanagari matches shipped but Hinglish drops, so shipped
-weights were kept again. Take-away: more data/epochs alone does not
-beat the shipped run; gold variance across seeds is ~±2-3 points, so
-compare several TRAIN_SEED values before adopting any new weights.
+body, so proxy header injection cannot replace it — use a freshly
+generated token. `--device auto` and cuDNN-deterministic training
+(reproducible seeds) both required fixes in `train.py` that only landed
+on this branch; the bio loss class weight has to be created on the
+training device, not the host device. Wall time for the current default
+recipe (200k/6k examples, 20 epochs) is roughly 3 min/model on a Kaggle
+GPU vs. ~12 min on CPU for `v1:32`, ~2x that on CPU for `v2:48`.
 
 ## Known misses / small follow-ups
 
 - Hinglish: `croer` (typo), `do lakh's` (apostrophe), long ranges like
-  `paanch se sadhe saat lakh`, spurious spans on unfamiliar words.
-- Demo text still says "13 examples" for the benchmark set (22 chips now).
-- Roadmap: Marathi (साडे, सव्वा) and Gujarati (સવા, દોઢ) packs next
+  `paanch se sadhe saat lakh`, spurious spans on unfamiliar words (the
+  "long" category is the weakest at 0.75 value acc; 13 spurious spans and
+  9 wrong-boundary misses combined dominate the miss count on this round's
+  gold eval).
+- `v2` trades a little span precision for its accuracy/robustness gain:
+  4/55 negatives are now false positives (was 2/55 under `v1`).
+
+## Next
+
+- Add languages: Marathi (साडे, सव्वा) and Gujarati (સવા, દોઢ) next
   (cheapest, share prefix semantics); then Bengali, Tamil/Telugu/Kannada.
-  WASM SIMD only if sub-millisecond single-string latency is ever needed.
+- Consider reducing spurious spans: more negative examples in training
+  data, and/or a precision-aware tweak to matrix winner selection (it
+  currently optimizes value_acc first, FP rate only as a late tie-break).
+- WebGPU is verified on a real GPU (desktop Chrome) only for the `v1`
+  arch's plain conv layers. `v2`'s residual path (`y = relu(conv(x)) +
+  x`) in WGSL is unit-tested by structure but has not been checked on an
+  actual GPU adapter — run the demo's batch benchmark and confirm 0
+  mismatches before trusting it in production.
+- WASM SIMD only if sub-millisecond single-string latency is ever needed.
 
 ## Process notes
 
