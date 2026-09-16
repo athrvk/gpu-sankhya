@@ -7,7 +7,8 @@
 #      edits package.json). The workflow compares that version against
 #      what's already on npm and publishes only when it differs.
 #   2. Publish a GitHub release with tag vX.Y.Z matching package.json.
-#   3. Manually via workflow_dispatch.
+#   3. Manually via workflow_dispatch (publishes only if the version is not
+#      on npm yet; otherwise just ensures the tag and GitHub release exist).
 #
 # One-time setup:
 #   1. Publish the package to npm manually once from a local machine:
@@ -64,9 +65,8 @@ jobs:
               exit 1
             fi
             echo "publish=true" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "publish=true" >> "$GITHUB_OUTPUT"
           else
+            # push or workflow_dispatch: publish only if this version is not on npm yet
             PUBLISHED_VERSION="$(npm view gpu-sankhya@$VERSION version 2>/dev/null || true)"
             if [ "$PUBLISHED_VERSION" = "$VERSION" ]; then
               echo "publish=false" >> "$GITHUB_OUTPUT"
@@ -100,15 +100,22 @@ jobs:
         if: steps.decide.outputs.publish == 'true'
         run: npm publish --provenance
 
+      # Tag and release run on push and workflow_dispatch (not on the release
+      # event, where both already exist). Both are idempotent: the tag is only
+      # created if missing, and action-gh-release updates an existing release.
       - name: Tag release commit
-        if: steps.decide.outputs.publish == 'true' && github.event_name == 'push'
+        if: github.event_name != 'release'
         run: |
           VERSION="${{ steps.decide.outputs.version }}"
-          git tag "v$VERSION"
-          git push origin "v$VERSION"
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null 2>&1; then
+            echo "tag v$VERSION already exists on origin"
+          else
+            git tag "v$VERSION"
+            git push origin "v$VERSION"
+          fi
 
       - name: Create GitHub release
-        if: steps.decide.outputs.publish == 'true' && github.event_name == 'push'
+        if: github.event_name != 'release'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.decide.outputs.version }}
