@@ -320,6 +320,13 @@ TEMPLATES = {
         "rupaye chahiye abhi",
         "paise nahi hain mere paas",
         "paisa nahi hai bilkul",
+        "flat #1 dekh liya tha",
+        "item #12 pasand aaya",
+        "room number 4 mein hai",
+        "flat number 4 khali hai",
+        "seat #23 book kar di",
+        "order #45 aa gaya",
+        "table number 9 reserve hai",
     ],
 }
 

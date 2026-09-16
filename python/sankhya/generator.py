@@ -13,6 +13,7 @@ import sys
 from . import classes as C
 from . import core
 from . import noise_latn as NL
+from . import charset as CS
 from .langs import base as langbase
 
 MAX_LEN = 128
@@ -122,6 +123,19 @@ def _sep():
     return ("SEP", " ")
 
 
+def _num_tokens_from_digits_p(pack, rng, digit_str):
+    """Like _num_tokens_from_digits, but for packs that declare a
+    `deva_digit_prob` (hi_deva), renders the digit glyphs in Devanagari
+    with that probability. The token CLASS stays DIGITS/DOT/COMMA either
+    way -- only the surface text changes -- so label computation is
+    unaffected (it happens after normalize_text() maps them back to ASCII)."""
+    p = getattr(pack, "deva_digit_prob", 0.0)
+    if p and rng.random() < p:
+        from . import noise_deva as ND
+        digit_str = ND.to_deva_digits(digit_str)
+    return _num_tokens_from_digits(digit_str)
+
+
 def build_term_tokens(pack, rng, structure, unit_cls=None):
     """Build tokens (list of (cls,text)) for a single Amount, per structure."""
     toks = []
@@ -161,7 +175,7 @@ def build_term_tokens(pack, rng, structure, unit_cls=None):
         if ntok:
             toks.append(ntok)
         else:
-            toks += _num_tokens_from_digits(str(n))
+            toks += _num_tokens_from_digits_p(pack, rng, str(n))
         toks.append(_sep())
         toks.append((u, uword))
 
@@ -180,7 +194,7 @@ def build_term_tokens(pack, rng, structure, unit_cls=None):
         else:
             val = rng.randint(1, 99)
             ds = _digits_str(rng, val)
-        toks += _num_tokens_from_digits(ds) + [_sep(), (u, uword)]
+        toks += _num_tokens_from_digits_p(pack, rng, ds) + [_sep(), (u, uword)]
 
     elif structure == "digits_symbol":
         u, uword, is_symbol = unit_tok()
@@ -197,7 +211,7 @@ def build_term_tokens(pack, rng, structure, unit_cls=None):
             val = round(rng.uniform(1, 50), 2) if rng.random() < 0.5 else rng.randint(1, 500)
             ds = _digits_str(rng, val, decimal=isinstance(val, float) and val != int(val))
         space = " " if rng.random() < 0.5 else ""
-        toks += _num_tokens_from_digits(ds)
+        toks += _num_tokens_from_digits_p(pack, rng, ds)
         if space:
             toks.append(_sep())
         toks.append((u, uword))
@@ -206,7 +220,7 @@ def build_term_tokens(pack, rng, structure, unit_cls=None):
         val = rng.choice([500, 1000, 2000, 50000, 125000, 25000, 999, 15000])
         indian = rng.random() < 0.6
         ds = _digits_str(rng, val, indian_grouping=indian)
-        toks += _num_tokens_from_digits(ds)
+        toks += _num_tokens_from_digits_p(pack, rng, ds)
 
     elif structure == "chain":
         n_terms = rng.choice([2, 3])
@@ -290,6 +304,8 @@ def build_phrase(pack, rng, structure=None, exclude_currency_bare=False):
         pool = _STRUCTURE_WEIGHTS
         if exclude_currency_bare:
             pool = [(s, w) for s, w in pool if s not in ("digits_currency", "bare_card_currency")]
+        if not pack.english_fraction_phrases:
+            pool = [(s, w) for s, w in pool if s != "english_fraction"]
         names = [s for s, _ in pool]
         weights = [w for _, w in pool]
         structure = rng.choices(names, weights=weights)[0]
@@ -360,13 +376,13 @@ def build_range_phrase(pack, rng):
                 high = low + 1
             low_s, high_s = str(low), str(high)
         assert float(high_s) <= 3 * float(low_s) + 1e-9
-        left = _num_tokens_from_digits(low_s)
+        left = _num_tokens_from_digits_p(pack, rng, low_s)
         left = _maybe_repeat_unit(pack, rng, left, u, uword)
         # digit pairs must always use an explicit connector - bare-space
         # juxtaposition ("58 157 hazzar", "1 2 LAKH") only reads naturally
         # between two WORD forms ("do teen lakh", "dedh do lakh").
         connector = _range_connector(pack, rng, allow_juxtaposition=False)
-        right = _num_tokens_from_digits(high_s)
+        right = _num_tokens_from_digits_p(pack, rng, high_s)
         space = _sep() if (rng.random() < 0.5 or not is_symbol) else None
         toks = left + [connector] + right + ([space] if space else []) + [(u, uword)]
         return toks
@@ -443,10 +459,10 @@ def _tokens_to_text_and_labels(tokens):
     return text, cls_per_char
 
 
-def sample_example(pack, rng, max_len=MAX_LEN):
+def sample_example(pack, rng, max_len=MAX_LEN, phrase_pack=None):
     for _attempt in range(50):
         try:
-            ex = _sample_example_once(pack, rng)
+            ex = _sample_example_once(pack, rng, phrase_pack=phrase_pack)
         except AssertionError:
             raise
         except Exception:
@@ -463,9 +479,11 @@ def _assert_prefix_before_number(pack, span_tokens):
     """Any PFX_* token that is not an english_fraction_phrases surface form
     must appear before the NUMBER of its term (Hindi prefixes precede their
     number); only English glue words like "and a half" come after it."""
+    packs = pack if isinstance(pack, (list, tuple)) else [pack]
     eng_forms = set()
-    for forms in pack.english_fraction_phrases.values():
-        eng_forms.update(f.lower() for f in forms)
+    for p in packs:
+        for forms in p.english_fraction_phrases.values():
+            eng_forms.update(f.lower() for f in forms)
 
     num_seen = False
     for cls, text in span_tokens:
@@ -479,15 +497,29 @@ def _assert_prefix_before_number(pack, span_tokens):
             raise AssertionError(f"Hindi prefix after number: {span_tokens}")
 
 
-def _finalize(pack, rng, text, span_defs, is_negative):
+def _finalize(pack, rng, text, span_defs, is_negative, currency_pack=None):
+    _currency_pack = currency_pack if currency_pack is not None else pack
+    # Labels are computed on the NORMALIZED text (NFC + Devanagari-digit ->
+    # ASCII + lowercase); if NFC normalization changes the character length
+    # the char-level offsets would desync, so bail out and let the caller
+    # resample this example instead.
+    normalized = CS.normalize_text(text)
+    if len(normalized) != len(text):
+        raise ValueError("NFC normalization changed text length; resample")
+
     bio = [0] * len(text)
     clsids = [C.CLASS_TO_ID["O"]] * len(text)
     spans = []
     for start, end, toks in span_defs:
         span_tokens = toks
-        _assert_prefix_before_number(pack, span_tokens)
-        result = core.evaluate(span_tokens)
-        currency = core.detect_currency(text, start, end, pack)
+        # core.evaluate() (and the prefix-order check) must see the same
+        # NORMALIZED text the model will be trained/decoded on (NFC +
+        # Devanagari-digit -> ASCII + lowercase) - e.g. a "७२" DIGITS token
+        # must reach core as ASCII "72", never the raw Devanagari glyphs.
+        norm_tokens = [(cls, CS.normalize_text(t)) for cls, t in span_tokens]
+        _assert_prefix_before_number(_currency_pack, norm_tokens)
+        result = core.evaluate(norm_tokens)
+        currency = core.detect_currency(text, start, end, _currency_pack)
         classes_str = " ".join(c for c, _ in span_tokens if c != "SEP")
         spans.append({
             "start": start, "end": end,
@@ -509,7 +541,7 @@ def _finalize(pack, rng, text, span_defs, is_negative):
 
         # round-trip check
         rebuilt = [(cls, "x") for cls, _ in span_tokens]  # text irrelevant, only cls matters for eval
-        check = core.evaluate(span_tokens)
+        check = core.evaluate(norm_tokens)
         if check.value != result.value or check.unit != result.unit or check.range != result.range:
             raise AssertionError("round-trip mismatch")
 
@@ -650,7 +682,13 @@ def _build_negative_text(pack, rng):
     return rng.choice(pack.templates["negatives"])
 
 
-def _sample_example_once(pack, rng):
+def _sample_example_once(pack, rng, phrase_pack=None):
+    """phrase_pack: when set (cross-script mode), the {P}/{P1}/{P2} phrase(s)
+    are built from phrase_pack's lexicon while the template, currency
+    markers, approximators and filler words still come from `pack`; currency
+    detection scans the union of both packs' marker lists."""
+    ppack = phrase_pack if phrase_pack is not None else pack
+    currency_pack = pack if phrase_pack is None else [pack, phrase_pack]
     family_weights = [
         ("casual", 16), ("classifieds", 16), ("news", 13), ("salary", 9),
         ("ranges", 8), ("two_spans", 10), ("bare", 12), ("short_context", 8),
@@ -663,7 +701,7 @@ def _sample_example_once(pack, rng):
     if family == "negatives":
         text = _build_negative_text(pack, rng)
         text = _apply_casing_and_wrap(pack, rng, text)
-        return _finalize(pack, rng, text, [], is_negative=True)
+        return _finalize(pack, rng, text, [], is_negative=True, currency_pack=currency_pack)
 
     # "bare": at least half are TRULY bare - the phrase IS the entire text,
     # nothing else: no chat-fragment wrap, no filler, no punctuation. This is
@@ -681,18 +719,18 @@ def _sample_example_once(pack, rng):
     phrase_cache = {}
 
     if family == "ranges":
-        phrase_cache["P"] = build_range_phrase(pack, rng)
+        phrase_cache["P"] = build_range_phrase(ppack, rng)
     elif family == "two_spans":
-        phrase_cache["P1"], _ = build_phrase(pack, rng, exclude_currency_bare=True)
-        phrase_cache["P2"], _ = build_phrase(pack, rng, exclude_currency_bare=True)
+        phrase_cache["P1"], _ = build_phrase(ppack, rng, exclude_currency_bare=True)
+        phrase_cache["P2"], _ = build_phrase(ppack, rng, exclude_currency_bare=True)
     elif family in ("bare", "short_context"):
         # bias toward short, single-token-ish forms typical of short inputs
         struct = rng.choice(_SHORT_STRUCTURES) if rng.random() < 0.6 else None
-        phrase_cache["P"], structure = build_phrase(pack, rng, structure=struct)
+        phrase_cache["P"], structure = build_phrase(ppack, rng, structure=struct)
         if "{C}" in template and structure in ("digits_currency", "bare_card_currency"):
             force_currency = True
     else:
-        phrase_cache["P"], structure = build_phrase(pack, rng)
+        phrase_cache["P"], structure = build_phrase(ppack, rng)
         if "{C}" in template and structure in ("digits_currency", "bare_card_currency"):
             force_currency = True
 
@@ -732,13 +770,13 @@ def _sample_example_once(pack, rng):
         struct_used = locals().get("structure")
         if struct_used in ("bare_card_currency", "digits_currency"):
             s, e, _ = span_defs[-1]
-            if core.detect_currency(out, s, e, pack) is None:
+            if core.detect_currency(out, s, e, currency_pack) is None:
                 out = out[:e] + " rupaye" + out[e:]
 
     if not truly_bare:
         out = _insert_fillers(pack, rng, out, span_defs)
         out = _apply_casing_and_wrap(pack, rng, out)
-    return _finalize(pack, rng, out, _recompute_offsets(out, span_defs), is_negative=False)
+    return _finalize(pack, rng, out, _recompute_offsets(out, span_defs), is_negative=False, currency_pack=currency_pack)
 
 
 def _recompute_offsets(out, span_defs):
@@ -765,19 +803,65 @@ def generate(pack, n, seed=0, max_len=MAX_LEN):
     return out
 
 
+def generate_multi(packs, weights=None, n=1000, seed=0, cross=0.0, max_len=MAX_LEN):
+    """Multi-pack generation: each example picks one pack by `weights` (default
+    uniform); a `cross` share of examples instead take a template from one
+    pack and build the {P}/{P1}/{P2} phrase(s) from a DIFFERENT pack (currency
+    markers/approximators still come from the template's own pack). With a
+    single pack this reduces to plain `generate()` behaviour."""
+    if len(packs) == 1:
+        return generate(packs[0], n, seed=seed, max_len=max_len)
+    if weights is None:
+        weights = [1.0] * len(packs)
+    rng = random.Random(seed)
+    out = []
+    for _ in range(n):
+        pack = rng.choices(packs, weights=weights)[0]
+        if rng.random() < cross:
+            others = [p for p in packs if p is not pack]
+            phrase_pack = rng.choice(others) if others else None
+            ex = sample_example(pack, rng, max_len=max_len, phrase_pack=phrase_pack)
+            ex["cross_script"] = True
+            if phrase_pack is not None:
+                ex["phrase_lang"] = phrase_pack.id
+        else:
+            ex = sample_example(pack, rng, max_len=max_len)
+            ex["cross_script"] = False
+        out.append(ex)
+    return out
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=1000)
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--out", type=str, default="data/train.jsonl")
-    ap.add_argument("--lang", type=str, default="hi_latn")
+    ap.add_argument("--lang", type=str, default="hi_latn", help="comma-separated pack ids, e.g. hi_latn,hi_deva")
+    ap.add_argument("--mix", type=str, default=None, help="comma-separated weights matching --lang, e.g. 0.55,0.45")
+    ap.add_argument("--cross", type=float, default=0.0, help="share of examples that mix template/phrase across packs")
     args = ap.parse_args(argv)
 
-    pack = langbase.get_pack(args.lang)
-    rng = random.Random(args.seed)
+    lang_ids = [x.strip() for x in args.lang.split(",") if x.strip()]
+    packs = [langbase.get_pack(l) for l in lang_ids]
+
+    if len(packs) == 1:
+        rng = random.Random(args.seed)
+        with open(args.out, "w", encoding="utf-8") as f:
+            for _ in range(args.n):
+                ex = sample_example(packs[0], rng)
+                f.write(json.dumps(ex, ensure_ascii=False) + "\n")
+        print(f"wrote {args.n} examples to {args.out}", file=sys.stderr)
+        return
+
+    if args.mix:
+        weights = [float(x) for x in args.mix.split(",")]
+        assert len(weights) == len(packs), "--mix must match --lang count"
+    else:
+        weights = None
+
+    examples = generate_multi(packs, weights=weights, n=args.n, seed=args.seed, cross=args.cross)
     with open(args.out, "w", encoding="utf-8") as f:
-        for _ in range(args.n):
-            ex = sample_example(pack, rng)
+        for ex in examples:
             f.write(json.dumps(ex, ensure_ascii=False) + "\n")
     print(f"wrote {args.n} examples to {args.out}", file=sys.stderr)
 

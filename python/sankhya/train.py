@@ -12,7 +12,7 @@ import torch
 import torch.nn as nn
 
 from . import classes as C
-from .charset import build_charset
+from .charset import build_charset, normalize_text
 from .langs import base as langbase
 from .model import SankhyaCNN, count_params
 from .decode import decode_spans
@@ -43,7 +43,7 @@ def tensorize(examples, char_to_id, max_len=MAX_LEN):
     mask = np.zeros((n, max_len), dtype=np.float32)
     unk = char_to_id.get("<unk>", 1)
     for i, ex in enumerate(examples):
-        text = ex["text"].lower()
+        text = normalize_text(ex["text"])
         L = min(len(text), max_len)
         for j in range(L):
             chars[i, j] = char_to_id.get(text[j], unk)

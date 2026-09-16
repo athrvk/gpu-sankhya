@@ -34,6 +34,7 @@ from .decode import decode_spans
 from .langs.base import get_pack
 from .train import MAX_LEN, build_char_to_id, load_jsonl
 from . import np_infer
+from .charset import normalize_text
 
 
 def run(weights_path: str, examples: list, lang: str = "hi_latn"):
@@ -51,7 +52,7 @@ def run(weights_path: str, examples: list, lang: str = "hi_latn"):
     decoded_rows = []
 
     for ex in examples:
-        text = ex["text"].lower()[:MAX_LEN]
+        text = normalize_text(ex["text"])[:MAX_LEN]
         L = len(text)
         ids = np_infer.pad_ids(np.array([char_to_id.get(c, unk) for c in text], dtype=np.int64))
         bio_logits, cls_logits = np_infer.forward(weights, ids, dilation=2, layers=layers)

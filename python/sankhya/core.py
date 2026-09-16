@@ -42,6 +42,12 @@ def _merge_numbers(tokens):
         if cls == "SEP":
             continue
         if cls in ("DIGITS", "DOT", "COMMA"):
+            # defensive: labels are computed on normalize_text()'d text, so
+            # DIGITS tokens must already be ASCII 0-9 (Devanagari digits are
+            # mapped before char encoding / labelling ever happens).
+            if cls == "DIGITS":
+                assert text and all(ch in "0123456789" for ch in text), \
+                    f"non-ASCII digit reached core: {text!r}"
             buf += text
             have_num = True
         else:
@@ -203,22 +209,34 @@ def evaluate(tokens: List[Tuple[str, str]]) -> Result:
 
 
 def detect_currency(text: str, start: int, end: int, pack) -> Optional[str]:
-    """Scan up to 4 chars before/after [start,end) for a currency marker from pack."""
-    before = text[max(0, start - 4):start]
+    """Scan up to 4/6 chars before/after [start,end) for a currency marker.
+
+    `pack` may be a single LanguagePack, or a list of packs (multi-lang runs)
+    in which case the union of both packs' marker lists is scanned.
+    """
+    packs = pack if isinstance(pack, (list, tuple)) else [pack]
+
+    before = text[max(0, start - 6):start]
     after = text[end:end + 6]
 
     before_stripped = before.rstrip()
-    for marker in getattr(pack, "currency_markers_before", []):
-        m = marker.rstrip(".").lower()
-        bs = before_stripped.lower()
-        if bs.endswith(marker.lower()) or bs.endswith(m):
-            return "INR"
-
     after_stripped = after.lstrip()
-    for word in getattr(pack, "currency_words_after", []):
-        w = word.lower()
-        a = after_stripped.lower()
-        if a.startswith(w):
-            return "INR"
+
+    for p in packs:
+        for marker in getattr(p, "currency_markers_before", []):
+            m = marker.rstrip(".").lower()
+            bs = before_stripped.lower()
+            if bs.endswith(marker.lower()) or bs.endswith(m):
+                return "INR"
+        for word in getattr(p, "currency_words_after", []):
+            w = word.lower()
+            a = after_stripped.lower()
+            if a.startswith(w):
+                return "INR"
 
     return None
+
+
+def detect_currency_multi(text: str, start: int, end: int, packs) -> Optional[str]:
+    """Explicit multi-pack variant of detect_currency (same behaviour)."""
+    return detect_currency(text, start, end, list(packs))

@@ -13,6 +13,7 @@ from .decode import decode_spans
 from .model import SankhyaCNN
 from .train import load_jsonl, build_char_to_id, MAX_LEN
 from . import np_infer
+from .charset import normalize_text
 
 
 def run_torch(ckpt_path, examples):
@@ -31,7 +32,7 @@ def run_torch(ckpt_path, examples):
     preds = []
     with torch.no_grad():
         for ex in examples:
-            text = ex["text"].lower()[:MAX_LEN]
+            text = normalize_text(ex["text"])[:MAX_LEN]
             L = len(text)
             ids = np_infer.pad_ids([char_to_id.get(c, unk) for c in text])
             t = torch.tensor([ids], dtype=torch.int64)
@@ -56,7 +57,7 @@ def run_json_weights(weights_path, examples, int8=False):
 
     preds = []
     for ex in examples:
-        text = ex["text"].lower()[:MAX_LEN]
+        text = normalize_text(ex["text"])[:MAX_LEN]
         L = len(text)
         ids = np_infer.pad_ids(np.array([char_to_id.get(c, unk) for c in text], dtype=np.int64))
         bio_logits, cls_logits = np_infer.forward(weights, ids, dilation=2, layers=layers)
@@ -68,20 +69,63 @@ def run_json_weights(weights_path, examples, int8=False):
     return preds, classes
 
 
+def _print_metrics(examples, preds, classes, header=""):
+    tp = fp = fn = 0
+    val_correct = val_total = 0
+    for ex, (text, bio_pred, cls_pred, bio_probs) in zip(examples, preds):
+        gold_spans = [(s["start"], s["end"]) for s in ex["spans"]]
+        decoded = decode_spans(text, bio_pred, cls_pred, bio_probs=bio_probs)
+        pred_set = {(d["start"], d["end"]) for d in decoded}
+        pred_by_span = {(d["start"], d["end"]): d for d in decoded}
+        gold_set = set(gold_spans)
+        tp += len(gold_set & pred_set)
+        fp += len(pred_set - gold_set)
+        fn += len(gold_set - pred_set)
+        for sp in ex["spans"]:
+            val_total += 1
+            key = (sp["start"], sp["end"])
+            if key in pred_by_span:
+                toks = [(classes[cid], sub) for cid, sub in pred_by_span[key]["tokens"]]
+                res = core.evaluate(toks)
+                if res.value == sp["value"]:
+                    if "range" in sp and sp.get("range"):
+                        if res.range and list(res.range) == sp["range"]:
+                            val_correct += 1
+                    else:
+                        val_correct += 1
+    prec = tp / (tp + fp) if (tp + fp) else 0.0
+    rec = tp / (tp + fn) if (tp + fn) else 0.0
+    f1 = 2 * prec * rec / (prec + rec) if (prec + rec) else 0.0
+    val_acc = val_correct / val_total if val_total else 0.0
+    print(f"{header} examples={len(examples)} precision={prec:.4f} recall={rec:.4f} f1={f1:.4f} value_acc={val_acc:.4f}")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--gold", default="tests/gold.jsonl")
+    ap.add_argument("--gold", default=["tests/gold.jsonl"], nargs="+",
+                     help="one or more gold jsonl files; per-file metrics are printed too")
     ap.add_argument("--ckpt", default="models/sankhya.pt")
     ap.add_argument("--weights-json", default=None, help="use JSON weights (float) instead of torch ckpt")
     ap.add_argument("--int8", action="store_true", help="use int8 JSON weights (requires --weights-json)")
     args = ap.parse_args(argv)
 
-    examples = load_jsonl(args.gold)
+    gold_files = args.gold if isinstance(args.gold, list) else [args.gold]
+    examples = []
+    file_bounds = []  # (path, start_idx, end_idx) into `examples`
+    for path in gold_files:
+        exs = load_jsonl(path)
+        file_bounds.append((path, len(examples), len(examples) + len(exs)))
+        examples.extend(exs)
 
     if args.weights_json:
         preds, classes = run_json_weights(args.weights_json, examples, int8=args.int8)
     else:
         preds, classes = run_torch(args.ckpt, examples)
+
+    if len(gold_files) > 1:
+        for path, s, e in file_bounds:
+            _print_metrics(examples[s:e], preds[s:e], classes, header=f"[{path}]")
+        print("\n=== combined ===")
 
     tp = fp = fn = 0
     val_correct = val_total = 0
