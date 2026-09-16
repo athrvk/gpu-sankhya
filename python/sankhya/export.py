@@ -173,8 +173,9 @@ def main(argv=None):
         for i, ex in enumerate(val_ex):
             text = ex["text"]
             L = min(len(text), MAX_LEN)
-            row = chars_np[i, :L]
+            row = np_infer.pad_ids(chars_np[i, :L])
             bio_logits, cls_logits = np_infer.forward(weights_np, row, dilation=dilation, layers=layers)
+            bio_logits, cls_logits = bio_logits[:L], cls_logits[:L]
             bio_pred = bio_logits.argmax(-1).tolist()
             cls_pred = cls_logits.argmax(-1).tolist()
             decoded = decode_spans(text, bio_pred, cls_pred)
@@ -196,13 +197,17 @@ def main(argv=None):
         print("WARNING: int8 quantization loses >=0.5% value accuracy")
 
     # cross-check np float forward vs torch forward on a couple examples
+    # (single-text inference, so both sides get the same PAD_TAIL padding
+    # before forward() and are sliced back to the real length before compare)
     with torch.no_grad():
         for i in range(3):
             L = min(len(val_ex[i]["text"]), MAX_LEN)
-            row = chars_np[i, :L]
-            t_bio, t_cls = model(torch.from_numpy(chars_np[i:i+1, :L]))
-            n_bio, n_cls = np_infer.forward(w_float, row, dilation=dilation, layers=layers)
-            d = max(np.abs(t_bio[0].numpy() - n_bio).max(), np.abs(t_cls[0].numpy() - n_cls).max())
+            padded_row = np_infer.pad_ids(chars_np[i, :L])
+            t_bio, t_cls = model(torch.from_numpy(padded_row[None, :]))
+            t_bio, t_cls = t_bio[0, :L], t_cls[0, :L]
+            n_bio, n_cls = np_infer.forward(w_float, padded_row, dilation=dilation, layers=layers)
+            n_bio, n_cls = n_bio[:L], n_cls[:L]
+            d = max(np.abs(t_bio.numpy() - n_bio).max(), np.abs(t_cls.numpy() - n_cls).max())
             print(f"np_infer vs torch example {i} max diff: {d:.6g}")
 
 

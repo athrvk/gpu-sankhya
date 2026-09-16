@@ -32,11 +32,12 @@ def run_torch(ckpt_path, examples):
     with torch.no_grad():
         for ex in examples:
             text = ex["text"].lower()[:MAX_LEN]
-            ids = [char_to_id.get(c, unk) for c in text]
+            L = len(text)
+            ids = np_infer.pad_ids([char_to_id.get(c, unk) for c in text])
             t = torch.tensor([ids], dtype=torch.int64)
             bio_logits, cls_logits = model(t)
-            bio_pred = bio_logits[0].argmax(-1).tolist()
-            cls_pred = cls_logits[0].argmax(-1).tolist()
+            bio_pred = bio_logits[0, :L].argmax(-1).tolist()
+            cls_pred = cls_logits[0, :L].argmax(-1).tolist()
             preds.append((ex["text"], bio_pred, cls_pred))
     return preds, classes
 
@@ -54,10 +55,11 @@ def run_json_weights(weights_path, examples, int8=False):
     preds = []
     for ex in examples:
         text = ex["text"].lower()[:MAX_LEN]
-        ids = np.array([char_to_id.get(c, unk) for c in text], dtype=np.int64)
+        L = len(text)
+        ids = np_infer.pad_ids(np.array([char_to_id.get(c, unk) for c in text], dtype=np.int64))
         bio_logits, cls_logits = np_infer.forward(weights, ids, dilation=2, layers=layers)
-        bio_pred = bio_logits.argmax(-1).tolist()
-        cls_pred = cls_logits.argmax(-1).tolist()
+        bio_pred = bio_logits[:L].argmax(-1).tolist()
+        cls_pred = cls_logits[:L].argmax(-1).tolist()
         preds.append((ex["text"], bio_pred, cls_pred))
     return preds, classes
 

@@ -2,12 +2,46 @@
 
 Kept simple and explicit (loops over kernel taps + matmul) so a JS port can
 mirror it 1:1. Weights come from the JSON export (float or int8-dequantized).
+
+IMPORTANT -- padding parity with training (read this before porting to JS):
+training always right-pads every example to MAX_LEN=128 with char id 0 (the
+"<pad>" embedding, which has non-zero learned features) before running the
+conv stack, so every real character in training saw at least a long run of
+pad-id context to its right. At inference, running the forward pass on a
+SHORT, TIGHTLY-CROPPED input (e.g. just "2.5L", 4 chars, no padding) puts the
+last few real characters at the literal edge of the array, where conv1d's
+zero-padding (numeric 0.0, NOT the id-0 embedding) kicks in instead -- a
+distribution mismatch that measurably corrupts predictions on short/bare
+inputs (verified: "2.5L" tags the "L" as UNIT_LAKH when padded, but as
+UNIT_HAZAAR/UNIT_BILLION/UNIT_CRORE when run tight/unpadded).
+
+The fix used everywhere in this repo (Python AND the JS port MUST mirror
+this exactly): before calling forward(), right-pad the char-id array with at
+least PAD_TAIL=16 copies of pad id 0 via pad_ids() -- 16 is comfortably past
+the 4-layer network's receptive field (+/-9 chars) so the padded tail fully
+reproduces the training-time context. Run forward() on the padded array,
+then slice bio_logits/cls_logits back down to the ORIGINAL (unpadded) text
+length before argmax/decode -- the padded tail's outputs are discarded, only
+used to give the real tokens correct right-context.
 """
 from __future__ import annotations
 
 import base64
 
 import numpy as np
+
+PAD_TAIL = 16
+
+
+def pad_ids(ids, tail: int = PAD_TAIL):
+    """Right-pad a 1-D sequence of char ids with `tail` copies of pad id 0.
+    Accepts a list or a 1-D numpy array; returns the same type. Always pad
+    single-example inference inputs with this before calling forward() --
+    see the module docstring for why this must match training-time padding.
+    """
+    if isinstance(ids, np.ndarray):
+        return np.concatenate([ids, np.zeros(tail, dtype=ids.dtype)])
+    return list(ids) + [0] * tail
 
 
 def _conv1d(x, w, b, padding, dilation=1):

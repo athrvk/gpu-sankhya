@@ -121,6 +121,48 @@ def _repair_letters_run(raw_ids: List[int]) -> List[int]:
     return result
 
 
+def bridge_bio(text: str, bio_ids: List[int]) -> List[int]:
+    """BIO repair (applied before class repair): a single O-tagged char that
+    has B/I immediately before it AND I immediately after it becomes I --
+    bridging a one-char gap inside what should be a single contiguous span.
+    Fixes e.g. "five and a half" where the space right after "five" gets
+    raw-tagged O, and "₹85000" where the "5" right after the currency
+    symbol/first digit gets raw-tagged O.
+    """
+    out = list(bio_ids)
+    n = len(out)
+    for i in range(1, n - 1):
+        if out[i] == 0 and out[i - 1] in (1, 2) and out[i + 1] == 2:
+            out[i] = 2
+    return out
+
+
+def extend_digit_spans(text: str, bio_ids: List[int]) -> List[int]:
+    """BIO repair (applied before class repair, after bridge_bio): if an
+    in-span (B/I) run ends on a digit character and the immediately
+    following character(s) are also digits but raw-tagged O, extend the
+    span (tag them I) through that digit run. Fixes e.g. "15000/month"
+    decoding as just "1500" (dropping the trailing digit).
+    """
+    out = list(bio_ids)
+    n = len(out)
+    i = 0
+    while i < n:
+        if out[i] in (1, 2):
+            j = i
+            while j + 1 < n and out[j + 1] in (1, 2):
+                j += 1
+            if text[j].isdigit():
+                k = j + 1
+                while k < n and out[k] == 0 and text[k].isdigit():
+                    out[k] = 2
+                    k += 1
+            i = j + 1
+        else:
+            i += 1
+    return out
+
+
 def repair_classes(text: str, start: int, end: int, cls_ids: List[int]) -> List[int]:
     """Deterministically repair per-char class predictions within [start, end)
     of a decoded span, using character-type structure rather than the raw
@@ -213,8 +255,16 @@ def decode_spans(
       field (mean over the span of the max BIO prob per char) is computed, and
       spans with confidence < 0.5 are dropped.
 
+    Before spans are found, the raw BIO sequence itself is repaired in two
+    passes (see their docstrings): `bridge_bio` closes single-char O gaps
+    inside a span, then `extend_digit_spans` extends a span forward through
+    a trailing digit run it was cut short of.
+
     Returns list of dicts: {start, end, text, tokens: [(cls_id, substr), ...], confidence}
     """
+    bio_ids = bridge_bio(text, bio_ids)
+    bio_ids = extend_digit_spans(text, bio_ids)
+
     n = len(text)
     spans = []
     start = None

@@ -5,7 +5,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from sankhya import classes as C
-from sankhya.decode import decode_spans, repair_classes, _repair_letters_run
+from sankhya.decode import decode_spans, repair_classes, _repair_letters_run, bridge_bio, extend_digit_spans
 
 O = C.CLASS_TO_ID["O"]
 SEP = C.CLASS_TO_ID["SEP"]
@@ -144,6 +144,80 @@ def test_repair_whitespace_defaults_to_sep():
     raw = [CARD_10, CARD_10, O, UNIT_LAKH, UNIT_LAKH, UNIT_LAKH, UNIT_LAKH]
     repaired = repair_classes(text, 0, len(text), raw)
     assert cnames(repaired, 2, 3) == ["SEP"]
+
+
+def test_bridge_bio_closes_single_char_o_gap():
+    # "five and a half" -- the space right after "five" is raw-tagged O
+    # between two I's; bridge_bio should turn it into I.
+    text = "five and a half"
+    bio = [1, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+    bridged = bridge_bio(text, bio)
+    assert bridged[4] == 2
+    # unaffected elsewhere
+    assert bridged[0] == 1
+    assert bridged[5:] == bio[5:]
+
+
+def test_bridge_bio_does_not_bridge_at_span_edges():
+    # a leading/trailing O should NOT be bridged (only a gap strictly
+    # between a B/I and a following I is bridged).
+    text = "xayz"
+    bio = [0, 1, 2, 0]  # O at index 3 has no I after it -> stays O
+    bridged = bridge_bio(text, bio)
+    assert bridged == bio
+
+
+def test_bridge_bio_currency_digit_gap():
+    # "₹85000" -- the "5" right after the currency symbol/leading digit
+    # raw-tagged O, flanked by I on both sides.
+    text = "₹85000"
+    #        0(sym) 1(8) 2(5) 3(0) 4(0) 5(0)
+    bio = [1, 2, 0, 2, 2, 2]
+    bridged = bridge_bio(text, bio)
+    assert bridged == [1, 2, 2, 2, 2, 2]
+
+
+def test_extend_digit_spans_extends_trailing_digit_run():
+    # "15000/month" -- span currently ends at "1500" (index 3, a digit),
+    # with the final "0" (index 4) raw-tagged O; extend_digit_spans should
+    # pull it into the span since it's a digit immediately following a
+    # digit the span already ends on.
+    text = "15000/month"
+    bio = [1, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0]
+    extended = extend_digit_spans(text, bio)
+    assert extended[:5] == [1, 2, 2, 2, 2]
+    # the "/" after the digit run is not a digit -> not extended further
+    assert extended[5] == 0
+
+
+def test_extend_digit_spans_stops_at_non_digit():
+    # span ends on a digit but next char is not a digit -> no extension
+    text = "20k logon"
+    bio = [1, 2, 0] + [0] * 6
+    extended = extend_digit_spans(text, bio)
+    assert extended == bio
+
+
+def test_extend_digit_spans_does_not_cross_into_new_b():
+    # if the following digit char was already tagged B (start of a NEW
+    # span), extend_digit_spans must not steal it.
+    text = "1000200"
+    bio = [1, 2, 2, 2, 1, 2, 2]  # "1000" then a new span "200" starting with B
+    extended = extend_digit_spans(text, bio)
+    assert extended == bio
+
+
+def test_decode_spans_end_to_end_bridge_and_extend():
+    # combines both BIO repairs end-to-end via decode_spans: "15000/month"
+    # with the trailing "0" mistagged O should decode as a single span
+    # covering the full "15000".
+    text = "15000/month"
+    bio = [1, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0]
+    cls = [DIGITS, DIGITS, DIGITS, DIGITS, DIGITS, O, O, O, O, O, O]
+    spans = decode_spans(text, bio, cls)
+    assert len(spans) == 1
+    assert spans[0]["start"] == 0 and spans[0]["end"] == 5
+    assert spans[0]["text"] == "15000"
 
 
 def test_decode_spans_applies_repair_before_filter():
