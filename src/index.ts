@@ -1,4 +1,4 @@
-import type { Sankhya, ParseOptions, WeightsJson } from "./types.ts";
+import type { Sankhya, ParseOptions, WeightsJson, CharTag, Inspection, ModelInfo } from "./types.ts";
 import { loadWeights, type LoadedWeights } from "./weights.ts";
 import { buildCharToId, encodeChars, makeWindows, normalizeText, MAX_LEN, PADDED_MAX, paddedLength } from "./charset.ts";
 import { forward, softmaxRow, argmaxRow, Scratch } from "./infer-cpu.ts";
@@ -10,9 +10,10 @@ import { CLASSES } from "./classes.ts";
 import { WebGPUBackend, probeWebGPU } from "./infer-webgpu.ts";
 import defaultWeightsJson from "./data/default-weights.json" with { type: "json" };
 
-export type { Sankhya, ParseOptions } from "./types.ts";
+export type { Sankhya, ParseOptions, CharTag, Inspection, ModelInfo } from "./types.ts";
 export { isWebGPUAvailable, probeWebGPU } from "./infer-webgpu.ts";
 export { normalizeText } from "./charset.ts";
+export { CLASSES } from "./classes.ts";
 
 export interface CreateParserOptions {
   weights?: WeightsJson;
@@ -129,6 +130,64 @@ export class Parser {
     return out;
   }
 
+  /** Synchronous CPU inspection: raw argmax BIO/class tags for every
+   * character of the normalized text (before decode repair), plus the same
+   * spans `parse()` would return. Uses the same window/padding logic as
+   * parse(): for texts longer than MAX_LEN, each character is filled from
+   * the first window that covers it. */
+  inspect(text: string): Inspection {
+    const t0 = performance.now();
+    const normalized = normalizeText(text);
+    const windows = makeWindows(normalized.length);
+    const chars: CharTag[] = new Array(normalized.length);
+    const filled = new Array<boolean>(normalized.length).fill(false);
+    for (const win of windows) {
+      const sub = normalized.slice(win.offset, win.offset + win.length);
+      const padLen = paddedLength(sub.length);
+      const ids = encodeChars(sub, this.charToId, this.idsScratch, padLen);
+      const fw = forward(this.weights, ids, this.scratch);
+      for (let t = 0; t < sub.length; t++) {
+        const gi = win.offset + t;
+        if (filled[gi]) continue;
+        filled[gi] = true;
+        const bioId = argmaxRow(fw.bioLogits, t * 3, 3) as 0 | 1 | 2;
+        const probs = new Float32Array(3);
+        softmaxRow(fw.bioLogits, t * 3, 3, probs);
+        const clsId = argmaxRow(fw.clsLogits, t * fw.nCls, fw.nCls);
+        chars[gi] = {
+          ch: sub[t],
+          bio: bioId,
+          bioProb: [probs[0], probs[1], probs[2]],
+          cls: CLASSES[clsId],
+          clsId,
+        };
+      }
+    }
+    const spans = this.parse(text);
+    const ms = performance.now() - t0;
+    return { text: normalized, chars, spans, ms };
+  }
+
+  /** Static info about the loaded model: architecture, parameter count and
+   * vocab/class sizes. */
+  modelInfo(): ModelInfo {
+    const w = this.weights;
+    let params = w.embed.data.length;
+    for (const l of w.conv) params += l.w.data.length + l.b.length;
+    params += w.bio.w.data.length + w.bio.b.length;
+    params += w.cls.w.data.length + w.cls.b.length;
+    const channels = w.conv.length ? Math.max(...w.conv.map((l) => l.w.shape[0])) : w.embed.shape[1];
+    return {
+      version: w.version,
+      params,
+      channels,
+      embedDim: w.embed.shape[1],
+      vocab: w.embed.shape[0],
+      classes: w.classes.length,
+      layers: w.conv.map((l) => ({ k: l.k, dilation: l.dilation, residual: l.residual })),
+    };
+  }
+
   /** Batched parse. Uses WebGPU when requested/available and the batch is
    * large enough to be worthwhile; falls back to CPU otherwise. */
   async parseBatch(texts: string[], opts: ParseOptions = {}): Promise<Sankhya[][]> {
@@ -215,6 +274,16 @@ export function parse(text: string, opts: ParseOptions = {}): Sankhya[] {
  * large (>=32); otherwise runs on CPU. Defaults to CPU. */
 export function parseBatch(texts: string[], opts: ParseOptions = {}): Promise<Sankhya[][]> {
   return getDefault().parseBatch(texts, opts);
+}
+
+/** Inspect a single string on the default parser -- see Parser.inspect(). */
+export function inspect(text: string): Inspection {
+  return getDefault().inspect(text);
+}
+
+/** Info about the default parser's loaded model -- see Parser.modelInfo(). */
+export function modelInfo(): ModelInfo {
+  return getDefault().modelInfo();
 }
 
 export function createParser(opts: CreateParserOptions = {}): Parser {

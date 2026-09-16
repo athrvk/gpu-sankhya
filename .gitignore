@@ -8,3 +8,4 @@ dist/
 __pycache__/
 *.pyc
 isolate-*.log
+*.egg-info/

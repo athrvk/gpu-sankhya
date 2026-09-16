@@ -42,7 +42,6 @@ def run(weights_path: str, examples: list, lang: str = "hi_latn"):
         obj = json.load(f)
     vocab = obj["charset"]
     class_names = obj["classes"]
-    layers = obj.get("layers", 3)
     weights = np_infer.load_weights_int8_json(obj)
     char_to_id = build_char_to_id(vocab)
     unk = char_to_id.get("<unk>", 1)
@@ -57,7 +56,7 @@ def run(weights_path: str, examples: list, lang: str = "hi_latn"):
         text = normalize_text(ex["text"])[:MAX_LEN]
         L = len(text)
         ids = np_infer.pad_ids(np.array([char_to_id.get(c, unk) for c in text], dtype=np.int64))
-        bio_logits, cls_logits = np_infer.forward(weights, ids, dilation=2, layers=layers)
+        bio_logits, cls_logits = np_infer.forward(weights, ids)
         bio_logits, cls_logits = bio_logits[:L], cls_logits[:L]
         bio_pred = bio_logits.argmax(-1).tolist()
         cls_pred = cls_logits.argmax(-1).tolist()

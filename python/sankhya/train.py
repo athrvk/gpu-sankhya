@@ -14,7 +14,7 @@ import torch.nn as nn
 from . import classes as C
 from .charset import build_charset, build_charset_multi, normalize_text
 from .langs import base as langbase
-from .model import SankhyaCNN, count_params
+from .model import SankhyaCNN, count_params, ARCHS
 from .decode import decode_spans
 from . import core
 
@@ -169,12 +169,26 @@ def main(argv=None):
     ap.add_argument("--dilation", type=int, default=1)
     ap.add_argument("--channels", type=int, default=32)
     ap.add_argument("--layers", type=int, default=3, choices=[3, 4])
+    ap.add_argument("--arch", default=None, choices=list(ARCHS.keys()),
+                     help="named conv-stack preset; overrides --layers/--dilation when given")
+    ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--embed-dim", type=int, default=16)
     ap.add_argument("--label-smoothing", type=float, default=0.05)
     ap.add_argument("--grad-clip", type=float, default=1.0)
     ap.add_argument("--num-train", type=int, default=None, help="subsample training set to this many examples")
+    ap.add_argument("--device", default="cpu", choices=["cpu", "auto"],
+                     help="'cpu' (default, unchanged behaviour) or 'auto' to use CUDA when available")
     args = ap.parse_args(argv)
 
-    torch.manual_seed(0)
+    import random
+    torch.manual_seed(args.seed)
+    # Reproducible GPU runs: cuDNN's default autotuned conv kernels are
+    # nondeterministic, which made the same seed land ~1 gold point apart
+    # across Kaggle runs. The model is tiny, so the speed cost is nil.
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    np.random.seed(args.seed)
+    random.seed(args.seed)
     os.makedirs(args.out, exist_ok=True)
 
     t0 = time.time()
@@ -196,15 +210,20 @@ def main(argv=None):
     va_chars, va_bio, va_cls, va_mask = tensorize(val_ex, char_to_id)
     print(f"tensorized in {time.time()-t0:.1f}s")
 
-    device = "cpu"
+    if args.device == "auto" and torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
     torch.set_num_threads(4)
+    print(f"device={device}")
 
+    arch = ARCHS[args.arch] if args.arch else None
     model = SankhyaCNN(
-        vocab_size=len(vocab), n_cls=len(C.CLASSES), dilation=args.dilation,
-        channels=args.channels, layers=args.layers,
+        vocab_size=len(vocab), n_cls=len(C.CLASSES), arch=arch, dilation=args.dilation,
+        channels=args.channels, layers=args.layers, embed_dim=args.embed_dim,
     ).to(device)
     n_params = count_params(model)
-    print(f"param count: {n_params} (channels={args.channels} layers={args.layers})")
+    print(f"param count: {n_params} (arch={args.arch or 'legacy'} channels={args.channels} layers={len(model.arch)})")
 
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
     n_batches_per_epoch = math.ceil(len(train_ex) / args.batch)
@@ -212,7 +231,7 @@ def main(argv=None):
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=args.lr, total_steps=total_steps)
 
     # B (class 1) is rare relative to O/I; upweight it 2x in the bio loss.
-    bio_class_weight = torch.tensor([1.0, 2.0, 1.0], dtype=torch.float32)
+    bio_class_weight = torch.tensor([1.0, 2.0, 1.0], dtype=torch.float32, device=device)
     ce_bio = nn.CrossEntropyLoss(reduction="none", weight=bio_class_weight, label_smoothing=args.label_smoothing)
     ce_cls = nn.CrossEntropyLoss(reduction="none", label_smoothing=args.label_smoothing)
 
@@ -274,6 +293,9 @@ def main(argv=None):
         "dilation": args.dilation,
         "channels": args.channels,
         "layers": args.layers,
+        "arch": model.arch,
+        "embed_dim": args.embed_dim,
+        "seed": args.seed,
         "val_metrics": {k: v for k, v in best_metrics.items() if k != "misses"},
     }, ckpt_path)
     print(f"saved checkpoint to {ckpt_path}")

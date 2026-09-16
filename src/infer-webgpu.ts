@@ -31,7 +31,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 `;
 
 const CONV_WGSL = /* wgsl */ `
-struct Params { batch: u32, length: u32, cIn: u32, cOut: u32, k: u32, padding: u32, dilation: u32, relu: u32, stride: u32 };
+struct Params { batch: u32, length: u32, cIn: u32, cOut: u32, k: u32, padding: u32, dilation: u32, relu: u32, residual: u32, stride: u32 };
 @group(0) @binding(0) var<uniform> p: Params;
 @group(0) @binding(1) var<storage, read> x: array<f32>; // (batch, cIn, L)
 @group(0) @binding(2) var<storage, read> w: array<f32>; // (cOut, cIn, k)
@@ -60,6 +60,9 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
   }
   if (p.relu != 0u && acc < 0.0) { acc = 0.0; }
+  if (p.residual != 0u) {
+    acc = acc + x[(b * p.cIn + oc) * p.length + t];
+  }
   out[(b * p.cOut + oc) * p.length + t] = acc;
 }
 `;
@@ -153,8 +156,7 @@ export class WebGPUBackend {
     const STORAGE = GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST;
 
     const w = this.weights;
-    const convLayers = [w.conv1, w.conv2, w.conv3, ...(w.layers === 4 && w.conv4 ? [w.conv4] : [])];
-    const convBufs = convLayers.map((l) => ({ w: mkBuf(l.w.data, STORAGE), b: mkBuf(l.b, STORAGE) }));
+    const convBufs = w.conv.map((l) => ({ w: mkBuf(l.w.data, STORAGE), b: mkBuf(l.b, STORAGE) }));
 
     this.state = {
       device,
@@ -239,18 +241,16 @@ export class WebGPUBackend {
     }
 
     let cIn = embedDim;
-    const convLayers = [w.conv1, w.conv2, w.conv3, ...(w.layers === 4 && w.conv4 ? [w.conv4] : [])];
+    const convLayers = w.conv;
     const convPipeline = device.createComputePipeline({ layout: "auto", compute: { module: st.convModule, entryPoint: "main" } });
     for (let li = 0; li < convLayers.length; li++) {
       const layer = convLayers[li];
       const [cOut, , k] = layer.w.shape;
-      const isThird = li === 2;
-      const isFourth = li === 3;
-      const dilation = isFourth ? 4 : isThird ? w.dilation : 1;
-      const padding = isFourth ? Math.floor((4 * (3 - 1)) / 2) : isThird ? Math.floor((w.dilation * (3 - 1)) / 2) : li === 0 ? 1 : 2;
+      const dilation = layer.dilation;
+      const padding = layer.padding;
       const outBuf = device.createBuffer({ size: batch * cOut * length * 4, usage: STORAGE });
       const dims = dispatchDims(batch * cOut * length);
-      const params = mkUniform(new Uint32Array([batch, length, cIn, cOut, k, padding, dilation, 1, dims.stride]));
+      const params = mkUniform(new Uint32Array([batch, length, cIn, cOut, k, padding, dilation, 1, layer.residual ? 1 : 0, dims.stride]));
       dispatch(
         convPipeline,
         [

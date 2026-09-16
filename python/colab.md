@@ -26,3 +26,7 @@ From a fresh Colab notebook (CPU runtime is fine), in `python/` of this repo:
 Outputs land in `models/`: `sankhya.pt` (torch checkpoint), `sankhya.onnx`,
 `sankhya.weights.json` (float32, human-readable), `sankhya.weights.int8.json`
 (quantized), plus `charset.json` / `classes.json`.
+
+For the full multi-pack recipe on a GPU instead of Colab's CPU runtime,
+see "Training on Kaggle (GPU)" in `README.md` (`python -m
+kaggle_train.run push|status|pull|all`).

@@ -20,9 +20,10 @@ export const WINDOW_OVERLAP = 16;
 // real tokens correct right-context. Python's pad_ids() pads by exactly
 // PAD_TAIL; here we additionally round the total up to a multiple of 8
 // (buffer-size friendly for the JS backends), which only ever adds a few
-// more pad chars -- harmless, since PAD_TAIL=16 already comfortably exceeds
-// the network's receptive field.
-export const PAD_TAIL = 16;
+// more pad chars -- harmless, since PAD_TAIL=24 already comfortably exceeds
+// every arch preset's receptive field (see CONTRACT.md section 1; v2's
+// receptive field is 17 chars each side).
+export const PAD_TAIL = 24;
 
 function roundUp8(n: number): number {
   return Math.ceil(n / 8) * 8;

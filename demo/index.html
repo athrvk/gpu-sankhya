@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>gpu-sankhya</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23b5541e'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='white' font-family='sans-serif'%3E₹%3C/text%3E%3C/svg%3E" />
 <style>
   :root {
     --bg: #f7f7f5;
@@ -16,13 +17,19 @@
     --mark-bg: #ffe9b3;
     --mark-border: #e0a83a;
     --ok: #2f7d4f;
+    --ok-bg: #d9f0e2;
     --bad: #b23b3b;
+    --bad-bg: #f6dcdc;
+    --warn: #93650f;
+    --warn-soft: #f5e3bd;
+    --cell-o: #d8d5cd;
+    --focus: #3567c9;
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
       --bg: #171614;
       --panel: #201f1c;
       --border: #38352f;
@@ -33,36 +40,143 @@
       --mark-bg: #4a3a12;
       --mark-border: #a87a26;
       --ok: #59c98a;
+      --ok-bg: #1c3527;
       --bad: #e37070;
+      --bad-bg: #402323;
+      --warn: #e0b64f;
+      --warn-soft: #453210;
+      --cell-o: #3a372f;
+      --focus: #7fa4e8;
       color-scheme: dark;
     }
+  }
+  :root[data-theme="dark"] {
+    --bg: #171614;
+    --panel: #201f1c;
+    --border: #38352f;
+    --text: #ece9e3;
+    --muted: #9a958a;
+    --accent: #e08a4f;
+    --accent-soft: #4a3626;
+    --mark-bg: #4a3a12;
+    --mark-border: #a87a26;
+    --ok: #59c98a;
+    --ok-bg: #1c3527;
+    --bad: #e37070;
+    --bad-bg: #402323;
+    --warn: #e0b64f;
+    --warn-soft: #453210;
+    --cell-o: #3a372f;
+    --focus: #7fa4e8;
+    color-scheme: dark;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    padding: 2rem 1rem 4rem;
+    padding: 1.5rem 1rem 4rem;
+    padding-block: 1.5rem 4rem;
     background: var(--bg);
     color: var(--text);
     font-family: var(--sans);
     line-height: 1.5;
+    min-height: 100dvh;
   }
-  .wrap { max-width: 780px; margin: 0 auto; }
+  .wrap { max-width: 1500px; margin: 0 auto; }
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas: "left" "right" "strip" "bench";
+    gap: 1.1rem;
+    align-items: start;
+  }
+  .col-left { grid-area: left; min-width: 0; }
+  .col-right { grid-area: right; min-width: 0; }
+  .col-strip { grid-area: strip; min-width: 0; }
+  .col-bench { grid-area: bench; min-width: 0; }
+  .results-scroll { min-width: 0; }
+  @media (min-width: 700px) {
+    body { padding: 1.75rem 1.5rem 4rem; }
+    .layout {
+      grid-template-columns: 1fr 1fr;
+      grid-template-areas: "left right" "strip strip" "bench bench";
+    }
+    .col-right .card-results { position: sticky; top: 1.1rem; }
+    .results-scroll { max-height: calc(100vh - 14rem); overflow-y: auto; padding-right: 0.3rem; }
+  }
+  @media (min-width: 1100px) {
+    body { padding: 2rem 2rem 4rem; }
+    .layout {
+      grid-template-columns: minmax(360px, 1fr) minmax(440px, 1.3fr);
+      grid-template-areas: "left right" "strip bench";
+    }
+    .col-left textarea#input { min-height: 14rem; }
+    .col-right .card-results { top: 1.25rem; }
+    .results-scroll { max-height: calc(100vh - 15rem); }
+  }
+  a { color: var(--accent); }
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  header.top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .title-block { min-width: 0; }
   h1 {
     font-size: 1.6rem;
-    margin: 0 0 0.25rem;
+    margin: 0 0 0.2rem;
     letter-spacing: -0.02em;
   }
-  .tagline { color: var(--muted); margin: 0 0 1.5rem; font-size: 0.95rem; }
+  .tagline { color: var(--muted); margin: 0; font-size: 0.92rem; max-width: 56ch; }
+  .top-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .icon-btn {
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    padding: 0.4rem 0.7rem;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .icon-btn:hover { border-color: var(--accent); }
+  .badges-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    margin: 0.9rem 0 1.25rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .badge.yes { background: var(--ok-bg); color: var(--ok); border-color: transparent; }
+  .badge.no { background: var(--border); color: var(--muted); border-color: transparent; }
   .card {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 1rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.1rem;
   }
+  label { font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 0.3rem; }
   textarea {
     width: 100%;
-    min-height: 9rem;
+    min-height: 8rem;
     font-size: 0.95rem;
     font-family: var(--sans);
     padding: 0.6rem;
@@ -72,7 +186,15 @@
     color: var(--text);
     resize: vertical;
   }
-  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.75rem 0 0; }
+  .example-group { margin-top: 0.85rem; }
+  .example-group h3 {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin: 0.6rem 0 0.35rem;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
   .chip {
     display: inline-block;
     padding: 0.3rem 0.6rem;
@@ -80,10 +202,14 @@
     border: 1px solid var(--border);
     border-radius: 999px;
     cursor: pointer;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: var(--text);
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
-  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip:hover, .chip:focus-visible { border-color: var(--accent); color: var(--accent); }
+  .chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .mode-row { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.6rem; font-size: 0.78rem; color: var(--muted); }
   .stats {
     display: flex;
     flex-wrap: wrap;
@@ -92,55 +218,175 @@
     color: var(--muted);
   }
   .stats b { color: var(--text); font-weight: 600; }
-  .badge {
-    display: inline-block;
-    padding: 0.1rem 0.5rem;
+  .view-toggle { display: flex; gap: 0.4rem; margin-bottom: 0.75rem; }
+  .view-toggle button {
+    font-size: 0.78rem;
+    padding: 0.3rem 0.7rem;
     border-radius: 999px;
-    font-size: 0.75rem;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--muted);
+    cursor: pointer;
     font-weight: 600;
   }
-  .badge.yes { background: var(--ok); color: #08230f; }
-  .badge.no { background: var(--border); color: var(--muted); }
+  .view-toggle button.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
   .line {
     padding: 0.6rem 0;
     border-bottom: 1px solid var(--border);
+    cursor: default;
+    border-left: 3px solid transparent;
   }
   .line:last-child { border-bottom: none; }
-  .line-text { font-size: 0.95rem; }
+  .line-text { font-size: 0.95rem; overflow-wrap: anywhere; padding-left: 0.1rem; }
+  .line.selected {
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+    border-left-color: var(--accent);
+    padding-left: 0.5rem;
+    margin-left: -0.6rem;
+  }
   mark {
     background: var(--mark-bg);
     border-bottom: 2px solid var(--mark-border);
     color: inherit;
     border-radius: 2px;
     padding: 0 1px;
+    position: relative;
+  }
+  mark.hot { border-bottom-width: 3px; border-bottom-color: var(--accent); }
+  .mark-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 700;
+    margin-right: 2px;
+    vertical-align: middle;
+    line-height: 1;
   }
   .no-span { color: var(--muted); font-size: 0.8rem; font-style: italic; margin-top: 0.15rem; }
+
   .span-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     gap: 0.5rem 0.9rem;
+    align-items: center;
+    min-height: 56px;
     font-size: 0.8rem;
     color: var(--muted);
-    margin-top: 0.35rem;
-    padding: 0.35rem 0.5rem;
-    background: var(--bg);
-    border-radius: 6px;
+    padding: 0.5rem 0.15rem;
+    border-top: 1px solid var(--border);
   }
-  .span-row .value { font-weight: 700; color: var(--text); font-size: 0.9rem; }
-  .span-row .plain { color: var(--muted); }
-  .span-row .classes { font-family: var(--mono); font-size: 0.72rem; }
-  .conf-bar {
-    display: inline-block;
-    width: 60px;
-    height: 6px;
-    border-radius: 3px;
+  .span-row:first-of-type { margin-top: 0.4rem; }
+  .span-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.6rem;
+    font-weight: 700;
+    margin-right: 0.3rem;
+  }
+  .span-zone-value { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+  .span-value-btn {
+    all: unset;
+    cursor: pointer;
+    font-size: 1.35rem;
+    font-weight: 650;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    position: relative;
+  }
+  .span-value-btn:hover, .span-value-btn:focus-visible { color: var(--accent); }
+  .span-value-btn .copied-tip {
+    position: absolute;
+    top: -1.5em;
+    left: 0;
+    font-size: 0.65rem;
+    font-weight: 600;
+    background: var(--text);
+    color: var(--panel);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .span-value-btn.show-copied .copied-tip { opacity: 1; }
+  @media (prefers-reduced-motion: no-preference) {
+    .span-value-btn .copied-tip { transition: opacity 0.15s ease; }
+  }
+  .span-caption { font-size: 0.75rem; color: var(--muted); }
+  .span-zone-mid { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; min-width: 0; }
+  .chip-small {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.12rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
     background: var(--border);
-    overflow: hidden;
-    vertical-align: middle;
+    color: var(--muted);
+    white-space: nowrap;
   }
-  .conf-fill { height: 100%; background: var(--accent); }
+  .span-western {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .span-zone-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem; }
+  .conf-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+  .conf-pill.ok { background: var(--ok-bg); color: var(--ok); }
+  .conf-pill.warn { background: var(--warn-soft); color: var(--warn); }
+  .conf-pill.low { background: var(--border); color: var(--muted); }
+  .how-btn {
+    all: unset;
+    cursor: pointer;
+    font-size: 0.7rem;
+    color: var(--muted);
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+  }
+  .how-btn:hover, .how-btn:focus-visible { color: var(--accent); }
+  .how-btn .chev { display: inline-block; transition: transform 0.15s ease; }
+  .how-btn[aria-expanded="true"] .chev { transform: rotate(90deg); }
+  @media (prefers-reduced-motion: reduce) {
+    .how-btn .chev { transition: none; }
+  }
+  .how-panel {
+    grid-column: 1 / -1;
+    display: none;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0.1rem 0.15rem 0.5rem;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+  }
+  .how-panel.open { display: flex; }
+  .how-chip {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.15rem 0.45rem;
+    color: var(--text);
+  }
   h2 { font-size: 1rem; margin: 0 0 0.6rem; }
+  .row-head { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
   button {
     font-family: var(--sans);
     font-size: 0.85rem;
@@ -154,26 +400,98 @@
   }
   button:hover { filter: brightness(1.05); }
   button:disabled { opacity: 0.6; cursor: default; }
-  .bench-results {
-    margin-top: 0.9rem;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 0.75rem;
+  select {
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
   }
-  .bench-col {
+  .controls-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem 1.4rem;
+    align-items: flex-end;
+    margin-bottom: 0.9rem;
+  }
+  .control { display: flex; flex-direction: column; gap: 0.3rem; }
+  .bench-summary { font-size: 0.85rem; margin-bottom: 0.6rem; }
+  .bench-bars { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.7rem; }
+  .bench-bar-row { display: flex; align-items: center; gap: 0.6rem; font-size: 0.78rem; }
+  .bench-bar-label { width: 62px; flex-shrink: 0; color: var(--muted); }
+  .bench-bar-track { flex: 1; background: var(--border); border-radius: 4px; height: 14px; overflow: hidden; min-width: 0; }
+  .bench-bar-fill { height: 100%; background: var(--accent); border-radius: 4px; }
+  .bench-bar-fill.gpu { background: var(--focus); }
+  .bench-bar-num { width: 90px; flex-shrink: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .mismatch-list { font-family: var(--mono); font-size: 0.75rem; white-space: pre-wrap; color: var(--bad); overflow-wrap: anywhere; }
+  .match-ok { color: var(--ok); font-weight: 600; }
+  .strip-wrap { overflow-x: auto; padding-bottom: 0.3rem; }
+  .strip {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 0.25rem 0;
+  }
+  .strip-chars { display: flex; gap: 2px; }
+  .cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 22px;
+    flex: 0 0 22px;
+    font-family: var(--mono);
+  }
+  .cell .ch {
+    width: 22px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    background: var(--cell-o);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .cell.tag-B .ch { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .cell.tag-I .ch { background: var(--accent-soft); color: var(--accent); border-color: var(--mark-border); }
+  .cell .probbar { width: 18px; height: 3px; background: var(--border); border-radius: 2px; margin-top: 2px; overflow: hidden; }
+  .cell .probbar i { display: block; height: 100%; background: var(--accent); }
+  .strip-labels { position: relative; height: 15px; }
+  .run-label {
+    position: absolute;
+    top: 0;
+    box-sizing: border-box;
+    height: 100%;
+    padding-top: 2px;
+    border-top: 1px solid var(--mark-border);
+    font-size: 0.55rem;
+    color: var(--muted);
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .inspect-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+  .unavailable-note { font-size: 0.8rem; color: var(--muted); font-style: italic; }
+  pre.raw {
+    background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 0.6rem 0.8rem;
-    font-size: 0.82rem;
+    padding: 0.7rem;
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    overflow-x: auto;
+    max-height: 420px;
   }
-  .bench-col h3 { margin: 0 0 0.3rem; font-size: 0.85rem; }
-  .bench-col .err { color: var(--bad); font-family: var(--mono); font-size: 0.75rem; white-space: pre-wrap; }
+  .copy-row { display: flex; justify-content: flex-end; margin-bottom: 0.5rem; }
   footer {
     font-size: 0.82rem;
     color: var(--muted);
     margin-top: 2rem;
   }
-  footer a { color: var(--accent); }
   .error-box {
     background: var(--bad);
     color: #fff;
@@ -183,20 +501,71 @@
     font-size: 0.82rem;
   }
   .hidden { display: none !important; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+  .kbd-hint { font-size: 0.75rem; color: var(--muted); margin-top: 0.5rem; }
+  kbd {
+    font-family: var(--mono);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.05rem 0.35rem;
+    font-size: 0.72rem;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .conf-fill, .bench-bar-fill, .probbar i { transition: width 0.25s ease; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { scroll-behavior: auto !important; }
+  }
+  @media (max-width: 480px) {
+    h1 { font-size: 1.35rem; }
+    .stats { gap: 0.5rem 1rem; }
+    .bench-bar-label { width: 46px; }
+    .bench-bar-num { width: 72px; }
+  }
+  @media (max-width: 520px) {
+    .span-row {
+      grid-template-columns: 1fr;
+      grid-template-areas: "value" "mid" "right";
+      row-gap: 0.4rem;
+    }
+    .span-zone-value { grid-area: value; }
+    .span-zone-mid { grid-area: mid; }
+    .span-zone-right { grid-area: right; align-items: flex-start; flex-direction: row; justify-content: space-between; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>gpu-sankhya</h1>
-  <p class="tagline">
-    Parses Indian informal number shorthand in Hinglish and Devanagari (sava lakh, dedh crore, डेढ़ लाख, सवा करोड़, 2.5L, 20k, 2-3 lakh)
-    into numbers, entirely in your browser &mdash; an ~18k-parameter char CNN, 27&nbsp;KB gzipped.
-  </p>
+  <header class="top">
+    <div class="title-block">
+      <h1>gpu-sankhya</h1>
+      <p class="tagline">
+        Parses Indian informal number shorthand &mdash; Hinglish and Devanagari (sava lakh, dedh crore, डेढ़ लाख, सवा करोड़) &mdash; into numbers, entirely in your browser.
+      </p>
+    </div>
+    <div class="top-actions">
+      <a class="icon-btn" href="https://www.npmjs.com/package/gpu-sankhya" target="_blank" rel="noopener">npm</a>
+      <a class="icon-btn" href="https://github.com/athrvk/gpu-sankhya" target="_blank" rel="noopener">GitHub</a>
+      <button type="button" class="icon-btn" id="theme-toggle" aria-pressed="false">theme: system</button>
+    </div>
+  </header>
+
+  <div class="badges-row" id="badges-row">
+    <span class="badge" id="badge-params">model: &ndash;</span>
+    <span class="badge" id="badge-webgpu">WebGPU: checking&hellip;</span>
+  </div>
 
   <div id="load-error" class="card error-box hidden"></div>
 
-  <div class="card">
-    <textarea id="input" spellcheck="false">sava lakh ka phone
+  <div class="layout">
+    <div class="col-left">
+      <div class="card">
+        <label for="input">Input (one quantity per line)</label>
+        <textarea id="input" spellcheck="false">sava lakh ka phone
 dedh crore ka flat
 paune do lakh
 2.5L ka phone
@@ -208,28 +577,100 @@ CTC 12 LPA hai
 Rs 2,50,000/- negotiable
 teen din baad milte hain
 lakhon log aaye</textarea>
-    <div class="chips" id="chips"></div>
-  </div>
 
-  <div class="card">
-    <div class="stats" id="stats">
-      <span>latency: <b id="stat-latency">&ndash;</b></span>
-      <span>params: <b>17,883</b></span>
-      <span>bundle: <b>27 KB gzipped</b></span>
-      <span>backend: <b>CPU</b></span>
-      <span>WebGPU: <span id="webgpu-badge" class="badge no">checking&hellip;</span></span>
+        <div id="example-groups"></div>
+        <div class="mode-row">
+          <label for="chip-mode" style="margin:0;">Chip click:</label>
+          <select id="chip-mode">
+            <option value="append">append line</option>
+            <option value="replace">replace input</option>
+          </select>
+        </div>
+        <p class="kbd-hint">
+          <kbd>Ctrl/Cmd</kbd>+<kbd>Enter</kbd> runs the benchmark &middot; <kbd>Esc</kbd> clears the input
+        </p>
+      </div>
     </div>
-  </div>
 
-  <div class="card" id="results"></div>
+    <div class="col-right">
+      <div class="card">
+        <div class="stats" id="stats">
+          <span>parse: <b id="stat-latency">&ndash;</b></span>
+          <span>lines: <b id="stat-lines">0</b></span>
+          <span>spans: <b id="stat-spans">0</b></span>
+        </div>
+      </div>
 
-  <div class="card">
-    <h2>Batch benchmark</h2>
-    <p class="tagline" style="margin-bottom:0.6rem;">
-      Parses 500 varied strings (generated from the 13 examples) with <code>parseBatch</code>, on CPU and (if available) WebGPU, then checks that the results match.
-    </p>
-    <button id="bench-btn">Run batch benchmark</button>
-    <div class="bench-results" id="bench-results"></div>
+      <div class="card card-results">
+        <div class="row-head">
+          <h2 style="margin:0;">Results</h2>
+          <div class="view-toggle" role="group" aria-label="Output view">
+            <button type="button" id="view-cards" class="active" aria-pressed="true">Cards</button>
+            <button type="button" id="view-json" aria-pressed="false">Raw JSON</button>
+          </div>
+        </div>
+        <div class="copy-row hidden" id="copy-row">
+          <button type="button" id="copy-json">Copy JSON</button>
+        </div>
+        <div class="results-scroll">
+          <div id="results"></div>
+          <pre class="raw hidden" id="results-raw"></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-strip">
+      <div class="card">
+        <div class="inspect-toggle-row">
+          <h2 style="margin:0;">Inside the model</h2>
+          <label style="display:flex;align-items:center;gap:0.4rem;margin:0;">
+            <input type="checkbox" id="inspect-toggle" checked />
+            show per-character view
+          </label>
+        </div>
+        <div id="inspect-body">
+          <p class="tagline" style="margin:0 0 0.5rem;">
+            Per-character BIO tag and predicted class for the focused (or last) line, straight from the network before the deterministic core repairs anything.
+            <span id="inspect-time"></span>
+          </p>
+          <div class="strip-wrap"><div class="strip" id="strip"></div></div>
+        </div>
+        <p class="unavailable-note hidden" id="inspect-unavailable">
+          inspect() is not available in this build yet &mdash; showing parsed spans only.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-bench">
+      <div class="card">
+        <h2>Batch benchmark</h2>
+        <p class="tagline" style="margin-bottom:0.6rem;">
+          Parses a varied batch (generated from the example set) with <code>parseBatch</code> on CPU and (if available) WebGPU, then compares results span-for-span.
+        </p>
+        <div class="controls-grid">
+          <div class="control">
+            <label for="bench-backend">Backend</label>
+            <select id="bench-backend">
+              <option value="auto">auto</option>
+              <option value="cpu">cpu</option>
+              <option value="webgpu">webgpu</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="bench-size">Batch size</label>
+            <select id="bench-size">
+              <option value="100">100</option>
+              <option value="500" selected>500</option>
+              <option value="2000">2000</option>
+            </select>
+          </div>
+          <button type="button" id="bench-btn">Run batch benchmark</button>
+        </div>
+        <div id="bench-summary" class="bench-summary"></div>
+        <div id="bench-bars" class="bench-bars"></div>
+        <div id="bench-mismatches"></div>
+      </div>
+    </div>
   </div>
 
   <footer>
@@ -254,58 +695,136 @@ lakhon log aaye</textarea>
     }
   }
   const { parse, parseBatch, probeWebGPU } = mod;
+  const inspectFn = typeof mod.inspect === "function" ? mod.inspect : null;
+  const modelInfoFn = typeof mod.modelInfo === "function" ? mod.modelInfo : null;
 
-  const input = document.getElementById("input");
-  const results = document.getElementById("results");
-  const chipsDiv = document.getElementById("chips");
-  const statLatency = document.getElementById("stat-latency");
-  const webgpuBadge = document.getElementById("webgpu-badge");
-  const benchBtn = document.getElementById("bench-btn");
-  const benchResults = document.getElementById("bench-results");
+  // ---------- theme ----------
+  const THEME_KEY = "sankhya-demo-theme";
+  const themeBtn = document.getElementById("theme-toggle");
+  function safeGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
+  function safeSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
+  function applyTheme(mode) {
+    if (mode === "dark" || mode === "light") {
+      document.documentElement.setAttribute("data-theme", mode);
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+    themeBtn.textContent = "theme: " + (mode || "system");
+    themeBtn.setAttribute("aria-pressed", mode ? "true" : "false");
+  }
+  let theme = safeGet(THEME_KEY) || "system";
+  applyTheme(theme);
+  themeBtn.addEventListener("click", () => {
+    theme = theme === "system" ? "light" : theme === "light" ? "dark" : "system";
+    safeSet(THEME_KEY, theme);
+    applyTheme(theme);
+  });
 
-  const EXAMPLES = [
-    "sava lakh",
-    "dedh crore ka flat",
-    "paune do lakh",
-    "2.5L ka phone",
-    "20k logon ne attend kiya",
-    "sawaa laakh ka budget hai",
-    "2-3 lakh mein aa jayega",
-    "das hazaar crore ka package",
-    "bhai derh crore se badhkar saadhe teen crore ho gaya",
-    "CTC 12 LPA hai",
-    "Rs 2,50,000/- negotiable",
-    "teen din baad milte hain",
-    "lakhon log aaye",
-    "डेढ़ लाख",
-    "सवा दो करोड़ का फ्लैट",
-    "पौने दो लाख",
-    "२.५ लाख",
-    "दस हज़ार करोड़ का पैकेज",
-    "20k लोग आए",
-    "बजट साढ़े तीन लाख है",
-    "लाखों लोग आए",
-    "तीन दिन बाद",
-  ];
-
-  for (const ex of EXAMPLES) {
-    const chip = document.createElement("span");
-    chip.className = "chip";
-    chip.textContent = ex;
-    chip.onclick = () => { input.value = ex; runParse(); };
-    chipsDiv.appendChild(chip);
+  // ---------- model badge ----------
+  const badgeParams = document.getElementById("badge-params");
+  if (modelInfoFn) {
+    try {
+      const info = modelInfoFn();
+      badgeParams.textContent =
+        `model: ${info.params.toLocaleString("en-IN")} params · ${info.layers.length} layers · vocab ${info.vocab}`;
+    } catch {
+      badgeParams.textContent = "model: 17,883 params";
+    }
+  } else {
+    badgeParams.textContent = "model: 17,883 params · 27 KB gzipped";
   }
 
+  // ---------- webgpu badge ----------
+  const webgpuBadge = document.getElementById("badge-webgpu");
   let gpuAvail = false;
-  webgpuBadge.textContent = "probing…";
-  webgpuBadge.className = "badge no";
   try {
     gpuAvail = !!(await probeWebGPU());
   } catch {
     gpuAvail = false;
   }
-  webgpuBadge.textContent = gpuAvail ? "available" : "unavailable";
+  webgpuBadge.textContent = "WebGPU: " + (gpuAvail ? "available" : "unavailable");
   webgpuBadge.className = "badge " + (gpuAvail ? "yes" : "no");
+
+  // ---------- examples ----------
+  const EXAMPLE_GROUPS = [
+    ["Hinglish", [
+      "sava lakh",
+      "dedh crore ka flat",
+      "paune do lakh",
+      "2.5L ka phone",
+      "20k logon ne attend kiya",
+      "sawaa laakh ka budget hai",
+      "2-3 lakh mein aa jayega",
+      "das hazaar crore ka package",
+    ]],
+    ["Devanagari", [
+      "डेढ़ लाख",
+      "सवा दो करोड़ का फ्लैट",
+      "पौने दो लाख",
+      "२.५ लाख",
+      "दस हज़ार करोड़ का पैकेज",
+      "बजट साढ़े तीन लाख है",
+      "लाखों लोग आए",
+    ]],
+    ["Mixed", [
+      "20k लोग आए",
+      "budget 2 लाख hai",
+      "CTC 12 LPA hai",
+      "Rs 2,50,000/- negotiable",
+    ]],
+    ["Tricky", [
+      "bhai derh crore se badhkar saadhe teen crore ho gaya",
+      "teen din baad milte hain",
+      "तीन दिन बाद",
+    ]],
+  ];
+  const EXAMPLES = EXAMPLE_GROUPS.flatMap(([, list]) => list);
+
+  const input = document.getElementById("input");
+  const chipMode = document.getElementById("chip-mode");
+  const groupsDiv = document.getElementById("example-groups");
+  for (const [label, list] of EXAMPLE_GROUPS) {
+    const g = document.createElement("div");
+    g.className = "example-group";
+    const h = document.createElement("h3");
+    h.textContent = label;
+    g.appendChild(h);
+    const chips = document.createElement("div");
+    chips.className = "chips";
+    for (const ex of list) {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip";
+      chip.textContent = ex;
+      chip.addEventListener("click", () => {
+        if (chipMode.value === "replace") {
+          input.value = ex;
+        } else {
+          input.value = input.value.length && !input.value.endsWith("\n")
+            ? input.value + "\n" + ex
+            : input.value + ex;
+        }
+        scheduleParse();
+        input.focus();
+        updateHash();
+      });
+      chips.appendChild(chip);
+    }
+    g.appendChild(chips);
+    groupsDiv.appendChild(g);
+  }
+
+  // ---------- share via hash ----------
+  function updateHash() {
+    try {
+      history.replaceState(null, "", "#" + encodeURIComponent(input.value));
+    } catch {}
+  }
+  try {
+    if (location.hash.length > 1) {
+      input.value = decodeURIComponent(location.hash.slice(1));
+    }
+  } catch {}
 
   function indianGroup(n) {
     const neg = n < 0;
@@ -324,89 +843,444 @@ lakhon log aaye</textarea>
     }[c]));
   }
 
-  function renderLine(text, spans) {
+  // ---------- results (cards / raw json) ----------
+  const results = document.getElementById("results");
+  const resultsRaw = document.getElementById("results-raw");
+  const viewCardsBtn = document.getElementById("view-cards");
+  const viewJsonBtn = document.getElementById("view-json");
+  const copyRow = document.getElementById("copy-row");
+  const copyBtn = document.getElementById("copy-json");
+  const statLatency = document.getElementById("stat-latency");
+  const statLines = document.getElementById("stat-lines");
+  const statSpans = document.getElementById("stat-spans");
+
+  let currentView = "cards";
+  let lastParseData = []; // [{text, spans}]
+  let selectedLineIndex = null;
+
+  function setView(v) {
+    currentView = v;
+    viewCardsBtn.classList.toggle("active", v === "cards");
+    viewCardsBtn.setAttribute("aria-pressed", String(v === "cards"));
+    viewJsonBtn.classList.toggle("active", v === "json");
+    viewJsonBtn.setAttribute("aria-pressed", String(v === "json"));
+    results.classList.toggle("hidden", v !== "cards");
+    resultsRaw.classList.toggle("hidden", v !== "json");
+    copyRow.classList.toggle("hidden", v !== "json");
+    if (v === "json") renderRaw();
+  }
+  viewCardsBtn.addEventListener("click", () => setView("cards"));
+  viewJsonBtn.addEventListener("click", () => setView("json"));
+
+  function renderRaw() {
+    resultsRaw.textContent = JSON.stringify(lastParseData, null, 2);
+  }
+
+  copyBtn.addEventListener("click", async () => {
+    const text = JSON.stringify(lastParseData, null, 2);
+    try {
+      await navigator.clipboard.writeText(text);
+      copyBtn.textContent = "Copied!";
+    } catch {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        copyBtn.textContent = "Copied!";
+      } catch {
+        copyBtn.textContent = "Copy failed";
+      }
+    }
+    setTimeout(() => { copyBtn.textContent = "Copy JSON"; }, 1200);
+  });
+
+  const UNIT_VALUE = {
+    sau: 1e2, hazaar: 1e3, lakh: 1e5, crore: 1e7,
+    million: 1e6, billion: 1e9, arab: 1e9, kharab: 1e11,
+  };
+
+  function formatUnitAmount(n) {
+    const r = Math.round(n * 100) / 100;
+    return String(r).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+  }
+
+  function unitCaption(sp) {
+    if (!sp.unit) return "";
+    const uv = UNIT_VALUE[sp.unit];
+    if (!uv) return "";
+    if (sp.range) {
+      const a = formatUnitAmount(sp.range[0] / uv);
+      const b = formatUnitAmount(sp.range[1] / uv);
+      return `${a}–${b} ${sp.unit}`;
+    }
+    return `${formatUnitAmount(sp.value / uv)} ${sp.unit}`;
+  }
+
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  }
+
+  // human-readable "how" tokens from the raw classes[] of a span
+  function humanizeClasses(classes, spanText) {
+    const PFX = {
+      PFX_SAVA: "sava ×1.25",
+      PFX_DEDH: "dedh ×1.5",
+      PFX_DHAI: "dhai ×2.5",
+      PFX_SAADHE: "saadhe +½",
+      PFX_PAUNE: "paune −¼",
+      PFX_AADHA: "aadha ½",
+      PFX_PAAV: "paav ¼",
+    };
+    const out = [];
+    for (const cls of classes) {
+      if (!cls || cls === "SEP") continue;
+      if (PFX[cls]) { out.push(PFX[cls]); continue; }
+      if (cls.startsWith("CARD_")) { out.push(cls.slice(5)); continue; }
+      if (cls === "DIGITS") {
+        const m = spanText && spanText.match(/\d[\d.,]*/);
+        out.push(m ? m[0] : "digits");
+        continue;
+      }
+      if (cls.startsWith("UNIT_")) {
+        const unitKey = cls.slice(5).toLowerCase();
+        const uv = UNIT_VALUE[unitKey];
+        out.push(uv ? `${unitKey} ×${indianGroup(uv)}` : unitKey);
+        continue;
+      }
+      if (cls === "RANGE") { out.push("–"); continue; }
+      if (cls === "DOT") { out.push("."); continue; }
+      if (cls === "COMMA") { out.push(","); continue; }
+      out.push(cls);
+    }
+    return out;
+  }
+
+  function confBand(conf) {
+    if (conf >= 0.9) return "ok";
+    if (conf >= 0.7) return "warn";
+    return "low";
+  }
+
+  function renderLine(text, spans, index) {
     const lineDiv = document.createElement("div");
     lineDiv.className = "line";
+    lineDiv.dataset.index = String(index);
+    if (index === selectedLineIndex) lineDiv.classList.add("selected");
+    lineDiv.tabIndex = 0;
+    lineDiv.addEventListener("click", () => selectLine(index));
+    lineDiv.addEventListener("focus", () => selectLine(index));
 
     const textDiv = document.createElement("div");
     textDiv.className = "line-text";
     if (spans.length === 0) {
-      textDiv.textContent = text || " ";
+      textDiv.textContent = text || " ";
       lineDiv.appendChild(textDiv);
       if (text.trim()) {
         const noSpan = document.createElement("div");
         noSpan.className = "no-span";
-        noSpan.textContent = "no span matched";
+        noSpan.textContent = "no quantity found";
         lineDiv.appendChild(noSpan);
       }
       return lineDiv;
     }
 
+    const sorted = [...spans].sort((a, b) => a.start - b.start);
+    const numbered = sorted.length >= 2;
+
     let html = "";
     let cursor = 0;
-    const sorted = [...spans].sort((a, b) => a.start - b.start);
-    for (const sp of sorted) {
+    sorted.forEach((sp, i) => {
       html += escapeHtml(text.slice(cursor, sp.start));
-      html += "<mark>" + escapeHtml(text.slice(sp.start, sp.end)) + "</mark>";
+      const badge = numbered
+        ? `<span class="mark-badge" data-mark-idx="${i}">${i + 1}</span>`
+        : "";
+      html += `<mark data-mark-idx="${i}">${badge}${escapeHtml(text.slice(sp.start, sp.end))}</mark>`;
       cursor = sp.end;
-    }
+    });
     html += escapeHtml(text.slice(cursor));
     textDiv.innerHTML = html;
     lineDiv.appendChild(textDiv);
 
-    for (const sp of sorted) {
+    const marks = Array.from(textDiv.querySelectorAll("mark"));
+
+    sorted.forEach((sp, i) => {
       const row = document.createElement("div");
       row.className = "span-row";
+      row.tabIndex = 0;
+      const mark = marks[i];
+      const setHot = (on) => { if (mark) mark.classList.toggle("hot", on); };
+      row.addEventListener("mouseenter", () => setHot(true));
+      row.addEventListener("mouseleave", () => setHot(false));
+      row.addEventListener("focus", () => setHot(true));
+      row.addEventListener("blur", () => setHot(false));
+
       const pct = Math.round((sp.confidence || 0) * 100);
+      const band = confBand(sp.confidence || 0);
 
-      let valueStr = "";
-      if (sp.range) {
-        valueStr = indianGroup(sp.range[0]) + " – " + indianGroup(sp.range[1]);
-      } else {
-        valueStr = indianGroup(sp.value);
+      const valueZone = document.createElement("div");
+      valueZone.className = "span-zone-value";
+
+      const valueBtn = document.createElement("button");
+      valueBtn.type = "button";
+      valueBtn.className = "span-value-btn";
+      const rawNumber = sp.range ? sp.range[0] : sp.value;
+      const displayValue = sp.range
+        ? indianGroup(sp.range[0]) + " – " + indianGroup(sp.range[1])
+        : indianGroup(sp.value);
+      const currencyPrefix = sp.currency === "INR" ? "₹" : "";
+      valueBtn.innerHTML =
+        `${currencyPrefix}${escapeHtml(displayValue)}<span class="copied-tip">copied</span>`;
+      valueBtn.title = "Click to copy the raw number";
+      valueBtn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const ok = await copyText(String(Math.round(rawNumber)));
+        if (ok) {
+          valueBtn.classList.add("show-copied");
+          setTimeout(() => valueBtn.classList.remove("show-copied"), 1000);
+        }
+      });
+      valueZone.appendChild(valueBtn);
+
+      const caption = unitCaption(sp);
+      if (caption) {
+        const cap = document.createElement("div");
+        cap.className = "span-caption";
+        cap.textContent = caption;
+        valueZone.appendChild(cap);
       }
-      const plainStr = sp.range
-        ? Math.round(sp.range[0]) + "–" + Math.round(sp.range[1])
-        : String(Math.round(sp.value));
 
-      row.innerHTML =
-        `<span class="value">${valueStr}</span>` +
-        `<span class="plain">(${plainStr})</span>` +
-        (sp.unit ? `<span>unit: ${escapeHtml(sp.unit)}</span>` : "") +
-        (sp.currency ? `<span>currency: ${escapeHtml(sp.currency)}</span>` : "") +
-        `<span>conf: ${pct}% <span class="conf-bar"><span class="conf-fill" style="width:${pct}%"></span></span></span>` +
-        `<span class="classes">${escapeHtml(sp.classes.join(" "))}</span>`;
+      const midZone = document.createElement("div");
+      midZone.className = "span-zone-mid";
+      if (sp.unit) {
+        const c = document.createElement("span");
+        c.className = "chip-small";
+        c.textContent = sp.unit;
+        midZone.appendChild(c);
+      }
+      if (sp.currency) {
+        const c = document.createElement("span");
+        c.className = "chip-small";
+        c.textContent = sp.currency;
+        midZone.appendChild(c);
+      }
+      if (sp.range) {
+        const c = document.createElement("span");
+        c.className = "chip-small";
+        c.textContent = "range " + indianGroup(sp.range[0]) + " – " + indianGroup(sp.range[1]);
+        midZone.appendChild(c);
+      }
+      const western = document.createElement("span");
+      western.className = "span-western";
+      western.textContent = Math.round(rawNumber).toLocaleString("en-US");
+      midZone.appendChild(western);
+
+      const rightZone = document.createElement("div");
+      rightZone.className = "span-zone-right";
+      const pill = document.createElement("span");
+      pill.className = "conf-pill " + band;
+      pill.textContent = pct + "%";
+      rightZone.appendChild(pill);
+
+      const howBtn = document.createElement("button");
+      howBtn.type = "button";
+      howBtn.className = "how-btn";
+      howBtn.setAttribute("aria-expanded", "false");
+      howBtn.innerHTML = `<span class="chev">▸</span> how`;
+      rightZone.appendChild(howBtn);
+
+      row.appendChild(valueZone);
+      row.appendChild(midZone);
+      row.appendChild(rightZone);
+
+      const howPanel = document.createElement("div");
+      howPanel.className = "how-panel";
+      const tokens = humanizeClasses(sp.classes || [], sp.span || text.slice(sp.start, sp.end));
+      for (const t of tokens) {
+        const chip = document.createElement("span");
+        chip.className = "how-chip";
+        chip.textContent = t;
+        howPanel.appendChild(chip);
+      }
+      howBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const open = howPanel.classList.toggle("open");
+        howBtn.setAttribute("aria-expanded", String(open));
+      });
+
       lineDiv.appendChild(row);
-    }
+      lineDiv.appendChild(howPanel);
+    });
     return lineDiv;
+  }
+
+  function selectLine(index) {
+    selectedLineIndex = index;
+    document.querySelectorAll(".line").forEach((el) => {
+      el.classList.toggle("selected", Number(el.dataset.index) === index);
+    });
+    renderInspect();
   }
 
   let debounceTimer = null;
   function scheduleParse() {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(runParse, 60);
+    debounceTimer = setTimeout(runParse, 120);
+    updateHash();
   }
 
   function runParse() {
     results.innerHTML = "";
     const lines = input.value.split("\n");
+    lastParseData = [];
+    let spanCount = 0;
     const t0 = performance.now();
-    for (const line of lines) {
+    lines.forEach((line, i) => {
       let spans = [];
       try {
         spans = parse(line);
       } catch (e) {
         spans = [];
       }
-      results.appendChild(renderLine(line, spans));
-    }
+      spanCount += spans.length;
+      lastParseData.push({ text: line, spans });
+      results.appendChild(renderLine(line, spans, i));
+    });
     const t1 = performance.now();
     statLatency.textContent = (t1 - t0).toFixed(2) + " ms";
+    statLines.textContent = String(lines.length);
+    statSpans.textContent = String(spanCount);
+    if (currentView === "json") renderRaw();
+
+    if (selectedLineIndex === null || selectedLineIndex >= lines.length) {
+      selectedLineIndex = lines.length - 1;
+    }
+    document.querySelectorAll(".line").forEach((el) => {
+      el.classList.toggle("selected", Number(el.dataset.index) === selectedLineIndex);
+    });
+    renderInspect();
   }
 
   input.addEventListener("input", scheduleParse);
-  runParse();
 
+  // ---------- inside the model ----------
+  const inspectToggle = document.getElementById("inspect-toggle");
+  const inspectBody = document.getElementById("inspect-body");
+  const inspectUnavailable = document.getElementById("inspect-unavailable");
+  const inspectTime = document.getElementById("inspect-time");
+  const strip = document.getElementById("strip");
+
+  if (!inspectFn) {
+    inspectUnavailable.classList.remove("hidden");
+    inspectBody.classList.add("hidden");
+    inspectToggle.disabled = true;
+  }
+
+  inspectToggle.addEventListener("change", () => {
+    inspectBody.classList.toggle("hidden", !inspectToggle.checked);
+  });
+
+  function abbrevClass(cls) {
+    if (!cls) return cls;
+    return cls
+      .replace(/^CARD_/, "C:")
+      .replace(/^UNIT_/, "U:")
+      .replace(/^PFX_/, "P:");
+  }
+
+  const CELL_STEP = 24; // 22px cell + 2px gap
+
+  function renderInspect() {
+    if (!inspectFn || !inspectToggle.checked) return;
+    const line = selectedLineIndex !== null ? lastParseData[selectedLineIndex] : null;
+    strip.innerHTML = "";
+    inspectTime.textContent = "";
+    if (!line || !line.text.trim()) return;
+    let insp;
+    try {
+      insp = inspectFn(line.text);
+    } catch {
+      return;
+    }
+    inspectTime.textContent = `· inspect: ${insp.ms.toFixed(2)} ms`;
+
+    const charsRow = document.createElement("div");
+    charsRow.className = "strip-chars";
+    const labelsRow = document.createElement("div");
+    labelsRow.className = "strip-labels";
+    labelsRow.style.width = insp.chars.length * CELL_STEP - 2 + "px";
+
+    insp.chars.forEach((c, i) => {
+      const cell = document.createElement("div");
+      const tag = c.bio === 1 ? "B" : c.bio === 2 ? "I" : "O";
+      cell.className = "cell tag-" + tag;
+      const bProb = Array.isArray(c.bioProb) ? c.bioProb[1] : 0;
+      const ch = document.createElement("div");
+      ch.className = "ch";
+      ch.textContent = c.ch === " " ? "·" : c.ch;
+      ch.style.opacity = String(Math.max(0.35, Math.min(1, 0.35 + bProb * 0.65)));
+      cell.appendChild(ch);
+      const bar = document.createElement("div");
+      bar.className = "probbar";
+      const fill = document.createElement("i");
+      fill.style.width = Math.round(bProb * 100) + "%";
+      bar.appendChild(fill);
+      cell.appendChild(bar);
+      cell.title = `char: "${c.ch}"  bio: ${tag}  class: ${c.cls}  P(B)=${bProb.toFixed(2)}`;
+      charsRow.appendChild(cell);
+    });
+
+    // group contiguous non-O runs of the same class into a single centred
+    // label with a bracket line, so labels never overlap between cells.
+    let i = 0;
+    while (i < insp.chars.length) {
+      const c = insp.chars[i];
+      const tag = c.bio === 1 ? "B" : c.bio === 2 ? "I" : "O";
+      if (tag === "O" || !c.cls) { i++; continue; }
+      let j = i + 1;
+      while (j < insp.chars.length) {
+        const cj = insp.chars[j];
+        const tagj = cj.bio === 1 ? "B" : cj.bio === 2 ? "I" : "O";
+        if (tagj === "O" || cj.cls !== c.cls) break;
+        j++;
+      }
+      const runLen = j - i;
+      const label = document.createElement("div");
+      label.className = "run-label";
+      label.style.left = i * CELL_STEP + "px";
+      label.style.width = runLen * CELL_STEP - 2 + "px";
+      label.textContent = abbrevClass(c.cls);
+      label.title = c.cls;
+      labelsRow.appendChild(label);
+      i = j;
+    }
+
+    strip.appendChild(charsRow);
+    strip.appendChild(labelsRow);
+  }
+
+  // ---------- batch benchmark ----------
   const BATCH_DECORATIONS = [
     (s, i) => s,
     (s, i) => s + " #" + i,
@@ -437,10 +1311,7 @@ lakhon log aaye</textarea>
     if ((a.unit || "") !== (b.unit || "")) return false;
     if ((a.currency || "") !== (b.currency || "")) return false;
     if ((a.classes || []).join(" ") !== (b.classes || []).join(" ")) return false;
-    // confidence is allowed to differ by up to 0.02
     if (Math.abs((a.confidence || 0) - (b.confidence || 0)) > 0.02) {
-      // confidence-only mismatches beyond tolerance still fail, but everything
-      // else above already matched, so this is the sole difference.
       return false;
     }
     return true;
@@ -474,74 +1345,136 @@ lakhon log aaye</textarea>
         const gpuStr = gpuSpans.length
           ? gpuSpans.map((sp) => spanLabel(sp)).join(", ")
           : "(no spans)";
-        mismatches.push(
-          `${texts[i]} → cpu: ${cpuStr} | gpu: ${gpuStr}`
-        );
+        mismatches.push(`${texts[i]} → cpu: ${cpuStr} | gpu: ${gpuStr}`);
       }
     }
     return mismatches;
   }
 
-  benchBtn.addEventListener("click", async () => {
+  const benchBtn = document.getElementById("bench-btn");
+  const benchBackendSel = document.getElementById("bench-backend");
+  const benchSizeSel = document.getElementById("bench-size");
+  const benchSummary = document.getElementById("bench-summary");
+  const benchBars = document.getElementById("bench-bars");
+  const benchMismatches = document.getElementById("bench-mismatches");
+
+  function drawBar(label, ms, maxMs, cls) {
+    const row = document.createElement("div");
+    row.className = "bench-bar-row";
+    const pct = maxMs > 0 ? Math.max(2, Math.round((ms / maxMs) * 100)) : 0;
+    row.innerHTML =
+      `<span class="bench-bar-label">${label}</span>` +
+      `<span class="bench-bar-track"><span class="bench-bar-fill ${cls || ""}" style="width:${pct}%"></span></span>` +
+      `<span class="bench-bar-num">${ms.toFixed(1)} ms</span>`;
+    return row;
+  }
+
+  async function runBenchmark() {
     benchBtn.disabled = true;
-    benchResults.innerHTML = "";
-    const batch = makeVariedBatch(500);
-
-    const cpuCol = document.createElement("div");
-    cpuCol.className = "bench-col";
-    cpuCol.innerHTML = "<h3>CPU</h3><div>running&hellip;</div>";
-    benchResults.appendChild(cpuCol);
-
-    const gpuCol = document.createElement("div");
-    gpuCol.className = "bench-col";
-    gpuCol.innerHTML = "<h3>WebGPU</h3><div>" + (gpuAvail ? "running&hellip;" : "no adapter") + "</div>";
-    benchResults.appendChild(gpuCol);
+    benchSummary.textContent = "";
+    benchBars.innerHTML = "";
+    benchMismatches.textContent = "";
+    const n = parseInt(benchSizeSel.value, 10) || 500;
+    const backend = benchBackendSel.value;
+    const batch = makeVariedBatch(n);
 
     let cpuTotal = null;
     let cpuResults = null;
-    try {
-      const c0 = performance.now();
-      cpuResults = await parseBatch(batch, { backend: "cpu" });
-      const c1 = performance.now();
-      cpuTotal = c1 - c0;
-      cpuCol.innerHTML = `<h3>CPU</h3><div>${cpuTotal.toFixed(1)} ms total</div><div>${(cpuTotal / batch.length).toFixed(3)} ms/string</div>`;
-    } catch (e) {
-      cpuCol.innerHTML = `<h3>CPU</h3><div class="err">${escapeHtml(String(e && e.message ? e.message : e))}</div>`;
+    let gpuTotal = null;
+    let gpuResults = null;
+    let cpuErr = null;
+    let gpuErr = null;
+
+    const wantCpu = backend === "cpu" || backend === "auto";
+    const wantGpu = backend === "webgpu" || (backend === "auto" && gpuAvail);
+
+    if (wantCpu) {
+      try {
+        const c0 = performance.now();
+        cpuResults = await parseBatch(batch, { backend: "cpu" });
+        cpuTotal = performance.now() - c0;
+      } catch (e) {
+        cpuErr = e && e.message ? e.message : String(e);
+      }
+    }
+    if (wantGpu) {
+      if (!gpuAvail) {
+        gpuErr = "no WebGPU adapter available";
+      } else {
+        try {
+          const g0 = performance.now();
+          gpuResults = await parseBatch(batch, { backend: "webgpu" });
+          gpuTotal = performance.now() - g0;
+        } catch (e) {
+          gpuErr = e && e.message ? e.message : String(e);
+        }
+      }
     }
 
-    if (gpuAvail) {
-      try {
-        const g0 = performance.now();
-        const gpuResults = await parseBatch(batch, { backend: "webgpu" });
-        const g1 = performance.now();
-        const gpuTotal = g1 - g0;
+    const maxMs = Math.max(cpuTotal || 0, gpuTotal || 0, 1);
+    if (cpuTotal != null) benchBars.appendChild(drawBar("CPU", cpuTotal, maxMs, "cpu"));
+    if (cpuErr) {
+      const p = document.createElement("div");
+      p.className = "mismatch-list";
+      p.textContent = "CPU error: " + cpuErr;
+      benchBars.appendChild(p);
+    }
+    if (gpuTotal != null) benchBars.appendChild(drawBar("WebGPU", gpuTotal, maxMs, "gpu"));
+    else if (backend !== "cpu") {
+      const p = document.createElement("div");
+      p.className = "unavailable-note";
+      p.textContent = "WebGPU: " + (gpuErr || "unavailable");
+      benchBars.appendChild(p);
+    }
 
-        let extra = "";
-        if (cpuResults) {
-          const mismatches = compareBatchResults(batch, cpuResults, gpuResults);
-          if (mismatches.length === 0) {
-            extra += `<div style="color:#1a7f37;">matches CPU: ${batch.length}/${batch.length}</div>`;
-          } else {
-            extra += `<div style="color:#c0341d;">mismatches: ${mismatches.length}</div>`;
-            const examples = mismatches.slice(0, 5);
-            extra += `<div style="color:#c0341d; font-family:monospace; font-size:0.85em; white-space:pre-wrap;">${examples
-              .map((m) => escapeHtml(m))
-              .join("\n")}</div>`;
-          }
-        }
-        if (cpuTotal != null && gpuTotal > 0) {
-          const speedup = cpuTotal / gpuTotal;
-          extra += `<div>speedup: ${speedup.toFixed(1)}x vs CPU</div>`;
-        }
+    let summaryParts = [];
+    summaryParts.push(`batch size: ${n}`);
+    if (cpuTotal != null) summaryParts.push(`CPU: ${cpuTotal.toFixed(1)} ms (${(cpuTotal / n).toFixed(3)} ms/string)`);
+    if (gpuTotal != null) summaryParts.push(`WebGPU: ${gpuTotal.toFixed(1)} ms (${(gpuTotal / n).toFixed(3)} ms/string)`);
+    else summaryParts.push(`WebGPU: unavailable`);
+    if (cpuTotal != null && gpuTotal != null && gpuTotal > 0) {
+      summaryParts.push(`speedup: ${(cpuTotal / gpuTotal).toFixed(1)}x`);
+    }
+    benchSummary.textContent = summaryParts.join(" · ");
 
-        gpuCol.innerHTML = `<h3>WebGPU</h3><div>${gpuTotal.toFixed(1)} ms total</div><div>${(gpuTotal / batch.length).toFixed(3)} ms/string</div>${extra}`;
-      } catch (e) {
-        gpuCol.innerHTML = `<h3>WebGPU</h3><div class="err">${escapeHtml(String(e && e.stack ? e.stack : e))}</div>`;
+    if (cpuResults && gpuResults) {
+      const mismatches = compareBatchResults(batch, cpuResults, gpuResults);
+      if (mismatches.length === 0) {
+        const ok = document.createElement("div");
+        ok.className = "match-ok";
+        ok.textContent = `matches CPU: ${batch.length}/${batch.length}`;
+        benchMismatches.appendChild(ok);
+      } else {
+        const head = document.createElement("div");
+        head.style.color = "var(--bad)";
+        head.style.fontWeight = "600";
+        head.textContent = `mismatches: ${mismatches.length}/${batch.length}`;
+        benchMismatches.appendChild(head);
+        const list = document.createElement("div");
+        list.className = "mismatch-list";
+        list.textContent = mismatches.slice(0, 8).join("\n");
+        benchMismatches.appendChild(list);
       }
     }
 
     benchBtn.disabled = false;
+  }
+
+  benchBtn.addEventListener("click", runBenchmark);
+
+  // ---------- keyboard ----------
+  window.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      runBenchmark();
+    } else if (e.key === "Escape" && document.activeElement === input) {
+      input.value = "";
+      scheduleParse();
+      runParse();
+    }
   });
+
+  runParse();
 </script>
 </body>
 </html>
