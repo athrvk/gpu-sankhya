@@ -10,7 +10,7 @@ export interface BackendResult {
 }
 
 const EMBED_WGSL = /* wgsl */ `
-struct Params { batch: u32, length: u32, embedDim: u32, vocab: u32 };
+struct Params { batch: u32, length: u32, embedDim: u32, vocab: u32, stride: u32 };
 @group(0) @binding(0) var<uniform> p: Params;
 @group(0) @binding(1) var<storage, read> charIds: array<i32>;
 @group(0) @binding(2) var<storage, read> embed: array<f32>;
@@ -18,7 +18,7 @@ struct Params { batch: u32, length: u32, embedDim: u32, vocab: u32 };
 
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
-  let idx = gid.x;
+  let idx = gid.y * p.stride + gid.x;
   let total = p.batch * p.length;
   if (idx >= total) { return; }
   let b = idx / p.length;
@@ -31,7 +31,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 `;
 
 const CONV_WGSL = /* wgsl */ `
-struct Params { batch: u32, length: u32, cIn: u32, cOut: u32, k: u32, padding: u32, dilation: u32, relu: u32 };
+struct Params { batch: u32, length: u32, cIn: u32, cOut: u32, k: u32, padding: u32, dilation: u32, relu: u32, stride: u32 };
 @group(0) @binding(0) var<uniform> p: Params;
 @group(0) @binding(1) var<storage, read> x: array<f32>; // (batch, cIn, L)
 @group(0) @binding(2) var<storage, read> w: array<f32>; // (cOut, cIn, k)
@@ -40,7 +40,7 @@ struct Params { batch: u32, length: u32, cIn: u32, cOut: u32, k: u32, padding: u
 
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
-  let idx = gid.x;
+  let idx = gid.y * p.stride + gid.x;
   let total = p.batch * p.cOut * p.length;
   if (idx >= total) { return; }
   let t = idx % p.length;
@@ -65,7 +65,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 `;
 
 const HEAD_WGSL = /* wgsl */ `
-struct Params { batch: u32, length: u32, cIn: u32, nOut: u32 };
+struct Params { batch: u32, length: u32, cIn: u32, nOut: u32, stride: u32 };
 @group(0) @binding(0) var<uniform> p: Params;
 @group(0) @binding(1) var<storage, read> x: array<f32>; // (batch, cIn, L)
 @group(0) @binding(2) var<storage, read> w: array<f32>; // (nOut, cIn)
@@ -74,7 +74,7 @@ struct Params { batch: u32, length: u32, cIn: u32, nOut: u32 };
 
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
-  let idx = gid.x;
+  let idx = gid.y * p.stride + gid.x;
   let total = p.batch * p.length * p.nOut;
   if (idx >= total) { return; }
   let o = idx % p.nOut;
@@ -191,13 +191,31 @@ export class WebGPUBackend {
       return buf;
     };
 
-    const dispatch = (pipeline: GPUComputePipeline, entries: GPUBindGroupEntry[], total: number) => {
+    // WebGPU caps dispatchWorkgroups() at device.limits.maxComputeWorkgroupsPerDimension
+    // (commonly 65535) *per dimension*. A single 1D dispatch of
+    // ceil(total/64) workgroups silently exceeds that for large batches
+    // (e.g. batch=500 * length~72 * nOut=120 / 64 = 67500 workgroups for the
+    // cls head alone), which is a validation error -- the dispatch is
+    // dropped and its output buffer is left zero-initialized, corrupting
+    // every downstream read of it. Spread workgroups across x and y instead
+    // (workgroup_size is 1 in y/z) and have the shader recombine
+    // global_invocation_id.{x,y} into the flat element index via `stride`
+    // (= workgroupsX * 64), so no dimension ever exceeds the device limit.
+    const maxWorkgroupsPerDim = device.limits?.maxComputeWorkgroupsPerDimension ?? 65535;
+    const dispatchDims = (total: number): { x: number; y: number; stride: number } => {
+      const totalWorkgroups = Math.max(1, Math.ceil(total / 64));
+      const x = Math.min(totalWorkgroups, maxWorkgroupsPerDim);
+      const y = Math.ceil(totalWorkgroups / x);
+      return { x, y, stride: x * 64 };
+    };
+
+    const dispatch = (pipeline: GPUComputePipeline, entries: GPUBindGroupEntry[], dims: { x: number; y: number }) => {
       const bindGroup = device.createBindGroup({ layout: pipeline.getBindGroupLayout(0), entries });
       const encoder = device.createCommandEncoder();
       const pass = encoder.beginComputePass();
       pass.setPipeline(pipeline);
       pass.setBindGroup(0, bindGroup);
-      pass.dispatchWorkgroups(Math.ceil(total / 64));
+      pass.dispatchWorkgroups(dims.x, dims.y);
       pass.end();
       device.queue.submit([encoder.finish()]);
     };
@@ -205,7 +223,8 @@ export class WebGPUBackend {
     // embed gather
     let cur = device.createBuffer({ size: batch * embedDim * length * 4, usage: STORAGE });
     {
-      const params = mkUniform(new Uint32Array([batch, length, embedDim, w.embed.shape[0]]));
+      const dims = dispatchDims(batch * length);
+      const params = mkUniform(new Uint32Array([batch, length, embedDim, w.embed.shape[0], dims.stride]));
       const pipeline = device.createComputePipeline({ layout: "auto", compute: { module: st.embedModule, entryPoint: "main" } });
       dispatch(
         pipeline,
@@ -215,7 +234,7 @@ export class WebGPUBackend {
           { binding: 2, resource: { buffer: st.embedBuf } },
           { binding: 3, resource: { buffer: cur } },
         ],
-        batch * length,
+        dims,
       );
     }
 
@@ -230,7 +249,8 @@ export class WebGPUBackend {
       const dilation = isFourth ? 4 : isThird ? w.dilation : 1;
       const padding = isFourth ? Math.floor((4 * (3 - 1)) / 2) : isThird ? Math.floor((w.dilation * (3 - 1)) / 2) : li === 0 ? 1 : 2;
       const outBuf = device.createBuffer({ size: batch * cOut * length * 4, usage: STORAGE });
-      const params = mkUniform(new Uint32Array([batch, length, cIn, cOut, k, padding, dilation, 1]));
+      const dims = dispatchDims(batch * cOut * length);
+      const params = mkUniform(new Uint32Array([batch, length, cIn, cOut, k, padding, dilation, 1, dims.stride]));
       dispatch(
         convPipeline,
         [
@@ -240,7 +260,7 @@ export class WebGPUBackend {
           { binding: 3, resource: { buffer: st.convBufs[li].b } },
           { binding: 4, resource: { buffer: outBuf } },
         ],
-        batch * cOut * length,
+        dims,
       );
       cur = outBuf;
       cIn = cOut;
@@ -249,7 +269,8 @@ export class WebGPUBackend {
     const headPipeline = device.createComputePipeline({ layout: "auto", compute: { module: st.headModule, entryPoint: "main" } });
     const runHead = async (headBuf: { w: GPUBuffer; b: GPUBuffer }, nOut: number) => {
       const outBuf = device.createBuffer({ size: batch * length * nOut * 4, usage: STORAGE });
-      const params = mkUniform(new Uint32Array([batch, length, cIn, nOut]));
+      const dims = dispatchDims(batch * length * nOut);
+      const params = mkUniform(new Uint32Array([batch, length, cIn, nOut, dims.stride]));
       dispatch(
         headPipeline,
         [
@@ -259,7 +280,7 @@ export class WebGPUBackend {
           { binding: 3, resource: { buffer: headBuf.b } },
           { binding: 4, resource: { buffer: outBuf } },
         ],
-        batch * length * nOut,
+        dims,
       );
       const readBuf = device.createBuffer({ size: batch * length * nOut * 4, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
       const encoder = device.createCommandEncoder();
