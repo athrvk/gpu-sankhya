@@ -1,0 +1,187 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { evaluate, detectCurrency } from "../src/core.ts";
+import { HI_LATN } from "../src/lang-hi-latn.ts";
+
+type Tok = [string, string];
+function ev(...toks: Tok[]) {
+  return evaluate(toks);
+}
+
+test("paune do lakh", () => {
+  const r = ev(["PFX_PAUNE", "paune"], ["SEP", " "], ["CARD_2", "do"], ["SEP", " "], ["UNIT_LAKH", "lakh"]);
+  assert.equal(r.value, 175000);
+});
+
+test("ek crore bees lakh", () => {
+  const r = ev(["CARD_1", "ek"], ["SEP", " "], ["UNIT_CRORE", "crore"], ["SEP", " "], ["CARD_20", "bees"], ["SEP", " "], ["UNIT_LAKH", "lakh"]);
+  assert.equal(r.value, 12000000);
+});
+
+test("dhai sau", () => {
+  const r = ev(["PFX_DHAI", "dhai"], ["SEP", " "], ["UNIT_SAU", "sau"]);
+  assert.equal(r.value, 250);
+});
+
+test("2.5L", () => {
+  const r = ev(["DIGITS", "2"], ["DOT", "."], ["DIGITS", "5"], ["UNIT_LAKH", "L"]);
+  assert.equal(r.value, 250000);
+});
+
+test("12 lpa", () => {
+  const r = ev(["DIGITS", "1"], ["DIGITS", "2"], ["SEP", " "], ["UNIT_LAKH", "LPA"]);
+  assert.equal(r.value, 1200000);
+});
+
+test("sadhe 3 lakh", () => {
+  const r2 = ev(["PFX_SAADHE", "sadhe"], ["SEP", " "], ["DIGITS", "3"], ["SEP", " "], ["UNIT_LAKH", "lakh"]);
+  assert.equal(r2.value, 350000);
+});
+
+test("1,25,000", () => {
+  const r = ev(
+    ["DIGITS", "1"],
+    ["COMMA", ","],
+    ["DIGITS", "2"],
+    ["DIGITS", "5"],
+    ["COMMA", ","],
+    ["DIGITS", "0"],
+    ["DIGITS", "0"],
+    ["DIGITS", "0"],
+  );
+  assert.equal(r.value, 125000);
+});
+
+test("sava lakh", () => {
+  const r = ev(["PFX_SAVA", "sava"], ["SEP", " "], ["UNIT_LAKH", "lakh"]);
+  assert.equal(r.value, 125000);
+});
+
+test("dedh crore", () => {
+  const r = ev(["PFX_DEDH", "dedh"], ["SEP", " "], ["UNIT_CRORE", "crore"]);
+  assert.equal(r.value, 15000000);
+});
+
+test("dhai lakh", () => {
+  const r = ev(["PFX_DHAI", "dhai"], ["SEP", " "], ["UNIT_LAKH", "lakh"]);
+  assert.equal(r.value, 250000);
+});
+
+test("20k", () => {
+  const r = ev(["DIGITS", "2"], ["DIGITS", "0"], ["UNIT_HAZAAR", "k"]);
+  assert.equal(r.value, 20000);
+});
+
+test("dedh-do lakh range", () => {
+  const r = ev(["PFX_DEDH", "dedh"], ["RANGE", " "], ["CARD_2", "do"], ["SEP", " "], ["UNIT_LAKH", "lakh"]);
+  assert.deepEqual(r.range, [150000, 200000]);
+});
+
+test("2-3 lakh range", () => {
+  const r = ev(["DIGITS", "2"], ["RANGE", "-"], ["DIGITS", "3"], ["SEP", " "], ["UNIT_LAKH", "lakh"]);
+  assert.deepEqual(r.range, [200000, 300000]);
+  assert.equal(r.unit, "lakh");
+});
+
+test("two and a half lakh", () => {
+  const r = ev(["CARD_2", "two"], ["SEP", " "], ["PFX_SAADHE", "and a half"], ["SEP", " "], ["UNIT_LAKH", "lakh"]);
+  assert.equal(r.value, 250000);
+});
+
+test("half a crore", () => {
+  const r = ev(["PFX_AADHA", "half a"], ["SEP", " "], ["UNIT_CRORE", "crore"]);
+  assert.equal(r.value, 5000000);
+});
+
+test("pachas rupaye no unit", () => {
+  const r = ev(["CARD_50", "pachas"]);
+  assert.equal(r.value, 50);
+  assert.equal(r.unit, null);
+});
+
+test("rs 500", () => {
+  const r = ev(["DIGITS", "5"], ["DIGITS", "0"], ["DIGITS", "0"]);
+  assert.equal(r.value, 500);
+});
+
+test("currency detection", () => {
+  const text = "Rs 500 only";
+  assert.equal(detectCurrency(text, 3, 6, HI_LATN), "INR");
+  const text2 = "pachas rupaye chahiye";
+  assert.equal(detectCurrency(text2, 0, 6, HI_LATN), "INR");
+  const text3 = "do din baad";
+  assert.equal(detectCurrency(text3, 0, 2, HI_LATN), null);
+});
+
+test("das hazaar crore", () => {
+  const r = ev(["CARD_10", "das"], ["SEP", " "], ["UNIT_HAZAAR", "hazaar"], ["SEP", " "], ["UNIT_CRORE", "crore"]);
+  assert.equal(r.value, 1e11);
+  assert.equal(r.unit, "crore");
+});
+
+test("sau crore", () => {
+  const r = ev(["UNIT_SAU", "sau"], ["SEP", " "], ["UNIT_CRORE", "crore"]);
+  assert.equal(r.value, 1e9);
+});
+
+test("dedh sau crore", () => {
+  const r = ev(["PFX_DEDH", "dedh"], ["SEP", " "], ["UNIT_SAU", "sau"], ["SEP", " "], ["UNIT_CRORE", "crore"]);
+  assert.equal(r.value, 1.5e9);
+});
+
+test("2 lakh crore", () => {
+  const r = ev(["DIGITS", "2"], ["SEP", " "], ["UNIT_LAKH", "lakh"], ["SEP", " "], ["UNIT_CRORE", "crore"]);
+  assert.equal(r.value, 2e12);
+});
+
+test("saadhe teen sau crore", () => {
+  const r = ev(
+    ["PFX_SAADHE", "saadhe"],
+    ["SEP", " "],
+    ["CARD_3", "teen"],
+    ["SEP", " "],
+    ["UNIT_SAU", "sau"],
+    ["SEP", " "],
+    ["UNIT_CRORE", "crore"],
+  );
+  assert.equal(r.value, 3.5e9);
+});
+
+test("50 hazaar crore", () => {
+  const r = ev(["DIGITS", "5"], ["DIGITS", "0"], ["SEP", " "], ["UNIT_HAZAAR", "hazaar"], ["SEP", " "], ["UNIT_CRORE", "crore"]);
+  assert.equal(r.value, 5e11);
+});
+
+test("ek lakh bees hazaar crore", () => {
+  const r = ev(
+    ["CARD_1", "ek"],
+    ["SEP", " "],
+    ["UNIT_LAKH", "lakh"],
+    ["SEP", " "],
+    ["CARD_20", "bees"],
+    ["SEP", " "],
+    ["UNIT_HAZAAR", "hazaar"],
+    ["SEP", " "],
+    ["UNIT_CRORE", "crore"],
+  );
+  assert.equal(r.value, 1.2e12);
+  assert.equal(r.unit, "crore");
+});
+
+test("half a lakh (PFX collapse: repeated PFX_AADHA separated only by SEP)", () => {
+  const r = ev(["PFX_AADHA", "half"], ["SEP", " "], ["PFX_AADHA", "a"], ["SEP", " "], ["UNIT_LAKH", "lakh"]);
+  assert.equal(r.value, 50000);
+});
+
+test("three n half lakh (PFX collapse: CARD_3 + collapsed PFX_SAADHE)", () => {
+  const r = ev(
+    ["CARD_3", "three"],
+    ["SEP", " "],
+    ["PFX_SAADHE", "n"],
+    ["SEP", " "],
+    ["PFX_SAADHE", "half"],
+    ["SEP", " "],
+    ["UNIT_LAKH", "lakh"],
+  );
+  assert.equal(r.value, 350000);
+});

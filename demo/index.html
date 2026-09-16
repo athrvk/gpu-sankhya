@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>gpu-sankhya</title>
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --panel: #ffffff;
+    --border: #e2e0db;
+    --text: #1c1b19;
+    --muted: #706c64;
+    --accent: #b5541e;
+    --accent-soft: #f2d9c4;
+    --mark-bg: #ffe9b3;
+    --mark-border: #e0a83a;
+    --ok: #2f7d4f;
+    --bad: #b23b3b;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #171614;
+      --panel: #201f1c;
+      --border: #38352f;
+      --text: #ece9e3;
+      --muted: #9a958a;
+      --accent: #e08a4f;
+      --accent-soft: #4a3626;
+      --mark-bg: #4a3a12;
+      --mark-border: #a87a26;
+      --ok: #59c98a;
+      --bad: #e37070;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 2rem 1rem 4rem;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.5;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; }
+  h1 {
+    font-size: 1.6rem;
+    margin: 0 0 0.25rem;
+    letter-spacing: -0.02em;
+  }
+  .tagline { color: var(--muted); margin: 0 0 1.5rem; font-size: 0.95rem; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+  }
+  textarea {
+    width: 100%;
+    min-height: 9rem;
+    font-size: 0.95rem;
+    font-family: var(--sans);
+    padding: 0.6rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    resize: vertical;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.75rem 0 0; }
+  .chip {
+    display: inline-block;
+    padding: 0.3rem 0.6rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--text);
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  .stats b { color: var(--text); font-weight: 600; }
+  .badge {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .badge.yes { background: var(--ok); color: #08230f; }
+  .badge.no { background: var(--border); color: var(--muted); }
+  .line {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .line:last-child { border-bottom: none; }
+  .line-text { font-size: 0.95rem; }
+  mark {
+    background: var(--mark-bg);
+    border-bottom: 2px solid var(--mark-border);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+  }
+  .no-span { color: var(--muted); font-size: 0.8rem; font-style: italic; margin-top: 0.15rem; }
+  .span-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.9rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.35rem;
+    padding: 0.35rem 0.5rem;
+    background: var(--bg);
+    border-radius: 6px;
+  }
+  .span-row .value { font-weight: 700; color: var(--text); font-size: 0.9rem; }
+  .span-row .plain { color: var(--muted); }
+  .span-row .classes { font-family: var(--mono); font-size: 0.72rem; }
+  .conf-bar {
+    display: inline-block;
+    width: 60px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+    overflow: hidden;
+    vertical-align: middle;
+  }
+  .conf-fill { height: 100%; background: var(--accent); }
+  h2 { font-size: 1rem; margin: 0 0 0.6rem; }
+  button {
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 7px;
+    border: 1px solid var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    cursor: pointer;
+    font-weight: 600;
+  }
+  button:hover { filter: brightness(1.05); }
+  button:disabled { opacity: 0.6; cursor: default; }
+  .bench-results {
+    margin-top: 0.9rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+  }
+  .bench-col {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.82rem;
+  }
+  .bench-col h3 { margin: 0 0 0.3rem; font-size: 0.85rem; }
+  .bench-col .err { color: var(--bad); font-family: var(--mono); font-size: 0.75rem; white-space: pre-wrap; }
+  footer {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-top: 2rem;
+  }
+  footer a { color: var(--accent); }
+  .error-box {
+    background: var(--bad);
+    color: #fff;
+    padding: 0.8rem;
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+  }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>gpu-sankhya</h1>
+  <p class="tagline">
+    Parses Indian informal number shorthand (sava lakh, dedh crore, 2.5L, 20k, 2-3 lakh, das hazaar crore)
+    into numbers, entirely in your browser &mdash; an ~18k-parameter char CNN, 27&nbsp;KB gzipped.
+  </p>
+
+  <div id="load-error" class="card error-box hidden"></div>
+
+  <div class="card">
+    <textarea id="input" spellcheck="false">sava lakh ka phone
+dedh crore ka flat
+paune do lakh
+2.5L ka phone
+20k logon ne attend kiya
+2-3 lakh mein aa jayega
+das hazaar crore ka package
+bhai derh crore se badhkar saadhe teen crore ho gaya
+CTC 12 LPA hai
+Rs 2,50,000/- negotiable
+teen din baad milte hain
+lakhon log aaye</textarea>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="card">
+    <div class="stats" id="stats">
+      <span>latency: <b id="stat-latency">&ndash;</b></span>
+      <span>params: <b>17,883</b></span>
+      <span>bundle: <b>27 KB gzipped</b></span>
+      <span>backend: <b>CPU</b></span>
+      <span>WebGPU: <span id="webgpu-badge" class="badge no">checking&hellip;</span></span>
+    </div>
+  </div>
+
+  <div class="card" id="results"></div>
+
+  <div class="card">
+    <h2>Batch benchmark</h2>
+    <p class="tagline" style="margin-bottom:0.6rem;">
+      Parses the 13 example strings repeated to 500 items with <code>parseBatch</code>, on CPU and (if available) WebGPU.
+    </p>
+    <button id="bench-btn">Run batch benchmark</button>
+    <div class="bench-results" id="bench-results"></div>
+  </div>
+
+  <footer>
+    Char CNN tags spans + token classes; a deterministic core does the arithmetic.
+    Source: <a href="https://github.com/athrvk/gpu-sankhya" target="_blank" rel="noopener">github.com/athrvk/gpu-sankhya</a>
+    &middot; npm package <code>gpu-sankhya</code>
+  </footer>
+</div>
+
+<script type="module">
+  let mod;
+  try {
+    mod = await import("./index.js");
+  } catch (e1) {
+    try {
+      mod = await import("../dist/index.js");
+    } catch (e2) {
+      const box = document.getElementById("load-error");
+      box.textContent = "Failed to load gpu-sankhya module: " + (e2 && e2.message ? e2.message : e2);
+      box.classList.remove("hidden");
+      throw e2;
+    }
+  }
+  const { parse, parseBatch, probeWebGPU } = mod;
+
+  const input = document.getElementById("input");
+  const results = document.getElementById("results");
+  const chipsDiv = document.getElementById("chips");
+  const statLatency = document.getElementById("stat-latency");
+  const webgpuBadge = document.getElementById("webgpu-badge");
+  const benchBtn = document.getElementById("bench-btn");
+  const benchResults = document.getElementById("bench-results");
+
+  const EXAMPLES = [
+    "sava lakh",
+    "dedh crore ka flat",
+    "paune do lakh",
+    "2.5L ka phone",
+    "20k logon ne attend kiya",
+    "sawaa laakh ka budget hai",
+    "2-3 lakh mein aa jayega",
+    "das hazaar crore ka package",
+    "bhai derh crore se badhkar saadhe teen crore ho gaya",
+    "CTC 12 LPA hai",
+    "Rs 2,50,000/- negotiable",
+    "teen din baad milte hain",
+    "lakhon log aaye",
+  ];
+
+  for (const ex of EXAMPLES) {
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    chip.textContent = ex;
+    chip.onclick = () => { input.value = ex; runParse(); };
+    chipsDiv.appendChild(chip);
+  }
+
+  let gpuAvail = false;
+  webgpuBadge.textContent = "probing…";
+  webgpuBadge.className = "badge no";
+  try {
+    gpuAvail = !!(await probeWebGPU());
+  } catch {
+    gpuAvail = false;
+  }
+  webgpuBadge.textContent = gpuAvail ? "available" : "unavailable";
+  webgpuBadge.className = "badge " + (gpuAvail ? "yes" : "no");
+
+  function indianGroup(n) {
+    const neg = n < 0;
+    n = Math.round(Math.abs(n));
+    let s = String(n);
+    if (s.length <= 3) return (neg ? "-" : "") + s;
+    let last3 = s.slice(-3);
+    let rest = s.slice(0, -3);
+    rest = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ",");
+    return (neg ? "-" : "") + rest + "," + last3;
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    }[c]));
+  }
+
+  function renderLine(text, spans) {
+    const lineDiv = document.createElement("div");
+    lineDiv.className = "line";
+
+    const textDiv = document.createElement("div");
+    textDiv.className = "line-text";
+    if (spans.length === 0) {
+      textDiv.textContent = text || " ";
+      lineDiv.appendChild(textDiv);
+      if (text.trim()) {
+        const noSpan = document.createElement("div");
+        noSpan.className = "no-span";
+        noSpan.textContent = "no span matched";
+        lineDiv.appendChild(noSpan);
+      }
+      return lineDiv;
+    }
+
+    let html = "";
+    let cursor = 0;
+    const sorted = [...spans].sort((a, b) => a.start - b.start);
+    for (const sp of sorted) {
+      html += escapeHtml(text.slice(cursor, sp.start));
+      html += "<mark>" + escapeHtml(text.slice(sp.start, sp.end)) + "</mark>";
+      cursor = sp.end;
+    }
+    html += escapeHtml(text.slice(cursor));
+    textDiv.innerHTML = html;
+    lineDiv.appendChild(textDiv);
+
+    for (const sp of sorted) {
+      const row = document.createElement("div");
+      row.className = "span-row";
+      const pct = Math.round((sp.confidence || 0) * 100);
+
+      let valueStr = "";
+      if (sp.range) {
+        valueStr = indianGroup(sp.range[0]) + " – " + indianGroup(sp.range[1]);
+      } else {
+        valueStr = indianGroup(sp.value);
+      }
+      const plainStr = sp.range
+        ? Math.round(sp.range[0]) + "–" + Math.round(sp.range[1])
+        : String(Math.round(sp.value));
+
+      row.innerHTML =
+        `<span class="value">${valueStr}</span>` +
+        `<span class="plain">(${plainStr})</span>` +
+        (sp.unit ? `<span>unit: ${escapeHtml(sp.unit)}</span>` : "") +
+        (sp.currency ? `<span>currency: ${escapeHtml(sp.currency)}</span>` : "") +
+        `<span>conf: ${pct}% <span class="conf-bar"><span class="conf-fill" style="width:${pct}%"></span></span></span>` +
+        `<span class="classes">${escapeHtml(sp.classes.join(" "))}</span>`;
+      lineDiv.appendChild(row);
+    }
+    return lineDiv;
+  }
+
+  let debounceTimer = null;
+  function scheduleParse() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(runParse, 60);
+  }
+
+  function runParse() {
+    results.innerHTML = "";
+    const lines = input.value.split("\n");
+    const t0 = performance.now();
+    for (const line of lines) {
+      let spans = [];
+      try {
+        spans = parse(line);
+      } catch (e) {
+        spans = [];
+      }
+      results.appendChild(renderLine(line, spans));
+    }
+    const t1 = performance.now();
+    statLatency.textContent = (t1 - t0).toFixed(2) + " ms";
+  }
+
+  input.addEventListener("input", scheduleParse);
+  runParse();
+
+  benchBtn.addEventListener("click", async () => {
+    benchBtn.disabled = true;
+    benchResults.innerHTML = "";
+    const repeated = [];
+    while (repeated.length < 500) repeated.push(...EXAMPLES);
+    const batch = repeated.slice(0, 500);
+
+    const cpuCol = document.createElement("div");
+    cpuCol.className = "bench-col";
+    cpuCol.innerHTML = "<h3>CPU</h3><div>running&hellip;</div>";
+    benchResults.appendChild(cpuCol);
+
+    const gpuCol = document.createElement("div");
+    gpuCol.className = "bench-col";
+    gpuCol.innerHTML = "<h3>WebGPU</h3><div>" + (gpuAvail ? "running&hellip;" : "no adapter") + "</div>";
+    benchResults.appendChild(gpuCol);
+
+    try {
+      const c0 = performance.now();
+      await parseBatch(batch, { backend: "cpu" });
+      const c1 = performance.now();
+      const total = c1 - c0;
+      cpuCol.innerHTML = `<h3>CPU</h3><div>${total.toFixed(1)} ms total</div><div>${(total / batch.length).toFixed(3)} ms/string</div>`;
+    } catch (e) {
+      cpuCol.innerHTML = `<h3>CPU</h3><div class="err">${escapeHtml(String(e && e.message ? e.message : e))}</div>`;
+    }
+
+    if (gpuAvail) {
+      try {
+        const g0 = performance.now();
+        await parseBatch(batch, { backend: "webgpu" });
+        const g1 = performance.now();
+        const total = g1 - g0;
+        gpuCol.innerHTML = `<h3>WebGPU</h3><div>${total.toFixed(1)} ms total</div><div>${(total / batch.length).toFixed(3)} ms/string</div>`;
+      } catch (e) {
+        gpuCol.innerHTML = `<h3>WebGPU</h3><div class="err">${escapeHtml(String(e && e.stack ? e.stack : e))}</div>`;
+      }
+    }
+
+    benchBtn.disabled = false;
+  });
+</script>
+</body>
+</html>

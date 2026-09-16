@@ -1,0 +1,10 @@
+node_modules/
+dist/
+/site/
+/data/
+/python/data/
+/python/models/
+/python/models_*/
+__pycache__/
+*.pyc
+isolate-*.log

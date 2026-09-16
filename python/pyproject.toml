@@ -1,0 +1,13 @@
+[project]
+name = "gpu-sankhya-train"
+version = "0.1.0"
+description = "Synthetic data grammar, deterministic core and generator for gpu-sankhya"
+requires-python = ">=3.9"
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["sankhya*"]
