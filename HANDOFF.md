@@ -41,7 +41,7 @@ runs, class repair (sub-run smoothing >= 3 chars, punctuation rules,
 Unicode letters+marks count as letters), confidence gate 0.5, and the
 runtime right-pads input with 16 pad tokens to match training padding.
 
-## Kaggle training (built, never run on Kaggle)
+## Kaggle training (verified on Kaggle 2026-09-16)
 
 `python/kaggle_train/`: `kernel-metadata.json`, `train_kernel.py`
 (clones repo at GIT_REF, generates data, trains on GPU, exports, evals
@@ -60,6 +60,16 @@ From `python/`:
 Gotchas learned: the CLI validates the token by POSTing it in a request
 body, so proxy header injection cannot replace it; the previously
 pasted token returned 401 and is exposed — use a freshly generated one.
+
+Verified run (kernel v3, this branch, default config = shipped recipe):
+clone + pip 10s, data gen 50s, training 172s on the Kaggle GPU (vs ~12
+min on CPU), export + gold eval ~25s; ~4.5 min wall total. Result:
+int8 gold Hinglish 0.938 value acc / 0.927 F1, Devanagari 0.943 /
+0.944, val value acc 0.917 — same recipe as shipped, so this is
+run-to-run variance (a hair below the shipped 0.944 / 0.965). Shipped
+weights were kept. Two fixes were needed to get there: `--device auto`
+exists only on this branch (v1 cloned master and failed), and the bio
+loss class weight had to be created on the training device (v2).
 
 ## Known misses / small follow-ups
 
