@@ -59,6 +59,6 @@ jobs:
           fi
 
       # No auth token here: npm authenticates via OIDC trusted publishing.
-      # publishConfig in package.json already sets access=public and
-      # provenance=true.
-      - run: npm publish
+      # Provenance is requested explicitly here (not in publishConfig) so a
+      # manual `npm publish` from a laptop still works.
+      - run: npm publish --provenance
