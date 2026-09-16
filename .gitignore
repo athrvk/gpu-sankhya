@@ -1,10 +1,9 @@
 node_modules/
 dist/
-data/
-python/data/
-python/models/
+/data/
+/python/data/
+/python/models/
+/python/models_*/
 __pycache__/
 *.pyc
-python/models_*/
-*.v8.log
 isolate-*.log
