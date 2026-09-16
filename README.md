@@ -308,10 +308,9 @@ You can also just edit the `version` field in `package.json` in a PR — no
 need to run `npm version` or create a tag yourself. Either way, once the
 new version lands on master, the `publish` workflow detects that
 `package.json`'s version isn't on npm yet, builds, tests, publishes (with
-provenance), and creates the matching git tag and GitHub release for you.
-
-Publishing a GitHub release directly, or running the workflow manually via
-`workflow_dispatch`, also triggers a publish.
+provenance), and creates the matching `vX.Y.Z` git tag if it does not
+exist yet. Running the workflow manually via `workflow_dispatch` does the
+same check and publishes only if the version is not on npm.
 
 Trusted publishing (OIDC, no `NPM_TOKEN`) must be configured once on
 npmjs.com for this to work: package page -> Settings -> Trusted publisher,
