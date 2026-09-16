@@ -118,6 +118,49 @@ apostrophe run is `O`. Fires ~2% of the time a phrase ends on a unit token
 (`generator._maybe_possessive`), on top of whichever surface form/casing/N-noise
 was already chosen for that unit.
 
+### 1.5d Dakshina-mined romanization variants (`CARD_*`/`UNIT_*`, hi_latn only)
+
+`python/scripts/mine_dakshina.py` mines additional attested romanizations of
+Hindi cardinal/unit/prefix words out of the Google Dakshina v1.0 Hindi
+romanization lexicon (`hi.translit.sampled.{train,dev,test}.tsv`,
+https://github.com/google-research-datasets/dakshina, **CC BY-SA 4.0** —
+this derived spellings list is a redistribution of that dataset under the
+same licence; attribute Google Research / the Dakshina dataset when
+redistributing `_EXTRA_VARIANTS`/`LEXICON` entries sourced from it).
+
+For every Devanagari surface form used by `hi_deva`'s cardinal (1–99), unit
+and prefix tables (plus common inflections — plural unit suffixes and
+with/without-nukta spellings of ज़/ज, ड़/ड, ढ़/ढ), the script looks up every
+attested Latin romanization + its count across the three TSVs, drops
+anything already in `hi_latn`'s lexicon, and writes
+`python/scripts/dakshina_variants.json` (`{class: {devanagari: [[roman,
+count], ...]}}`).
+
+Merge rule applied by hand from that report: a variant is added to
+`_EXTRA_VARIANTS[n]` (cardinals) or a unit/prefix's form list if its count is
+≥2, or ≥1 when the Devanagari word has fewer than 5 total attestations in
+Dakshina — then it must clear a collision filter: not already mapped to a
+different class/number via `pack.all_forms()`, not a filler word / blocked
+surface / duration noun, longer than 2 characters, and not a common
+Hindi/English word with another meaning (hand list: `sat`, `char`, `ath`,
+`sath`, `saath`, `kharab`, `kharaab`, `das`, `so`, `me`, `to`, `petty`).
+Devanagari plural forms of a scale unit (करोड़ों, हज़ारों, अरबों → `krodo`,
+`karoron`, `krodon`, `hajaron`, `arabon`, …) are indefinite-plural usages
+("thousands of people"), not the "N thousand" multiplier, so they were added
+to `INDEFINITE_PLURALS` (label `O`), matching the existing `lakhon`/
+`hazaron`/`karodon` treatment, not to the unit's form list.
+
+The user-reported colloquial spellings of 66 (`chanchat`, `chanchatt`,
+`chaachat`, `chhachat`, `chhasath`, `chansath`, `chhiyasat`, `chiyasat`) are
+not attested in Dakshina and were added to `_EXTRA_VARIANTS[66]` directly.
+
+Re-run: `python python/scripts/mine_dakshina.py --lexicon-dir <dir containing
+hi.translit.sampled.{train,dev,test}.tsv>` (defaults to a scratchpad path;
+pass `--lexicon-dir` explicitly elsewhere). It only reports candidates — the
+merge into `hi_latn.py`'s lexicon tables and `test_generator.py`'s
+`test_dakshina_merged_unit_variants_map_correctly` is manual, so the
+collision/exclusion decisions above stay auditable.
+
 ### 1.6 Connectors inside a span (class `SEP`)
 
 - additive chain glue: whitespace only (`do lakh pachas hazaar`), occasionally `aur`

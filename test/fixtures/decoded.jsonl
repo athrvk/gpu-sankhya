@@ -212,6 +212,12 @@
 {"text": "gyaarah lakh ka package mila", "spans": [{"start": 0, "end": 12, "value": 1100000, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_11 SEP UNIT_LAKH"}]}
 {"text": "trepan hazaar diye the usne", "spans": [{"start": 0, "end": 13, "value": 53000, "range": null, "unit": "hazaar", "currency": null, "classes": "CARD_53 SEP UNIT_HAZAAR"}]}
 {"text": "unnatis lakh ka loan liya tha", "spans": [{"start": 0, "end": 12, "value": 2900000, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_29 SEP UNIT_LAKH"}]}
+{"text": "dus hazaar ka phone liya", "spans": [{"start": 0, "end": 10, "value": 10000, "range": null, "unit": "hazaar", "currency": null, "classes": "CARD_10 SEP UNIT_HAZAAR"}]}
+{"text": "terh lakh ka ghar hai", "spans": [{"start": 0, "end": 9, "value": 1300000, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_13 SEP UNIT_LAKH"}]}
+{"text": "pachis crore ka deal hua", "spans": [{"start": 0, "end": 12, "value": 250000000, "range": null, "unit": "crore", "currency": null, "classes": "CARD_25 SEP UNIT_CRORE"}]}
+{"text": "cheh sau rupaye bache", "spans": [{"start": 0, "end": 8, "value": 600, "range": null, "unit": "sau", "currency": "INR", "classes": "CARD_6 SEP UNIT_SAU"}]}
+{"text": "chihttr hazaar salary hai", "spans": [{"start": 0, "end": 14, "value": 76000, "range": null, "unit": "hazaar", "currency": null, "classes": "CARD_76 SEP UNIT_HAZAAR"}]}
+{"text": "chanchatt hazaar ka phone liya", "spans": [{"start": 10, "end": 16, "value": 1000, "range": null, "unit": "hazaar", "currency": null, "classes": "UNIT_HAZAAR"}]}
 {"text": "बस आधा लाख", "spans": [{"start": 3, "end": 10, "value": 50000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_AADHA SEP UNIT_LAKH"}]}
 {"text": "सवा लाख मिलेगा", "spans": [{"start": 0, "end": 7, "value": 125000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_SAVA SEP UNIT_LAKH"}]}
 {"text": "पौने दो लाख का बजट है", "spans": [{"start": 0, "end": 11, "value": 175000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_PAUNE SEP CARD_2 SEP UNIT_LAKH"}]}

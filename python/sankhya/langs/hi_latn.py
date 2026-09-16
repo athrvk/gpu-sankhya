@@ -32,25 +32,27 @@ _EXTRA_VARIANTS = {
     2: ["do"],
     3: ["teen", "tin"],
     5: ["paanch", "panch", "paach"],
-    6: ["chhe", "che", "chhah", "chah"],
+    6: ["chhe", "che", "chhah", "chah", "cheh"],
+    10: ["dus"],
     11: ["gyarah", "gyaarah", "gyara"],
     12: ["baarah", "barah", "bara"],
-    13: ["terah", "tera"],
+    13: ["terah", "tera", "terh"],
     14: ["chaudah", "chauda", "choudah"],
     15: ["pandrah", "pandra", "pandreh"],
     16: ["solah", "sola", "soleh"],
     17: ["satrah", "satra", "satreh"],
-    18: ["atharah", "athara", "attharah"],
+    18: ["atharah", "athara", "attharah", "atarah", "athaarah"],
     19: ["unnees", "unnis", "unees"],
     20: ["bees", "bis", "biss"],
     21: ["ikkis", "ikkees", "ekkis"],
     22: ["baais", "bais", "bayees"],
-    25: ["pachchis", "pachees", "pachchees"],
+    25: ["pachchis", "pachees", "pachchees", "pachis"],
+    26: ["chhabees"],
     27: ["sattais", "sattaees", "satais"],
-    29: ["untis", "unattis", "unnatis"],
+    29: ["untis", "unattis", "unnatis", "untees", "unatees"],
     30: ["tees", "tis"],
     31: ["iktis", "ektis", "ikattis"],
-    35: ["paintis", "paintees", "pentis"],
+    35: ["paintis", "paintees", "pentis", "pantis"],
     37: ["saintis", "saitis", "saintees"],
     38: ["adtis", "artis", "athtis"],
     39: ["untalis", "unchalis", "untaalis"],
@@ -76,7 +78,12 @@ _EXTRA_VARIANTS = {
     63: ["tirsath", "tresath", "tirseth"],
     64: ["chaunsath", "chausath", "chonsath"],
     65: ["painsath", "pensath", "painsatth"],
-    66: ["chhiyasath", "chiyasath", "chhiasath"],
+    66: [
+        "chhiyasath", "chiyasath", "chhiasath",
+        # user-reported colloquial spellings, not attested in Dakshina
+        "chanchat", "chanchatt", "chaachat", "chhachat", "chhasath",
+        "chansath", "chhiyasat", "chiyasat",
+    ],
     67: ["sadsath", "sarsath", "sarhsath"],
     68: ["adsath", "arsath", "athsath"],
     69: ["unhattar", "unhatar", "unnhattar"],
@@ -85,7 +92,7 @@ _EXTRA_VARIANTS = {
     73: ["tihattar", "tihatar", "tehattar"],
     74: ["chauhattar", "chauhatar", "chohattar"],
     75: ["pachhattar", "pachattar", "pachhatar"],
-    76: ["chhihattar", "chihattar", "chhiyattar"],
+    76: ["chhihattar", "chihattar", "chhiyattar", "chihttr"],
     77: ["sathattar", "satattar", "sattahattar"],
     78: ["athhattar", "athattar", "atthattar"],
     79: ["unyasi", "unasi", "unnasi", "unnyasi", "unnaasi"],
@@ -140,11 +147,14 @@ LEXICON.update({
     # in the lexicon so they are always recognised inside a quantity context
     # ("do lkah") rather than only occasionally produced by random N7 noise.
     "UNIT_LAKH": ["lakh", "lac", "lack", "laakh", "lakhs", "lacs", "peti", "lkah", "lakhh"],
-    "UNIT_MILLION": ["million", "mil"],
+    "UNIT_MILLION": ["million", "mil", "millium"],
     # "croer"/"crorr" are curated typo spellings, same rationale as above.
-    "UNIT_CRORE": ["crore", "karod", "karor", "karore", "crores", "karodh", "khokha", "croer", "crorr"],
+    "UNIT_CRORE": [
+        "crore", "karod", "karor", "karore", "crores", "karodh", "khokha",
+        "croer", "crorr", "crode", "khokhaa",
+    ],
     "UNIT_BILLION": ["billion"],
-    "UNIT_ARAB": ["arab"],
+    "UNIT_ARAB": ["arab", "araba"],
     "UNIT_KHARAB": ["kharab"],
 })
 
@@ -169,7 +179,7 @@ DURATION_NOUNS = [
 
 INDEFINITE_PLURALS = [
     "lakhon", "lakho", "laakhon", "hazaaron", "hazaron", "karodon", "crodon",
-    "croron", "sainkdon",
+    "croron", "sainkdon", "hajaron", "krodo", "karoron", "krodon", "arabon",
 ]
 
 FILLER_WORDS = [

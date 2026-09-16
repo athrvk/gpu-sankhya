@@ -221,6 +221,7 @@ def test_possessive_noise_on_units():
 
 def test_cardinal_variants_map_correctly():
     """Every curated 11..99 cardinal spelling in hi_latn's _EXTRA_VARIANTS
+    (including the Dakshina-mined and user-reported 66 spellings merged in)
     maps to the right CARD_n via pack.all_forms(), and the pack's charset
     gains no new characters from them (all variants are plain lowercase
     a-z, already covered by string.ascii_lowercase in charset.py)."""
@@ -247,6 +248,49 @@ def test_cardinal_variants_map_correctly():
             all_variant_chars.update(v.lower())
     assert all_variant_chars <= set("abcdefghijklmnopqrstuvwxyz0123456789")
 
+    # every 66-spelling reported by the user is present and maps to CARD_66
+    for v in ["chanchat", "chanchatt", "chaachat", "chhachat", "chhasath",
+              "chansath", "chhiyasat", "chiyasat"]:
+        assert v in HL._EXTRA_VARIANTS[66], v
+        assert forms.get(v) == "CARD_66", (v, forms.get(v))
+
+    # sanity: no accepted variant collides with a different class or with
+    # filler/blocked/duration words (same invariant the merge step enforced)
+    filler = set(w.lower() for w in pack.filler_words)
+    blocked = set(w.lower() for w in pack.blocked_surfaces)
+    duration = set(w.lower() for w in pack.duration_nouns)
+    for n, variants in HL._EXTRA_VARIANTS.items():
+        for v in variants:
+            if v.isdigit():
+                continue
+            v = v.lower()
+            assert v not in filler, f"{v!r} collides with a filler word"
+            assert v not in blocked, f"{v!r} collides with a blocked surface"
+            assert v not in duration, f"{v!r} collides with a duration noun"
+
+
+def test_dakshina_merged_unit_variants_map_correctly():
+    """Unit/prefix romanizations merged in from the Dakshina mining pass map
+    to the right class (or, for indefinite-plural forms like 'krodo'/
+    'hajaron'/'arabon', to O) and don't collide with anything else."""
+    pack = base.get_pack("hi_latn")
+    forms = pack.all_forms()
+
+    expect_unit = {
+        "dus": "CARD_10", "terh": "CARD_13", "atarah": "CARD_18",
+        "athaarah": "CARD_18", "pachis": "CARD_25", "chhabees": "CARD_26",
+        "untees": "CARD_29", "unatees": "CARD_29", "pantis": "CARD_35",
+        "cheh": "CARD_6", "chihttr": "CARD_76",
+        "araba": "UNIT_ARAB", "crode": "UNIT_CRORE", "khokhaa": "UNIT_CRORE",
+        "millium": "UNIT_MILLION",
+    }
+    for surface, cls in expect_unit.items():
+        assert forms.get(surface) == cls, (surface, cls, forms.get(surface))
+
+    expect_indefinite_O = ["hajaron", "krodo", "karoron", "krodon", "arabon"]
+    for surface in expect_indefinite_O:
+        assert forms.get(surface) == "O", (surface, forms.get(surface))
+
 
 if __name__ == "__main__":
     test_generate_and_roundtrip()
@@ -258,4 +302,5 @@ if __name__ == "__main__":
     test_typo_spellings_recognised_in_quantity_context()
     test_possessive_noise_on_units()
     test_cardinal_variants_map_correctly()
+    test_dakshina_merged_unit_variants_map_correctly()
     print("\nOK")
