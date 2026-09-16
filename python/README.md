@@ -135,10 +135,12 @@ vs. the torch model) before writing, so a broken export fails loudly.
 
 ## Evaluate on gold
 
-The hand-written gold sets (`tests/gold.jsonl`, 184 sentences / 168 spans,
-romanised; `tests/gold_deva.jsonl`, 169 sentences / 141 spans, Devanagari
-— both grew by 7 foreign-character examples exercising the `<unk>`-noise
-training) are the only numbers to trust for real-world quality — synthetic validation
+The hand-written gold sets (`tests/gold.jsonl`, 214 sentences / 188 spans,
+romanised; `tests/gold_deva.jsonl`, 182 sentences / 151 spans, Devanagari
+— this round added conjunction-joined multi-span sentences,
+trailing-cardinal chains, new negative families, possessive noise,
+in-context typos, and curated romanised cardinal variants 11-99) are the
+only numbers to trust for real-world quality — synthetic validation
 accuracy is optimistic because it's drawn from the same generator/templates
 the model was trained on. `--gold` accepts multiple files; per-file and
 combined metrics are printed.
@@ -205,29 +207,32 @@ python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl \
 
 | gold set          | examples | spans | precision | recall | F1     | value_acc |
 |--------------------|---------:|------:|----------:|-------:|-------:|----------:|
-| gold.jsonl          |      184 |   168 |    0.8971 | 0.9515 | 0.9235 |    0.9515 |
-| gold_deva.jsonl      |      169 |   141 |    0.9662 | 0.9931 | 0.9795 |    0.9861 |
-| combined             |      353 |   309 |    0.9288 | 0.9709 | 0.9494 |    0.9676 |
+| gold.jsonl          |      214 |   188 |    0.9167 | 0.9362 | 0.9263 |    0.9255 |
+| gold_deva.jsonl      |      182 |   151 |    0.9737 | 0.9801 | 0.9769 |    0.9735 |
+| combined             |      396 |   339 |    0.9419 | 0.9558 | 0.9488 |    0.9469 |
 
-Negatives: 55 examples, 4 false positives (7.3%). Miss summary: 0 missed,
-13 spurious, 1 wrong value, 9 wrong boundary. Per-category value_acc:
-digits 0.977, words 0.964, prefix 0.948, range 0.917, currency 0.979,
-multi_unit 1.0, symbol_unit 1.0, mixed_script 1.0, long 0.75.
+Negatives: 73 examples, 0 false positives. Miss summary: missed 2,
+spurious 7, wrong value 3, wrong boundary 13. Per-category value_acc:
+digits 0.967, words 0.940, prefix 0.926, range 0.917, currency 1.0,
+multi_unit 0.952, symbol_unit 0.970, mixed_script 1.0, long 0.80.
 
-For comparison, the previously shipped `v1`/32-channel model scored
-0.9441 (romanised) / 0.9645 (Devanagari) / 0.9536 (combined) value_acc,
-0.9510 combined F1, 2/55 (3.6%) negatives false positives on the older
-346-example gold set. `v2` gains about 1.4 points of combined value_acc
-and handles unfamiliar (out-of-vocab) characters much better, at a small
-cost in span precision (a few more spurious spans on unfamiliar words) —
-see the sweep evidence below for why `v2`/48 was chosen.
+For comparison, the previous shipped weights scored, on this same
+enlarged gold set, 0.9096 (romanised) / 0.9603 (Devanagari) / 0.9322
+(combined) value_acc, 0.9258 combined F1, 4/73 (5.5%) negatives false
+positives. Their numbers on the older, smaller 353-example gold set were
+0.9515 / 0.9861 / 0.9676 combined value_acc — the new gold set is
+deliberately harder: it adds conjunction-joined multi-span sentences,
+trailing-cardinal chains, possessives, in-context typos, cardinal
+spelling variants, and 18 more negative examples. See the sweep evidence
+below for why `v2`/48 seed 2 is the currently shipped run.
 
-Known miss categories: unusual typos ("croer", "five and a half crore"
-without a unit-noun boundary marker), possessive apostrophes
-("do lakh's"), long multi-term/mixed-numeral constructs ("three n half
-lakh", "50M"), multi-number range phrases ("तीस पैंतीस हज़ार", "paanch se
-sadhe saat lakh"), and occasional spurious spans or off-by-a-word
-boundaries on unfamiliar surrounding words ("mil", "poora", "raato raat").
+Known miss categories: wrong span boundaries on multi-span/range/
+connector phrases (the largest category this round), wrong value on a
+handful of prefix/compound constructs, unusual typos ("croer", "five and
+a half crore" without a unit-noun boundary marker), long
+multi-term/mixed-numeral constructs ("three n half lakh", "50M",
+"paanch se sadhe saat lakh"), and occasional spurious spans on
+unfamiliar surrounding words ("mil", "poora", "raato raat").
 
 ### Sweep evidence: why `v2`/48 channels is shipped
 
@@ -245,6 +250,23 @@ before the `<unk>`-noise generator change):
 0.950 / 0.957 / 0.964 / 0.944 / 0.940 (mean 0.951). After adding
 `<unk>`-noise augmentation, `v2:48` seeds 0-2 on the newer 353-example
 gold set scored 0.968 / 0.948 / 0.951.
+
+**Currently shipped:** a 3-seed `v2:48` sweep run on the enriched
+generator (conjunction multi-span family, trailing-cardinal chains, new
+negative families, possessive noise, in-context typos, curated cardinal
+variants), scored int8 combined gold value_acc / F1 / negatives
+false-positive rate:
+
+| seed | value_acc | F1    | negatives FP |
+|------|----------:|------:|--------------:|
+| 0    | 0.950     | 0.943 | 2.7%          |
+| 1    | 0.950     | 0.948 | 2.7%          |
+| 2    | 0.947     | 0.949 | 0.0%          |
+
+Seeds 0/1 tie on val value_acc within the 0.005 band ahead of seed 2, so
+the winner is picked by the tie-break rule below: seed 2 has the lowest
+negatives false-positive rate (0.0%) of the tied/near-tied set and a
+competitive F1, so **seed 2 is the shipped weights**.
 
 **The rule this implies, and what `eval_matrix.select_matrix_winner` /
 the Kaggle MATRIX kernel actually do:** pick the winning **config**
@@ -305,7 +327,7 @@ fixtures that pin the JS forward pass and decoder to this exact model.
    npm test
    ```
 
-   Must show `48/48` passing (`parity: 180/180 texts identical to python
+   Must show every test passing (`parity: 391/391 texts identical to python
    np_infer` and the e2e-parity fixture check both included). Re-running
    `make_fixtures.py` against the same weights + gold set is deterministic
    (no RNG involved), so this reproduces the existing fixtures exactly.
@@ -423,7 +445,7 @@ for the kernel to be scheduled.
 **After `pull`, run `npm test` from the repo root before committing.**
 `pull` overwrites `src/data/default-weights.json` and regenerates
 `test/fixtures/parity.jsonl` / `decoded.jsonl` from the new weights —
-`npm test` must pass (`63/63`) before those changes are committed. `pull`
+`npm test` must pass before those changes are committed. `pull`
 also copies the winning run's checkpoint + exports (`sankhya.pt`,
 `sankhya.onnx`, `sankhya.weights.json`, `sankhya.weights.int8.json`,
 `charset.json`, `classes.json`, `gold_metrics_*.json`) plus
