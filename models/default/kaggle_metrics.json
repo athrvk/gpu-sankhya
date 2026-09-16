@@ -10,7 +10,7 @@
     "epochs": 20,
     "arch": "v2",
     "channels": 48,
-    "seed": 2,
+    "seed": 0,
     "matrix": "v2:48:0,v2:48:1,v2:48:2",
     "smoke": false
   },
@@ -18,27 +18,27 @@
     "torch": {
       "per_file": {
         "tests/gold.jsonl": {
-          "examples": 214,
-          "spans": 188,
-          "precision": 0.9166666666666666,
-          "recall": 0.9361702127659575,
-          "f1": 0.9263157894736843,
-          "value_acc": 0.925531914893617,
+          "examples": 220,
+          "spans": 194,
+          "precision": 0.92,
+          "recall": 0.9484536082474226,
+          "f1": 0.9340101522842639,
+          "value_acc": 0.9381443298969072,
           "categories": {
             "digits": {
               "spans": 54,
-              "value_acc": 0.9444444444444444,
-              "exact_match_rate": 0.9444444444444444
+              "value_acc": 0.9259259259259259,
+              "exact_match_rate": 0.9259259259259259
             },
             "words": {
-              "spans": 134,
-              "value_acc": 0.917910447761194,
-              "exact_match_rate": 0.9328358208955224
+              "spans": 140,
+              "value_acc": 0.9428571428571428,
+              "exact_match_rate": 0.9571428571428572
             },
             "prefix": {
               "spans": 52,
-              "value_acc": 0.8846153846153846,
-              "exact_match_rate": 0.9038461538461539
+              "value_acc": 0.9423076923076923,
+              "exact_match_rate": 0.9423076923076923
             },
             "range": {
               "spans": 14,
@@ -46,7 +46,7 @@
               "exact_match_rate": 0.9285714285714286
             },
             "currency": {
-              "spans": 27,
+              "spans": 28,
               "value_acc": 1.0,
               "exact_match_rate": 1.0
             },
@@ -57,13 +57,13 @@
             },
             "symbol_unit": {
               "spans": 19,
-              "value_acc": 0.9473684210526315,
-              "exact_match_rate": 0.9473684210526315
+              "value_acc": 0.8947368421052632,
+              "exact_match_rate": 0.8947368421052632
             },
             "long": {
               "spans": 10,
               "value_acc": 0.8,
-              "exact_match_rate": 0.8
+              "exact_match_rate": 0.9
             }
           },
           "negatives": {
@@ -75,19 +75,19 @@
         "tests/gold_deva.jsonl": {
           "examples": 182,
           "spans": 151,
-          "precision": 0.9736842105263158,
-          "recall": 0.9801324503311258,
-          "f1": 0.976897689768977,
+          "precision": 0.9865771812080537,
+          "recall": 0.9735099337748344,
+          "f1": 0.98,
           "value_acc": 0.9668874172185431,
           "categories": {
             "digits": {
               "spans": 37,
-              "value_acc": 1.0,
-              "exact_match_rate": 1.0
+              "value_acc": 0.972972972972973,
+              "exact_match_rate": 0.972972972972973
             },
             "words": {
               "spans": 114,
-              "value_acc": 0.956140350877193,
+              "value_acc": 0.9649122807017544,
               "exact_match_rate": 0.9736842105263158
             },
             "prefix": {
@@ -112,8 +112,8 @@
             },
             "symbol_unit": {
               "spans": 14,
-              "value_acc": 1.0,
-              "exact_match_rate": 1.0
+              "value_acc": 0.9285714285714286,
+              "exact_match_rate": 0.9285714285714286
             },
             "mixed_script": {
               "spans": 2,
@@ -129,34 +129,34 @@
         }
       },
       "combined": {
-        "examples": 396,
-        "spans": 339,
-        "precision": 0.9418604651162791,
-        "recall": 0.9557522123893806,
-        "f1": 0.9487554904831625,
-        "value_acc": 0.943952802359882,
+        "examples": 402,
+        "spans": 345,
+        "precision": 0.9484240687679083,
+        "recall": 0.9594202898550724,
+        "f1": 0.9538904899135446,
+        "value_acc": 0.9507246376811594,
         "miss_summary": {
-          "missed_span": 2,
-          "spurious_span": 7,
-          "wrong_value": 4,
+          "missed_span": 1,
+          "spurious_span": 6,
+          "wrong_value": 3,
           "wrong_boundary": 13,
-          "total": 26
+          "total": 23
         },
         "categories": {
           "digits": {
             "spans": 91,
-            "value_acc": 0.967032967032967,
-            "exact_match_rate": 0.967032967032967
+            "value_acc": 0.945054945054945,
+            "exact_match_rate": 0.945054945054945
           },
           "words": {
-            "spans": 248,
-            "value_acc": 0.9354838709677419,
-            "exact_match_rate": 0.9516129032258065
+            "spans": 254,
+            "value_acc": 0.952755905511811,
+            "exact_match_rate": 0.9645669291338582
           },
           "prefix": {
             "spans": 81,
-            "value_acc": 0.9259259259259259,
-            "exact_match_rate": 0.9382716049382716
+            "value_acc": 0.9629629629629629,
+            "exact_match_rate": 0.9629629629629629
           },
           "range": {
             "spans": 24,
@@ -164,7 +164,7 @@
             "exact_match_rate": 0.9583333333333334
           },
           "currency": {
-            "spans": 47,
+            "spans": 48,
             "value_acc": 1.0,
             "exact_match_rate": 1.0
           },
@@ -175,8 +175,8 @@
           },
           "symbol_unit": {
             "spans": 33,
-            "value_acc": 0.9696969696969697,
-            "exact_match_rate": 0.9696969696969697
+            "value_acc": 0.9090909090909091,
+            "exact_match_rate": 0.9090909090909091
           },
           "mixed_script": {
             "spans": 2,
@@ -186,7 +186,7 @@
           "long": {
             "spans": 10,
             "value_acc": 0.8,
-            "exact_match_rate": 0.8
+            "exact_match_rate": 0.9
           }
         },
         "negatives": {
@@ -199,27 +199,27 @@
     "json_float32": {
       "per_file": {
         "tests/gold.jsonl": {
-          "examples": 214,
-          "spans": 188,
-          "precision": 0.9166666666666666,
-          "recall": 0.9361702127659575,
-          "f1": 0.9263157894736843,
-          "value_acc": 0.925531914893617,
+          "examples": 220,
+          "spans": 194,
+          "precision": 0.92,
+          "recall": 0.9484536082474226,
+          "f1": 0.9340101522842639,
+          "value_acc": 0.9381443298969072,
           "categories": {
             "digits": {
               "spans": 54,
-              "value_acc": 0.9444444444444444,
-              "exact_match_rate": 0.9444444444444444
+              "value_acc": 0.9259259259259259,
+              "exact_match_rate": 0.9259259259259259
             },
             "words": {
-              "spans": 134,
-              "value_acc": 0.917910447761194,
-              "exact_match_rate": 0.9328358208955224
+              "spans": 140,
+              "value_acc": 0.9428571428571428,
+              "exact_match_rate": 0.9571428571428572
             },
             "prefix": {
               "spans": 52,
-              "value_acc": 0.8846153846153846,
-              "exact_match_rate": 0.9038461538461539
+              "value_acc": 0.9423076923076923,
+              "exact_match_rate": 0.9423076923076923
             },
             "range": {
               "spans": 14,
@@ -227,7 +227,7 @@
               "exact_match_rate": 0.9285714285714286
             },
             "currency": {
-              "spans": 27,
+              "spans": 28,
               "value_acc": 1.0,
               "exact_match_rate": 1.0
             },
@@ -238,13 +238,13 @@
             },
             "symbol_unit": {
               "spans": 19,
-              "value_acc": 0.9473684210526315,
-              "exact_match_rate": 0.9473684210526315
+              "value_acc": 0.8947368421052632,
+              "exact_match_rate": 0.8947368421052632
             },
             "long": {
               "spans": 10,
               "value_acc": 0.8,
-              "exact_match_rate": 0.8
+              "exact_match_rate": 0.9
             }
           },
           "negatives": {
@@ -256,19 +256,19 @@
         "tests/gold_deva.jsonl": {
           "examples": 182,
           "spans": 151,
-          "precision": 0.9736842105263158,
-          "recall": 0.9801324503311258,
-          "f1": 0.976897689768977,
+          "precision": 0.9865771812080537,
+          "recall": 0.9735099337748344,
+          "f1": 0.98,
           "value_acc": 0.9668874172185431,
           "categories": {
             "digits": {
               "spans": 37,
-              "value_acc": 1.0,
-              "exact_match_rate": 1.0
+              "value_acc": 0.972972972972973,
+              "exact_match_rate": 0.972972972972973
             },
             "words": {
               "spans": 114,
-              "value_acc": 0.956140350877193,
+              "value_acc": 0.9649122807017544,
               "exact_match_rate": 0.9736842105263158
             },
             "prefix": {
@@ -293,8 +293,8 @@
             },
             "symbol_unit": {
               "spans": 14,
-              "value_acc": 1.0,
-              "exact_match_rate": 1.0
+              "value_acc": 0.9285714285714286,
+              "exact_match_rate": 0.9285714285714286
             },
             "mixed_script": {
               "spans": 2,
@@ -310,34 +310,34 @@
         }
       },
       "combined": {
-        "examples": 396,
-        "spans": 339,
-        "precision": 0.9418604651162791,
-        "recall": 0.9557522123893806,
-        "f1": 0.9487554904831625,
-        "value_acc": 0.943952802359882,
+        "examples": 402,
+        "spans": 345,
+        "precision": 0.9484240687679083,
+        "recall": 0.9594202898550724,
+        "f1": 0.9538904899135446,
+        "value_acc": 0.9507246376811594,
         "miss_summary": {
-          "missed_span": 2,
-          "spurious_span": 7,
-          "wrong_value": 4,
+          "missed_span": 1,
+          "spurious_span": 6,
+          "wrong_value": 3,
           "wrong_boundary": 13,
-          "total": 26
+          "total": 23
         },
         "categories": {
           "digits": {
             "spans": 91,
-            "value_acc": 0.967032967032967,
-            "exact_match_rate": 0.967032967032967
+            "value_acc": 0.945054945054945,
+            "exact_match_rate": 0.945054945054945
           },
           "words": {
-            "spans": 248,
-            "value_acc": 0.9354838709677419,
-            "exact_match_rate": 0.9516129032258065
+            "spans": 254,
+            "value_acc": 0.952755905511811,
+            "exact_match_rate": 0.9645669291338582
           },
           "prefix": {
             "spans": 81,
-            "value_acc": 0.9259259259259259,
-            "exact_match_rate": 0.9382716049382716
+            "value_acc": 0.9629629629629629,
+            "exact_match_rate": 0.9629629629629629
           },
           "range": {
             "spans": 24,
@@ -345,7 +345,7 @@
             "exact_match_rate": 0.9583333333333334
           },
           "currency": {
-            "spans": 47,
+            "spans": 48,
             "value_acc": 1.0,
             "exact_match_rate": 1.0
           },
@@ -356,8 +356,8 @@
           },
           "symbol_unit": {
             "spans": 33,
-            "value_acc": 0.9696969696969697,
-            "exact_match_rate": 0.9696969696969697
+            "value_acc": 0.9090909090909091,
+            "exact_match_rate": 0.9090909090909091
           },
           "mixed_script": {
             "spans": 2,
@@ -367,7 +367,7 @@
           "long": {
             "spans": 10,
             "value_acc": 0.8,
-            "exact_match_rate": 0.8
+            "exact_match_rate": 0.9
           }
         },
         "negatives": {
@@ -380,27 +380,27 @@
     "json_int8": {
       "per_file": {
         "tests/gold.jsonl": {
-          "examples": 214,
-          "spans": 188,
-          "precision": 0.9166666666666666,
-          "recall": 0.9361702127659575,
-          "f1": 0.9263157894736843,
-          "value_acc": 0.925531914893617,
+          "examples": 220,
+          "spans": 194,
+          "precision": 0.9292929292929293,
+          "recall": 0.9484536082474226,
+          "f1": 0.9387755102040816,
+          "value_acc": 0.9381443298969072,
           "categories": {
             "digits": {
               "spans": 54,
-              "value_acc": 0.9444444444444444,
-              "exact_match_rate": 0.9444444444444444
+              "value_acc": 0.9259259259259259,
+              "exact_match_rate": 0.9259259259259259
             },
             "words": {
-              "spans": 134,
-              "value_acc": 0.917910447761194,
-              "exact_match_rate": 0.9328358208955224
+              "spans": 140,
+              "value_acc": 0.9428571428571428,
+              "exact_match_rate": 0.9571428571428572
             },
             "prefix": {
               "spans": 52,
-              "value_acc": 0.8846153846153846,
-              "exact_match_rate": 0.9038461538461539
+              "value_acc": 0.9423076923076923,
+              "exact_match_rate": 0.9423076923076923
             },
             "range": {
               "spans": 14,
@@ -408,7 +408,7 @@
               "exact_match_rate": 0.9285714285714286
             },
             "currency": {
-              "spans": 27,
+              "spans": 28,
               "value_acc": 1.0,
               "exact_match_rate": 1.0
             },
@@ -419,13 +419,13 @@
             },
             "symbol_unit": {
               "spans": 19,
-              "value_acc": 0.9473684210526315,
-              "exact_match_rate": 0.9473684210526315
+              "value_acc": 0.8947368421052632,
+              "exact_match_rate": 0.8947368421052632
             },
             "long": {
               "spans": 10,
               "value_acc": 0.8,
-              "exact_match_rate": 0.8
+              "exact_match_rate": 0.9
             }
           },
           "negatives": {
@@ -437,9 +437,9 @@
         "tests/gold_deva.jsonl": {
           "examples": 182,
           "spans": 151,
-          "precision": 0.9736842105263158,
+          "precision": 0.9866666666666667,
           "recall": 0.9801324503311258,
-          "f1": 0.976897689768977,
+          "f1": 0.983388704318937,
           "value_acc": 0.9735099337748344,
           "categories": {
             "digits": {
@@ -491,34 +491,34 @@
         }
       },
       "combined": {
-        "examples": 396,
-        "spans": 339,
-        "precision": 0.9418604651162791,
-        "recall": 0.9557522123893806,
-        "f1": 0.9487554904831625,
-        "value_acc": 0.9469026548672567,
+        "examples": 402,
+        "spans": 345,
+        "precision": 0.9540229885057471,
+        "recall": 0.9623188405797102,
+        "f1": 0.9581529581529582,
+        "value_acc": 0.9536231884057971,
         "miss_summary": {
-          "missed_span": 2,
-          "spurious_span": 7,
+          "missed_span": 0,
+          "spurious_span": 4,
           "wrong_value": 3,
           "wrong_boundary": 13,
-          "total": 25
+          "total": 20
         },
         "categories": {
           "digits": {
             "spans": 91,
-            "value_acc": 0.967032967032967,
-            "exact_match_rate": 0.967032967032967
+            "value_acc": 0.9560439560439561,
+            "exact_match_rate": 0.9560439560439561
           },
           "words": {
-            "spans": 248,
-            "value_acc": 0.9395161290322581,
-            "exact_match_rate": 0.9516129032258065
+            "spans": 254,
+            "value_acc": 0.952755905511811,
+            "exact_match_rate": 0.9645669291338582
           },
           "prefix": {
             "spans": 81,
-            "value_acc": 0.9259259259259259,
-            "exact_match_rate": 0.9382716049382716
+            "value_acc": 0.9629629629629629,
+            "exact_match_rate": 0.9629629629629629
           },
           "range": {
             "spans": 24,
@@ -526,7 +526,7 @@
             "exact_match_rate": 0.9583333333333334
           },
           "currency": {
-            "spans": 47,
+            "spans": 48,
             "value_acc": 1.0,
             "exact_match_rate": 1.0
           },
@@ -537,8 +537,8 @@
           },
           "symbol_unit": {
             "spans": 33,
-            "value_acc": 0.9696969696969697,
-            "exact_match_rate": 0.9696969696969697
+            "value_acc": 0.9393939393939394,
+            "exact_match_rate": 0.9393939393939394
           },
           "mixed_script": {
             "spans": 2,
@@ -548,7 +548,7 @@
           "long": {
             "spans": 10,
             "value_acc": 0.8,
-            "exact_match_rate": 0.8
+            "exact_match_rate": 0.9
           }
         },
         "negatives": {

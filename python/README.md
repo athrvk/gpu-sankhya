@@ -135,7 +135,7 @@ vs. the torch model) before writing, so a broken export fails loudly.
 
 ## Evaluate on gold
 
-The hand-written gold sets (`tests/gold.jsonl`, 214 sentences / 188 spans,
+The hand-written gold sets (`tests/gold.jsonl`, 220 sentences / 194 spans,
 romanised; `tests/gold_deva.jsonl`, 182 sentences / 151 spans, Devanagari
 — this round added conjunction-joined multi-span sentences,
 trailing-cardinal chains, new negative families, possessive noise,
@@ -207,9 +207,9 @@ python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl \
 
 | gold set          | examples | spans | precision | recall | F1     | value_acc |
 |--------------------|---------:|------:|----------:|-------:|-------:|----------:|
-| gold.jsonl          |      214 |   188 |    0.9167 | 0.9362 | 0.9263 |    0.9255 |
-| gold_deva.jsonl      |      182 |   151 |    0.9737 | 0.9801 | 0.9769 |    0.9735 |
-| combined             |      396 |   339 |    0.9419 | 0.9558 | 0.9488 |    0.9469 |
+| gold.jsonl          |      214 |   188 |    0.9293 | 0.9485 | 0.9388 |    0.9381 |
+| gold_deva.jsonl      |      182 |   151 |    0.9867 | 0.9801 | 0.9834 |    0.9735 |
+| combined             |      396 |   339 |    0.9540 | 0.9623 | 0.9582 |    0.9536 |
 
 Negatives: 73 examples, 0 false positives. Miss summary: missed 2,
 spurious 7, wrong value 3, wrong boundary 13. Per-category value_acc:
