@@ -157,6 +157,34 @@ def test_ek_lakh_bees_hazaar_crore():
     assert r.unit == "crore"
 
 
+def test_collapse_repeated_prefix_half_a():
+    # "half a lakh" decoded as PFX_AADHA SEP PFX_AADHA UNIT_LAKH (a decode
+    # artifact where "half" and "a" both land on PFX_AADHA) must collapse to
+    # a single PFX_AADHA before evaluation, giving 0.5 * lakh = 50000, not
+    # 50000.5 (standalone 0.5 double-counted as an extra additive term).
+    r = ev(("PFX_AADHA", "half"), ("SEP", " "), ("PFX_AADHA", "a"), ("SEP", " "), ("UNIT_LAKH", "lakh"))
+    assert r.value == 50000, r.value
+
+
+def test_collapse_repeated_prefix_three_n_half():
+    # "three n half lakh" decoded as CARD_3 SEP PFX_SAADHE SEP PFX_SAADHE
+    # UNIT_LAKH ("n" and "half" both land on PFX_SAADHE) must collapse the
+    # duplicate PFX_SAADHE into one before evaluation: coef = 3 + 0.5 = 3.5,
+    # value = 3.5 * lakh = 350000.
+    r = ev(("CARD_3", "three"), ("SEP", " "), ("PFX_SAADHE", "n"), ("SEP", " "),
+           ("PFX_SAADHE", "half"), ("SEP", " "), ("UNIT_LAKH", "lakh"))
+    assert r.value == 350000, r.value
+
+
+def test_collapse_repeated_prefix_does_not_merge_different_prefixes():
+    # sanity: two DIFFERENT prefix classes in a row must NOT collapse --
+    # only identical consecutive PFX_* classes do.
+    r = ev(("PFX_SAVA", "sava"), ("SEP", " "), ("PFX_DEDH", "dedh"), ("SEP", " "), ("UNIT_LAKH", "lakh"))
+    # sava (standalone 1.25) flushed as its own additive term (no unit) = 1.25,
+    # then dedh (standalone 1.5) * lakh = 150000; total = 150001.25
+    assert r.value == 150001.25, r.value
+
+
 def _run_all():
     fns = [v for k, v in list(globals().items()) if k.startswith("test_")]
     for fn in fns:

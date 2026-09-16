@@ -51,6 +51,21 @@ def _merge_numbers(tokens):
     return out
 
 
+def _collapse_repeated_prefixes(merged):
+    """Consecutive tokens with the SAME PFX_* class, separated only by SEP
+    (already dropped by _merge_numbers, so they're adjacent here), collapse
+    into a single occurrence of that prefix. This handles decode artifacts
+    where a single-word prefix phrase like "half a" or "three n half" gets
+    split into two separate same-class tokens by BIO/char decoding: without
+    this, evaluate() would double-count the prefix's standalone value."""
+    out = []
+    for cls, text in merged:
+        if C.is_prefix(cls) and out and out[-1][0] == cls:
+            continue
+        out.append((cls, text))
+    return out
+
+
 def _flush_coef(num, pfx):
     if pfx is not None:
         info = C.PREFIX_INFO.get(pfx)
@@ -81,7 +96,7 @@ def _eval_amount(tokens):
     that closed the previous term, the running total is MULTIPLIED by the
     new unit's value instead of a new additive term being appended.
     """
-    merged = _merge_numbers(tokens)
+    merged = _collapse_repeated_prefixes(_merge_numbers(tokens))
     accum = 0
     last_unit_val = None
     max_unit_cls = None
