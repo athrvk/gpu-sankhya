@@ -1,2 +1,7 @@
 node_modules/
 dist/
+data/
+python/data/
+python/models/
+__pycache__/
+*.pyc
