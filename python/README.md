@@ -227,6 +227,60 @@ gold set used by `eval_gold.py`, not a generator round-trip test.
 See `colab.md` for a copy-pasteable notebook recipe (same commands as
 above, runs fine on Colab's CPU runtime).
 
+## Training on Kaggle (GPU)
+
+`python/kaggle_train/` wraps a Kaggle "script" kernel that runs the full
+multi-pack recipe above (`--lang hi_latn,hi_deva --mix 0.55,0.45 --cross
+0.10`, 200k train / 6k val, `--epochs 20 --channels 32 --layers 4
+--dilation 2`) on a Kaggle GPU, then evaluates on both gold sets and
+stages `models/` + `metrics.json` for download.
+
+### Prerequisites
+
+- A Kaggle account with **phone verification** — required for internet
+  access and GPU quota on kernels. Without it, `enable_internet`/GPU
+  kernels are rejected server-side even with valid credentials.
+- Kaggle CLI credentials. `kaggle` (2.2.4+) accepts, in priority order:
+  1. `KAGGLE_API_TOKEN=<token>` env var (generate at
+     https://www.kaggle.com/settings/api)
+  2. a token file at `~/.kaggle/access_token`
+  3. `kaggle auth login` (OAuth, cached under `~/.kaggle/`)
+  4. legacy: `~/.kaggle/kaggle.json` (or `KAGGLE_USERNAME` +
+     `KAGGLE_KEY` env vars), optionally relocated via `KAGGLE_CONFIG_DIR`
+
+  `python -m kaggle_train.run` checks for one of these and fails fast
+  with the same list if none is set — it never invents its own env var
+  names.
+
+### Commands (run from `python/`)
+
+```bash
+python -m kaggle_train.run push              # upload the kernel, start the GPU run
+python -m kaggle_train.run status             # poll every 30s until complete/error
+python -m kaggle_train.run pull               # download output, update weights + fixtures
+python -m kaggle_train.run all                # push, then status, then pull
+```
+
+Override a training default with `--set KEY=VALUE` (repeatable) before
+`push`/`all`, e.g. `--set EPOCHS=30 --set GIT_REF=my-branch`. Valid keys:
+`REPO_URL`, `GIT_REF`, `N_TRAIN`, `N_VAL`, `LANGS`, `MIX`, `CROSS`,
+`EPOCHS`, `CHANNELS`, `LAYERS`, `DILATION`, `TRAIN_SEED`, `VAL_SEED`.
+
+Expected wall time: roughly 15-30 minutes on a Kaggle T4/P100 for the
+default 200k-example recipe (vs. ~12 minutes on 4 CPU cores at the same
+size — GPU mainly helps at larger `N_TRAIN`/`EPOCHS`), plus queueing time
+for the kernel to be scheduled.
+
+**After `pull`, run `npm test` from the repo root before committing.**
+`pull` overwrites `src/data/default-weights.json` and regenerates
+`test/fixtures/parity.jsonl` / `decoded.jsonl` from the new weights —
+`npm test` must pass (`63/63`) before those changes are committed.
+
+See the module docstrings in `python/kaggle_train/run.py` and
+`python/kaggle_train/train_kernel.py` for how the kernel is structured,
+and `python/kaggle_train/kernel-metadata.json` for the exact Kaggle
+kernel settings (GPU + internet enabled, private script kernel).
+
 ## Adding a language pack
 
 Only Indian languages are in scope. To add one, construct a

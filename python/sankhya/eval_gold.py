@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 
 import numpy as np
 import torch
@@ -98,6 +99,10 @@ def _print_metrics(examples, preds, classes, header=""):
     f1 = 2 * prec * rec / (prec + rec) if (prec + rec) else 0.0
     val_acc = val_correct / val_total if val_total else 0.0
     print(f"{header} examples={len(examples)} precision={prec:.4f} recall={rec:.4f} f1={f1:.4f} value_acc={val_acc:.4f}")
+    return {
+        "examples": len(examples), "spans": val_total,
+        "precision": prec, "recall": rec, "f1": f1, "value_acc": val_acc,
+    }
 
 
 def main(argv=None):
@@ -107,6 +112,7 @@ def main(argv=None):
     ap.add_argument("--ckpt", default="models/sankhya.pt")
     ap.add_argument("--weights-json", default=None, help="use JSON weights (float) instead of torch ckpt")
     ap.add_argument("--int8", action="store_true", help="use int8 JSON weights (requires --weights-json)")
+    ap.add_argument("--json-out", default=None, help="write per-file + combined metrics as JSON to this path")
     args = ap.parse_args(argv)
 
     gold_files = args.gold if isinstance(args.gold, list) else [args.gold]
@@ -122,9 +128,10 @@ def main(argv=None):
     else:
         preds, classes = run_torch(args.ckpt, examples)
 
+    per_file_metrics = {}
     if len(gold_files) > 1:
         for path, s, e in file_bounds:
-            _print_metrics(examples[s:e], preds[s:e], classes, header=f"[{path}]")
+            per_file_metrics[path] = _print_metrics(examples[s:e], preds[s:e], classes, header=f"[{path}]")
         print("\n=== combined ===")
 
     tp = fp = fn = 0
@@ -219,6 +226,22 @@ def main(argv=None):
     print(f"\nwrong boundary ({len(wrong_boundary)}):")
     for m in wrong_boundary:
         print(f"  {m}")
+
+    if args.json_out:
+        combined_metrics = {
+            "examples": len(examples), "spans": val_total,
+            "precision": prec, "recall": rec, "f1": f1, "value_acc": val_acc,
+            "miss_summary": {
+                "missed_span": len(missed_spans), "spurious_span": len(spurious_spans),
+                "wrong_value": len(wrong_value), "wrong_boundary": len(wrong_boundary),
+                "total": total_misses,
+            },
+        }
+        out = {"per_file": per_file_metrics, "combined": combined_metrics}
+        os.makedirs(os.path.dirname(args.json_out) or ".", exist_ok=True)
+        with open(args.json_out, "w", encoding="utf-8") as f:
+            json.dump(out, f, indent=2)
+        print(f"\nwrote metrics json: {args.json_out}")
 
 
 if __name__ == "__main__":

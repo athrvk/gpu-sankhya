@@ -172,6 +172,8 @@ def main(argv=None):
     ap.add_argument("--label-smoothing", type=float, default=0.05)
     ap.add_argument("--grad-clip", type=float, default=1.0)
     ap.add_argument("--num-train", type=int, default=None, help="subsample training set to this many examples")
+    ap.add_argument("--device", default="cpu", choices=["cpu", "auto"],
+                     help="'cpu' (default, unchanged behaviour) or 'auto' to use CUDA when available")
     args = ap.parse_args(argv)
 
     torch.manual_seed(0)
@@ -196,8 +198,12 @@ def main(argv=None):
     va_chars, va_bio, va_cls, va_mask = tensorize(val_ex, char_to_id)
     print(f"tensorized in {time.time()-t0:.1f}s")
 
-    device = "cpu"
+    if args.device == "auto" and torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
     torch.set_num_threads(4)
+    print(f"device={device}")
 
     model = SankhyaCNN(
         vocab_size=len(vocab), n_cls=len(C.CLASSES), dilation=args.dilation,
