@@ -25,6 +25,9 @@ class LanguagePack:
     # common chat/English words used as O-labelled filler around spans, so
     # the model learns unknown words outside a span are not part of it
     filler_words: List[str] = field(default_factory=list)
+    # duration/time/count nouns for "CARD/DIGITS + noun" negatives
+    # ("teen din baad", "das minute mein") - bare numbers with no unit/currency
+    duration_nouns: List[str] = field(default_factory=list)
 
     def noise(self, word: str, rng) -> str:
         if self.noise_fn is not None:

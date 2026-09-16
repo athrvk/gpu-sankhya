@@ -184,8 +184,18 @@ def build_term_tokens(pack, rng, structure, unit_cls=None):
 
     elif structure == "digits_symbol":
         u, uword, is_symbol = unit_tok()
-        val = round(rng.uniform(1, 50), 2) if rng.random() < 0.5 else rng.randint(1, 500)
-        ds = _digits_str(rng, val, decimal=isinstance(val, float) and val != int(val))
+        # bias heavily toward very short forms ("2.5L", "5L", "20k", "12LPA")
+        # since these are the most common real-world spellings.
+        if rng.random() < 0.6:
+            if rng.random() < 0.5:
+                val = round(rng.uniform(1, 9.9), 1)  # one decimal place, 1-2 digit
+                ds = _digits_str(rng, val, decimal=True)
+            else:
+                val = rng.randint(1, 99)
+                ds = _digits_str(rng, val)
+        else:
+            val = round(rng.uniform(1, 50), 2) if rng.random() < 0.5 else rng.randint(1, 500)
+            ds = _digits_str(rng, val, decimal=isinstance(val, float) and val != int(val))
         space = " " if rng.random() < 0.5 else ""
         toks += _num_tokens_from_digits(ds)
         if space:
@@ -241,6 +251,22 @@ def build_term_tokens(pack, rng, structure, unit_cls=None):
         nword, _ = _safe_word(pack, rng, card)
         toks.append((card, nword))
 
+    elif structure == "bare_unit_currency":
+        # implicit-1 unit words: "hazar rupaye", "lakh rupaye", "sau rupaye"
+        u = rng.choices(["UNIT_HAZAAR", "UNIT_LAKH", "UNIT_CRORE", "UNIT_SAU"], weights=[35, 30, 15, 20])[0]
+        uword, _ = _safe_word(pack, rng, u)
+        toks.append((u, uword))
+
+    elif structure == "unit_chain":
+        # "unit + cardinal + unit" descending additive chain, e.g. "hazaar do sau" = 1200
+        big, small = "UNIT_HAZAAR", "UNIT_SAU"
+        bword, _ = _safe_word(pack, rng, big)
+        n = rng.randint(1, 9)
+        card = f"CARD_{n}"
+        nword, _ = _safe_word(pack, rng, card)
+        sword, _ = _safe_word(pack, rng, small)
+        toks += [(big, bword), _sep(), (card, nword), _sep(), (small, sword)]
+
     else:
         n = rng.randint(1, 99)
         card = f"CARD_{n}"
@@ -255,7 +281,7 @@ _STRUCTURE_WEIGHTS = [
     ("prefix_unit", 20), ("prefix_num_unit", 12), ("card_unit", 15),
     ("digits_word_unit", 15), ("digits_symbol", 15), ("digits_currency", 8),
     ("chain", 7), ("english_fraction", 4), ("bare_card_currency", 4),
-    ("mult_chain", 5),
+    ("mult_chain", 5), ("bare_unit_currency", 3), ("unit_chain", 2),
 ]
 
 
@@ -595,24 +621,58 @@ def _apply_casing_and_wrap(pack, rng, text):
     return text
 
 
+_SHORT_STRUCTURES = ["digits_symbol", "prefix_unit", "digits_word_unit", "mult_chain"]
+
+_DURATION_SUFFIXES = ["baad", "mein", "se", "ko", ""]
+
+
+def _build_negative_text(pack, rng):
+    """Pick one of: a CARD/DIGITS + duration/time/count-noun negative
+    (~35% of the "negatives" family, i.e. ~4% of all examples), a filler
+    word-soup negative, or a fixed template negative."""
+    r = rng.random()
+    if getattr(pack, "duration_nouns", None) and r < 0.35:
+        n = rng.randint(1, 99)
+        if rng.random() < 0.4:
+            numtext = str(n)
+        else:
+            card = f"CARD_{n}"
+            numtext, _ = _safe_word(pack, rng, card)
+        noun = rng.choice(pack.duration_nouns)
+        text = f"{numtext} {noun}"
+        suffix = rng.choice(_DURATION_SUFFIXES)
+        if suffix:
+            text += " " + suffix
+        return text
+    if r < 0.35 + 0.15:
+        n = rng.randint(3, 10)
+        return " ".join(_make_filler_word(pack, rng) for _ in range(n))
+    return rng.choice(pack.templates["negatives"])
+
+
 def _sample_example_once(pack, rng):
     family_weights = [
-        ("casual", 20), ("classifieds", 20), ("news", 15), ("salary", 10),
-        ("ranges", 8), ("two_spans", 10), ("bare", 5), ("negatives", 12),
+        ("casual", 16), ("classifieds", 16), ("news", 13), ("salary", 9),
+        ("ranges", 8), ("two_spans", 10), ("bare", 12), ("short_context", 8),
+        ("negatives", 12),
     ]
     names = [f for f, _ in family_weights]
     weights = [w for _, w in family_weights]
     family = rng.choices(names, weights=weights)[0]
-    template = rng.choice(pack.templates[family])
 
     if family == "negatives":
-        if rng.random() < 0.15:
-            n = rng.randint(3, 10)
-            text = " ".join(_make_filler_word(pack, rng) for _ in range(n))
-        else:
-            text = template
+        text = _build_negative_text(pack, rng)
         text = _apply_casing_and_wrap(pack, rng, text)
         return _finalize(pack, rng, text, [], is_negative=True)
+
+    # "bare": at least half are TRULY bare - the phrase IS the entire text,
+    # nothing else: no chat-fragment wrap, no filler, no punctuation. This is
+    # the short-input regime ("2.5L", "20k", "sava lakh", "das hazaar crore").
+    truly_bare = family == "bare" and rng.random() < 0.6
+    if truly_bare:
+        template = "{P}"
+    else:
+        template = rng.choice(pack.templates[family])
 
     force_currency = family in ("classifieds", "salary") and "{C}" in template and rng.random() < 0.5
     parts = re.split(r"(\{[A-Z0-9]+\})", template)
@@ -625,6 +685,12 @@ def _sample_example_once(pack, rng):
     elif family == "two_spans":
         phrase_cache["P1"], _ = build_phrase(pack, rng, exclude_currency_bare=True)
         phrase_cache["P2"], _ = build_phrase(pack, rng, exclude_currency_bare=True)
+    elif family in ("bare", "short_context"):
+        # bias toward short, single-token-ish forms typical of short inputs
+        struct = rng.choice(_SHORT_STRUCTURES) if rng.random() < 0.6 else None
+        phrase_cache["P"], structure = build_phrase(pack, rng, structure=struct)
+        if "{C}" in template and structure in ("digits_currency", "bare_card_currency"):
+            force_currency = True
     else:
         phrase_cache["P"], structure = build_phrase(pack, rng)
         if "{C}" in template and structure in ("digits_currency", "bare_card_currency"):
@@ -669,9 +735,9 @@ def _sample_example_once(pack, rng):
             if core.detect_currency(out, s, e, pack) is None:
                 out = out[:e] + " rupaye" + out[e:]
 
-    out = _insert_fillers(pack, rng, out, span_defs)
-
-    out = _apply_casing_and_wrap(pack, rng, out)
+    if not truly_bare:
+        out = _insert_fillers(pack, rng, out, span_defs)
+        out = _apply_casing_and_wrap(pack, rng, out)
     return _finalize(pack, rng, out, _recompute_offsets(out, span_defs), is_negative=False)
 
 

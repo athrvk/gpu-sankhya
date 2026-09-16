@@ -83,6 +83,11 @@ ENGLISH_FRACTION_PHRASES = {
     "PFX_AADHA": ["half a", "half"],
 }
 
+DURATION_NOUNS = [
+    "din", "dino", "ghante", "ghanta", "minute", "min", "second", "saal",
+    "saalon", "mahine", "hafte", "baje", "tareekh", "baar",
+]
+
 INDEFINITE_PLURALS = [
     "lakhon", "lakho", "laakhon", "hazaaron", "hazaron", "karodon", "crodon",
     "croron", "sainkdon",
@@ -282,6 +287,14 @@ TEMPLATES = {
         "sirf {P}",
         "kul {P}",
     ],
+    "short_context": [
+        "{P} only",
+        "{P} ka",
+        "price {P}",
+        "{P} final",
+        "{C}{P}",
+        "budget {P}",
+    ],
     "negatives": [
         "Pune mein flat lena hai",
         "Lakhan bhai ka number 9876543210 hai",
@@ -299,6 +312,14 @@ TEMPLATES = {
         "9123456780 pe call karo",
         "date 12/05 hai meeting ki",
         "unnees so pachasi mein hua tha",
+        "OTP 4521 hai tumhara",
+        "2019 mein shuru hua tha",
+        "pin code 110001 daalna",
+        "OTP 8823 aaya hai check karo",
+        "2024 mein plan hai humara",
+        "rupaye chahiye abhi",
+        "paise nahi hain mere paas",
+        "paisa nahi hai bilkul",
     ],
 }
 
@@ -324,6 +345,7 @@ PACK = base.LanguagePack(
     noise_fn=_hi_latn_noise,
     blocked_surfaces=BLOCKED_SURFACES,
     filler_words=FILLER_WORDS,
+    duration_nouns=DURATION_NOUNS,
 )
 
 # drop any filler word that collides with a real vocabulary surface form
@@ -331,6 +353,10 @@ PACK = base.LanguagePack(
 _forms_for_filter = PACK.all_forms()
 PACK.filler_words = [
     w for w in PACK.filler_words
+    if w.lower() not in _forms_for_filter and w.lower() not in BLOCKED_SURFACES
+]
+PACK.duration_nouns = [
+    w for w in PACK.duration_nouns
     if w.lower() not in _forms_for_filter and w.lower() not in BLOCKED_SURFACES
 ]
 
