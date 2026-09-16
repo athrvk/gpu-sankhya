@@ -1,6 +1,14 @@
 # Publishes gpu-sankhya to npm using npm's trusted publishing (OIDC) —
 # no NPM_TOKEN secret is stored or used.
 #
+# There are three ways to publish:
+#   1. Automatic: bump the "version" field in package.json and land the
+#      change on master (e.g. `npm version patch` + push, or a PR that
+#      edits package.json). The workflow compares that version against
+#      what's already on npm and publishes only when it differs.
+#   2. Publish a GitHub release with tag vX.Y.Z matching package.json.
+#   3. Manually via workflow_dispatch.
+#
 # One-time setup:
 #   1. Publish the package to npm manually once from a local machine:
 #        npm publish
@@ -13,9 +21,10 @@
 #        Workflow filename:    publish.yml
 #        Environment:          (leave blank)
 #
-# After that, publishing is fully automatic: create a GitHub release
-# with tag vX.Y.Z (matching the version in package.json) and this
-# workflow builds, tests, and publishes with provenance.
+# After that, publishing is fully automatic through any of the three
+# paths above: the workflow builds, tests, and publishes with
+# provenance, and (for the version-bump path) tags the commit and
+# creates a matching GitHub release.
 
 name: publish
 
@@ -23,9 +32,12 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+  push:
+    branches: [master]
+    paths: [package.json]
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 jobs:
@@ -39,26 +51,65 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
-      # Trusted publishing (OIDC) requires npm >= 11.5.
-      - run: npm install -g npm@latest
-
-      - run: npm ci
-
-      - run: npm run build
-
-      - run: npm test
-
-      - name: Verify release tag matches package.json version
-        if: github.event_name == 'release'
+      - name: Decide whether to publish
+        id: decide
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
-          PKG_VERSION="$(node -p "require('./package.json').version")"
-          if [ "$TAG" != "$PKG_VERSION" ]; then
-            echo "::error::Release tag ($GITHUB_REF_NAME) does not match package.json version (v$PKG_VERSION)."
-            exit 1
+          VERSION="$(node -p "require('./package.json').version")"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${GITHUB_REF_NAME#v}"
+            if [ "$TAG" != "$VERSION" ]; then
+              echo "::error::Release tag ($GITHUB_REF_NAME) does not match package.json version (v$VERSION)."
+              exit 1
+            fi
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            PUBLISHED_VERSION="$(npm view gpu-sankhya@$VERSION version 2>/dev/null || true)"
+            if [ "$PUBLISHED_VERSION" = "$VERSION" ]; then
+              echo "publish=false" >> "$GITHUB_OUTPUT"
+              echo "gpu-sankhya@$VERSION already on npm, nothing to do"
+            else
+              echo "publish=true" >> "$GITHUB_OUTPUT"
+            fi
           fi
+
+      # Trusted publishing (OIDC) requires npm >= 11.5.
+      - name: Install latest npm
+        if: steps.decide.outputs.publish == 'true'
+        run: npm install -g npm@latest
+
+      - name: Install dependencies
+        if: steps.decide.outputs.publish == 'true'
+        run: npm ci
+
+      - name: Build
+        if: steps.decide.outputs.publish == 'true'
+        run: npm run build
+
+      - name: Test
+        if: steps.decide.outputs.publish == 'true'
+        run: npm test
 
       # No auth token here: npm authenticates via OIDC trusted publishing.
       # Provenance is requested explicitly here (not in publishConfig) so a
       # manual `npm publish` from a laptop still works.
-      - run: npm publish --provenance
+      - name: Publish to npm
+        if: steps.decide.outputs.publish == 'true'
+        run: npm publish --provenance
+
+      - name: Tag release commit
+        if: steps.decide.outputs.publish == 'true' && github.event_name == 'push'
+        run: |
+          VERSION="${{ steps.decide.outputs.version }}"
+          git tag "v$VERSION"
+          git push origin "v$VERSION"
+
+      - name: Create GitHub release
+        if: steps.decide.outputs.publish == 'true' && github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.decide.outputs.version }}
+          generate_release_notes: true
