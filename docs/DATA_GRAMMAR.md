@@ -88,7 +88,7 @@ with the positive unit words.
 
 - additive chain glue: whitespace only (`do lakh pachas hazaar`), occasionally `aur`
 - English fraction glue: `and a half`, `and half`, `n half`, `and a quarter` → mapped to `PFX_SAADHE` / `PFX_SAVA` semantics
-- range glue (phase 2, off by default): `-`, `to`, `se`, `ya`, `/` → `2-3 lakh`, `do teen lakh`, `20-25k`
+- range glue (class `RANGE`): `-`, `–`, `to`, `se`, `ya`, `/`, `or`, plain juxtaposition → `2-3 lakh`, `2 se 3 lakh`, `do teen lakh`, `20-25k`, `1.5 to 2 crore`, `dedh do lakh`
 
 ### 1.7 Context words — **outside the span**, labelled `O`
 
@@ -103,7 +103,8 @@ with the positive unit words.
 ## 2. Span grammar (what is extracted)
 
 ```
-Span     := Term (SEP? Term)*            -- descending units, max 3 terms
+Span     := Amount (RANGE Amount)?       -- range: both amounts, unit may be shared (`2-3 lakh`)
+Amount   := Term (SEP? Term)*            -- descending units, max 3 terms
 Term     := Prefix? Number? Unit?        -- at least one of Prefix/Unit present, or Number+currency
 Number   := CARD_n | DIGITS(.DIGITS)?
 Prefix   := PFX_*
@@ -141,6 +142,11 @@ Given a class sequence for one span:
    - neither → 1 (bare `lakh`, `crore`)
    - English `and a half` / `and a quarter` behave as `saadhe` / `sava`
 3. `term = coef × unit`; `value = Σ terms`.
+3b. Ranges: split at `RANGE`; if the left amount has no unit it inherits the
+   right amount's unit (`2-3 lakh` → 200 000–300 000, `dedh do lakh` → 150 000–200 000).
+   Output `value` = low end, `range = [low, high]`. Juxtaposed cardinals
+   (`do teen`, `paanch das`) are a range only when both are cardinals and
+   ascending; the generator only emits ascending pairs.
 4. Validation used only by the generator: units strictly descending, `saadhe` needs N ≥ 3,
    `dedh`/`dhai` take no N, at most one prefix per term.
 
@@ -179,13 +185,14 @@ the empty string.
 
 | family                  | share | examples                                                                                           |
 |-------------------------|-------|----------------------------------------------------------------------------------------------------|
-| casual chat / WhatsApp  | 25 %  | `bhai {A} {P} mein ho jayega kya`, `usne {C}{P} maange yaar`, `{P} toh bahut zyada hai`, `mera budget {P} tak ka hai` |
+| casual chat / WhatsApp  | 20 %  | `bhai {A} {P} mein ho jayega kya`, `usne {C}{P} maange yaar`, `{P} toh bahut zyada hai`, `mera budget {P} tak ka hai` |
 | classifieds / e-commerce| 20 %  | `Price: {C}{P} negotiable`, `2019 model, {P} final`, `rent {P}/month, 2bhk`, `MRP {C}{P} only`     |
 | news / social feed      | 15 %  | `{P} logon ne attend kiya`, `startup ne {P} ka funding raise kiya`, `{P} se zyada views aa gaye`   |
 | salary / finance        | 10 %  | `CTC {P} per annum`, `package {P}`, `EMI {C}{P} monthly`, `loan {P} ka liya tha`                   |
+| ranges                  | 8 %   | `{P1}-{P2} lakh mein aa jayega`, `{P1} se {P2} crore ki deal`, `do teen hazaar lagenge`, `20-25k ka phone` |
 | two spans               | 10 %  | `{P1} se badhkar {P2} ho gaya`, `pehle {P1} tha ab {P2}`, `{P1} + {P2} = ?`                        |
 | bare phrase             | 5 %   | `{P}`                                                                                              |
-| negatives (no span)     | 15 %  | `Lakhan bhai ka number 9876543210 hai`, `KBC crorepati`, `lakhon log aaye`, `do din mein aa jaunga`, `pin 400001`, `2.30 baje milte hain`, `5L water bottle`, `so what`, `chaar dost` |
+| negatives (no span)     | 12 %  | `Lakhan bhai ka number 9876543210 hai`, `KBC crorepati`, `lakhon log aaye`, `do din mein aa jaunga`, `pin 400001`, `2.30 baje milte hain`, `so what`, `chaar dost` |
 
 Templates carry random casing, trailing emoji / punctuation (`!!`, `..`, `😂`),
 and 10 % of the time a random-length prefix/suffix of unrelated chat text so the
@@ -204,8 +211,29 @@ Per example the generator writes:
 
 Per-character targets derived from it:
 - `bio`: 0 = O, 1 = B, 2 = I (B on the first char of each span)
-- `cls`: one of ~125 classes (7 prefixes, 99 cardinals, 8 units, DIGITS, DOT,
-  COMMA, SEP, O). Whitespace inside a span is `SEP`. Both heads share the CNN trunk.
+- `cls`: one of ~126 classes (7 prefixes, 99 cardinals, 8 units, DIGITS, DOT,
+  COMMA, SEP, RANGE, O). Whitespace inside a span is `SEP`. Both heads share the CNN trunk.
+
+## 6b. Inference output shape
+
+```ts
+interface Sankhya {
+  span: string;            // exact source substring
+  start: number; end: number;
+  value: number;           // resolved value; low end for ranges
+  range?: [number, number];// present only for ranges
+  unit: "sau"|"hazaar"|"lakh"|"crore"|"million"|"billion"|"arab"|"kharab"|null;
+                           // largest scale unit in the phrase, canonical spelling;
+                           // null for `Rs 500` style bare amounts
+  currency: "INR"|null;    // adjacent marker detected by the core, outside the span
+  confidence: number;      // mean of span-tag softmax probs over the span
+  classes: string[];       // normalised token classes, e.g. ["PFX_DHAI","UNIT_LAKH"]
+}
+```
+
+`unit` and `classes` come for free from the class head, so `2.5L` and
+`dhai lakh` both return `unit: "lakh"`, `value: 250000`. Callers who want
+"2.5 lakh" back as display text can rebuild it from `value` and `unit`.
 
 `value` is not a model target. It is recomputed by the core from the class
 sequence, and the generator asserts round-trip equality (`core(classes) == value`)
@@ -221,16 +249,15 @@ so the arithmetic table and the generator can never drift apart.
 
 ## 8. Known ambiguities, decided up front
 
-- `2.5L` litres vs lakh, `5k` km vs thousand: extracted as a number. Templates
-  include a few liquid/distance negatives so the model learns the obvious cases,
-  but this is a documented limitation.
+- `2.5L` is always lakh (it is just `dhai lakh` written with a symbol); `5k` is
+  always thousand. No litre/km negatives are generated, so the model never
+  learns to suppress these.
 - English `so` vs Hindi `sau`: only a unit when preceded by a number word/prefix; the
   negatives include free-standing `so`.
 - `L` in `LPA`, `M` in `5M views`: treated as units (lakh, million).
-- Ranges (`2-3 lakh`) are phase 2; v1 generator does not emit them.
 
 ## 9. Open questions before writing the generator
 
 1. Should `sau`-only phrases (`paanch sau`, no currency) count? Proposal: yes.
 2. Should bare `Rs 500` be in scope? Proposal: yes (digits + currency).
-3. Ranges in v1 or v2? Proposal: v2.
+3. ~~Ranges in v1 or v2?~~ Decided: v1.
