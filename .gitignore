@@ -5,3 +5,6 @@ python/data/
 python/models/
 __pycache__/
 *.pyc
+python/models_*/
+*.v8.log
+isolate-*.log
