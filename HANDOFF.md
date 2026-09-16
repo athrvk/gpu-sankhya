@@ -50,7 +50,9 @@ Smoke-tested locally on CPU only. Needs `KAGGLE_API_TOKEN` in the
 session env (new sessions see env vars; a running session does not).
 From `python/`:
 
-    python -m kaggle_train.run push --set GIT_REF=master
+    python -m kaggle_train.run push --set GIT_REF=<branch with --device flag>
+    # GIT_REF=master fails until this branch merges: master's train.py
+    # has no --device flag (Kaggle run v1, 2026-09-16, exit 2).
     python -m kaggle_train.run status --timeout 3600
     python -m kaggle_train.run pull      # weights -> src/data, regen fixtures
     cd .. && npm test                    # must pass before committing weights
