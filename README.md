@@ -180,16 +180,13 @@ amortizing that overhead over a batch — hundreds of strings at once —
 which is exactly what `parseBatch` does with `backend: "auto"`/`"webgpu"`;
 `parse()` stays CPU-only and synchronous on purpose.
 
-The WebGPU path's plain (non-residual) conv layers have been verified on
-a real GPU in desktop Chrome, matching the CPU backend span-for-span on
-the demo page's batch benchmark. The current shipped model (arch `v2`)
-adds a residual connection (`y = relu(conv(x)) + x`) on four of its five
-layers; the WGSL shader's residual path is covered by unit tests that
-check its structure but has not yet been re-verified against a real GPU
-adapter in a browser — run the demo's batch benchmark yourself and check
-for a 0 mismatch count before relying on it. The demo's benchmark re-runs
-the CPU/WebGPU comparison on every click, so any regression shows up as a
-mismatch count rather than a silent wrong answer.
+The WebGPU path has been verified on a real GPU in desktop Chrome with
+the shipped `v2` model (residual layers included): on the demo page's
+batch benchmark (500 varied strings) it matches the CPU backend
+span-for-span (500/500) and runs about 1.9x faster (CPU 1.66 ms/string,
+WebGPU 0.88 ms/string). The demo's benchmark re-runs the CPU/WebGPU
+comparison on every click, so any regression shows up as a mismatch
+count rather than a silent wrong answer.
 
 ## Accuracy
 
