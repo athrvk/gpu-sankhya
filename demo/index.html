@@ -75,7 +75,38 @@
     line-height: 1.5;
     min-height: 100dvh;
   }
-  .wrap { max-width: 860px; margin: 0 auto; }
+  .wrap { max-width: 1500px; margin: 0 auto; }
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas: "left" "right" "strip" "bench";
+    gap: 1.1rem;
+    align-items: start;
+  }
+  .col-left { grid-area: left; min-width: 0; }
+  .col-right { grid-area: right; min-width: 0; }
+  .col-strip { grid-area: strip; min-width: 0; }
+  .col-bench { grid-area: bench; min-width: 0; }
+  .results-scroll { min-width: 0; }
+  @media (min-width: 700px) {
+    body { padding: 1.75rem 1.5rem 4rem; }
+    .layout {
+      grid-template-columns: 1fr 1fr;
+      grid-template-areas: "left right" "strip strip" "bench bench";
+    }
+    .col-right .card-results { position: sticky; top: 1.1rem; }
+    .results-scroll { max-height: calc(100vh - 14rem); overflow-y: auto; padding-right: 0.3rem; }
+  }
+  @media (min-width: 1100px) {
+    body { padding: 2rem 2rem 4rem; }
+    .layout {
+      grid-template-columns: minmax(360px, 1fr) minmax(440px, 1.3fr);
+      grid-template-areas: "left right" "strip bench";
+    }
+    .col-left textarea#input { min-height: 14rem; }
+    .col-right .card-results { top: 1.25rem; }
+    .results-scroll { max-height: calc(100vh - 15rem); }
+  }
   a { color: var(--accent); }
   :focus-visible {
     outline: 2px solid var(--focus);
@@ -400,9 +431,11 @@
 
   <div id="load-error" class="card error-box hidden"></div>
 
-  <div class="card">
-    <label for="input">Input (one quantity per line)</label>
-    <textarea id="input" spellcheck="false">sava lakh ka phone
+  <div class="layout">
+    <div class="col-left">
+      <div class="card">
+        <label for="input">Input (one quantity per line)</label>
+        <textarea id="input" spellcheck="false">sava lakh ka phone
 dedh crore ka flat
 paune do lakh
 2.5L ka phone
@@ -415,89 +448,99 @@ Rs 2,50,000/- negotiable
 teen din baad milte hain
 lakhon log aaye</textarea>
 
-    <div id="example-groups"></div>
-    <div class="mode-row">
-      <label for="chip-mode" style="margin:0;">Chip click:</label>
-      <select id="chip-mode">
-        <option value="append">append line</option>
-        <option value="replace">replace input</option>
-      </select>
-    </div>
-    <p class="kbd-hint">
-      <kbd>Ctrl/Cmd</kbd>+<kbd>Enter</kbd> runs the benchmark &middot; <kbd>Esc</kbd> clears the input
-    </p>
-  </div>
-
-  <div class="card">
-    <div class="stats" id="stats">
-      <span>parse: <b id="stat-latency">&ndash;</b></span>
-      <span>lines: <b id="stat-lines">0</b></span>
-      <span>spans: <b id="stat-spans">0</b></span>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="row-head">
-      <h2 style="margin:0;">Results</h2>
-      <div class="view-toggle" role="group" aria-label="Output view">
-        <button type="button" id="view-cards" class="active" aria-pressed="true">Cards</button>
-        <button type="button" id="view-json" aria-pressed="false">Raw JSON</button>
+        <div id="example-groups"></div>
+        <div class="mode-row">
+          <label for="chip-mode" style="margin:0;">Chip click:</label>
+          <select id="chip-mode">
+            <option value="append">append line</option>
+            <option value="replace">replace input</option>
+          </select>
+        </div>
+        <p class="kbd-hint">
+          <kbd>Ctrl/Cmd</kbd>+<kbd>Enter</kbd> runs the benchmark &middot; <kbd>Esc</kbd> clears the input
+        </p>
       </div>
     </div>
-    <div class="copy-row hidden" id="copy-row">
-      <button type="button" id="copy-json">Copy JSON</button>
-    </div>
-    <div id="results"></div>
-    <pre class="raw hidden" id="results-raw"></pre>
-  </div>
 
-  <div class="card">
-    <div class="inspect-toggle-row">
-      <h2 style="margin:0;">Inside the model</h2>
-      <label style="display:flex;align-items:center;gap:0.4rem;margin:0;">
-        <input type="checkbox" id="inspect-toggle" checked />
-        show per-character view
-      </label>
-    </div>
-    <div id="inspect-body">
-      <p class="tagline" style="margin:0 0 0.5rem;">
-        Per-character BIO tag and predicted class for the focused (or last) line, straight from the network before the deterministic core repairs anything.
-        <span id="inspect-time"></span>
-      </p>
-      <div class="strip-wrap"><div class="strip" id="strip"></div></div>
-    </div>
-    <p class="unavailable-note hidden" id="inspect-unavailable">
-      inspect() is not available in this build yet &mdash; showing parsed spans only.
-    </p>
-  </div>
+    <div class="col-right">
+      <div class="card">
+        <div class="stats" id="stats">
+          <span>parse: <b id="stat-latency">&ndash;</b></span>
+          <span>lines: <b id="stat-lines">0</b></span>
+          <span>spans: <b id="stat-spans">0</b></span>
+        </div>
+      </div>
 
-  <div class="card">
-    <h2>Batch benchmark</h2>
-    <p class="tagline" style="margin-bottom:0.6rem;">
-      Parses a varied batch (generated from the example set) with <code>parseBatch</code> on CPU and (if available) WebGPU, then compares results span-for-span.
-    </p>
-    <div class="controls-grid">
-      <div class="control">
-        <label for="bench-backend">Backend</label>
-        <select id="bench-backend">
-          <option value="auto">auto</option>
-          <option value="cpu">cpu</option>
-          <option value="webgpu">webgpu</option>
-        </select>
+      <div class="card card-results">
+        <div class="row-head">
+          <h2 style="margin:0;">Results</h2>
+          <div class="view-toggle" role="group" aria-label="Output view">
+            <button type="button" id="view-cards" class="active" aria-pressed="true">Cards</button>
+            <button type="button" id="view-json" aria-pressed="false">Raw JSON</button>
+          </div>
+        </div>
+        <div class="copy-row hidden" id="copy-row">
+          <button type="button" id="copy-json">Copy JSON</button>
+        </div>
+        <div class="results-scroll">
+          <div id="results"></div>
+          <pre class="raw hidden" id="results-raw"></pre>
+        </div>
       </div>
-      <div class="control">
-        <label for="bench-size">Batch size</label>
-        <select id="bench-size">
-          <option value="100">100</option>
-          <option value="500" selected>500</option>
-          <option value="2000">2000</option>
-        </select>
-      </div>
-      <button type="button" id="bench-btn">Run batch benchmark</button>
     </div>
-    <div id="bench-summary" class="bench-summary"></div>
-    <div id="bench-bars" class="bench-bars"></div>
-    <div id="bench-mismatches"></div>
+
+    <div class="col-strip">
+      <div class="card">
+        <div class="inspect-toggle-row">
+          <h2 style="margin:0;">Inside the model</h2>
+          <label style="display:flex;align-items:center;gap:0.4rem;margin:0;">
+            <input type="checkbox" id="inspect-toggle" checked />
+            show per-character view
+          </label>
+        </div>
+        <div id="inspect-body">
+          <p class="tagline" style="margin:0 0 0.5rem;">
+            Per-character BIO tag and predicted class for the focused (or last) line, straight from the network before the deterministic core repairs anything.
+            <span id="inspect-time"></span>
+          </p>
+          <div class="strip-wrap"><div class="strip" id="strip"></div></div>
+        </div>
+        <p class="unavailable-note hidden" id="inspect-unavailable">
+          inspect() is not available in this build yet &mdash; showing parsed spans only.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-bench">
+      <div class="card">
+        <h2>Batch benchmark</h2>
+        <p class="tagline" style="margin-bottom:0.6rem;">
+          Parses a varied batch (generated from the example set) with <code>parseBatch</code> on CPU and (if available) WebGPU, then compares results span-for-span.
+        </p>
+        <div class="controls-grid">
+          <div class="control">
+            <label for="bench-backend">Backend</label>
+            <select id="bench-backend">
+              <option value="auto">auto</option>
+              <option value="cpu">cpu</option>
+              <option value="webgpu">webgpu</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="bench-size">Batch size</label>
+            <select id="bench-size">
+              <option value="100">100</option>
+              <option value="500" selected>500</option>
+              <option value="2000">2000</option>
+            </select>
+          </div>
+          <button type="button" id="bench-btn">Run batch benchmark</button>
+        </div>
+        <div id="bench-summary" class="bench-summary"></div>
+        <div id="bench-bars" class="bench-bars"></div>
+        <div id="bench-mismatches"></div>
+      </div>
+    </div>
   </div>
 
   <footer>
