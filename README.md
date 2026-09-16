@@ -173,40 +173,41 @@ up as a mismatch count rather than a silent wrong answer.
 
 ## Accuracy
 
-The bundled default model: 17,883 parameters, 4 conv layers (kernel sizes
+The bundled default model: 18,811 parameters, 4 conv layers (kernel sizes
 3/5/3/3, dilations 1/1/2/4, 32 channels), 16-dim char embeddings over a
-56-character vocab. Trained 20 epochs (~9 minutes on 4 CPU cores) on
-150,000 synthetic examples generated from the `hi_latn` language pack's
-grammar (see `python/README.md`).
+114-character vocab (union of the `hi_latn` and `hi_deva` packs). Trained
+20 epochs (~12 minutes on 4 CPU cores) on 200,000 synthetic examples
+generated from both language packs' grammars, mixed 0.55/0.45 with a 10%
+cross-pack share (see `python/README.md`).
 
 On synthetic validation data (drawn from the same generator/templates as
-training): 0.97 value accuracy. This number is optimistic — it's testing
+training): 0.92 value accuracy. This number is optimistic — it's testing
 the model on its own distribution.
 
-On a hand-written gold set of 180 sentences / 161 spans
-(`python/tests/gold.jsonl`), written independently of the generator:
+On two hand-written gold sets, written independently of the generator —
+`python/tests/gold.jsonl` (romanised Hindi, 180 sentences / 161 spans) and
+`python/tests/gold_deva.jsonl` (Devanagari Hindi, 166 sentences / 141
+spans) — evaluated against the shipped int8-quantized weights:
 
-| metric | value |
-| --- | --- |
-| value accuracy | 0.95 (153/161) |
-| span precision | 0.90 |
-| span recall | 0.96 |
-| span F1 | 0.93 |
+| gold set | examples | spans | value accuracy | span precision | span recall | span F1 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| gold.jsonl (romanised) | 180 | 161 | 0.9441 | 0.9222 | 0.9565 | 0.9390 |
+| gold_deva.jsonl (Devanagari) | 166 | 141 | 0.9645 | 0.9580 | 0.9716 | 0.9648 |
+| combined | 346 | 302 | 0.9536 | 0.9387 | 0.9636 | 0.9510 |
 
-**The gold number is the one to trust.** Known miss categories, in rough
+**The gold numbers are the ones to trust.** Known miss categories, in rough
 order of frequency:
 
 - unusual typos the noise model doesn't cover (e.g. "croer" for "crore")
 - possessive apostrophes ("do lakh's")
-- long multi-term ranges ("paanch se sadhe saat lakh")
+- long multi-term/mixed-numeral constructs ("three n half lakh", "50M")
+- multi-number range phrases ("तीस पैंतीस हज़ार", "paanch se sadhe saat lakh")
 - occasional spurious spans triggered by unfamiliar words near number-ish
   context
 
 Reproduce these numbers yourself with
-`python -m sankhya.eval_gold --gold tests/gold.jsonl --weights-json src/data/default-weights.json --int8`
+`python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl --weights-json src/data/default-weights.json --int8`
 from `python/` (see `python/README.md`).
-
-Devanagari gold-set numbers: see python/README.md.
 
 ## How it works
 

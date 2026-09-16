@@ -13,23 +13,40 @@ Everything below is run from inside `python/`.
 pip install torch numpy onnx onnxruntime
 ```
 
-CPU-only torch is fine — training the default model (17,883 params) takes
-about 9 minutes on 4 CPU cores.
+CPU-only torch is fine — training the current multi-pack default model
+(18,811 params) takes about 12 minutes on 4 CPU cores for 200k examples.
 
 ## Generate data
+
+Single-pack (Latin-script/romanised Hindi only):
 
 ```bash
 python -m sankhya.generator --n 150000 --seed 3 --out data/train.jsonl --lang hi_latn
 python -m sankhya.generator --n 5000 --seed 4 --out data/val.jsonl --lang hi_latn
 ```
 
-Paths are relative to `python/`. `--lang` selects the registered
-`LanguagePack` (currently only `hi_latn`, Latin-script/romanised Hindi).
-
-You can also regenerate the charset file directly if you need it standalone:
+Multi-pack (romanised + Devanagari Hindi, the recipe used for the bundled
+default weights):
 
 ```bash
-python -m sankhya.charset --lang hi_latn --out data/charset.json
+python -m sankhya.generator --n 200000 --seed 5 --out data/train.jsonl \
+  --lang hi_latn,hi_deva --mix 0.55,0.45 --cross 0.10
+python -m sankhya.generator --n 6000 --seed 6 --out data/val.jsonl \
+  --lang hi_latn,hi_deva --mix 0.55,0.45 --cross 0.10
+```
+
+Paths are relative to `python/`. `--lang` takes a comma-separated list of
+registered `LanguagePack` ids (`hi_latn` Latin-script/romanised Hindi,
+`hi_deva` Devanagari Hindi). `--mix` gives per-pack sampling weights
+(defaults to uniform); `--cross` is the share of examples that mix a
+template/phrase across packs (0 disables cross-mixing).
+
+You can also regenerate the charset file directly if you need it standalone
+— pass the same comma-separated `--lang` list used for the data so the
+vocab is the union of every pack present (`build_charset_multi`):
+
+```bash
+python -m sankhya.charset --lang hi_latn,hi_deva --out data/charset.json
 ```
 
 ## Train
@@ -39,17 +56,30 @@ python -m sankhya.train \
   --train data/train.jsonl --val data/val.jsonl \
   --epochs 20 --batch 128 --lr 3e-3 \
   --channels 32 --layers 4 --dilation 2 \
+  --lang hi_latn,hi_deva \
   --out models/
 ```
 
 This is the exact recipe used for the bundled default weights: 4 conv
 layers (kernel sizes 3/5/3/3, dilations 1/1/2/4), 32 channels, 16-dim char
-embeddings over the 56-character `hi_latn` vocab — 17,883 parameters total.
-Writes `models/sankhya.pt` (a torch checkpoint carrying `vocab`, `classes`,
-`dilation`, `channels`, `layers`, `state_dict`).
+embeddings over the 114-character `hi_latn,hi_deva` union vocab — 18,811
+parameters total. Writes `models/sankhya.pt` (a torch checkpoint carrying
+`vocab`, `classes`, `dilation`, `channels`, `layers`, `state_dict`).
+
+`--lang` accepts a comma-separated pack list; when more than one pack is
+given, `train.py` builds the charset as the multi-pack union
+(`build_charset_multi`) so no character from any pack maps to `<unk>` —
+this matters most for `hi_deva`, whose Devanagari characters would
+otherwise all collapse to `<unk>` if the charset were built from a single
+(e.g. `hi_latn`-only) pack.
+
+A channels=48 variant was also trained and compared on gold: it scored
+marginally higher val value_acc (0.929 vs 0.919) but a *lower* combined
+gold span F1 (0.942 vs 0.953) at ~1.9x the parameters (35,691), so
+channels=32 remains the shipped default.
 
 Other flags: `--label-smoothing`, `--grad-clip`, `--num-train` (subsample
-the training set), `--lang` (default matches the data's language pack).
+the training set).
 
 ## Export
 
@@ -73,30 +103,50 @@ vs. the torch model) before writing, so a broken export fails loudly.
 
 ## Evaluate on gold
 
-The hand-written gold set (`tests/gold.jsonl`, 180 sentences / 161 spans)
-is the only number to trust for real-world quality — synthetic validation
+The hand-written gold sets (`tests/gold.jsonl`, 180 sentences / 161 spans,
+romanised; `tests/gold_deva.jsonl`, 166 sentences / 141 spans, Devanagari)
+are the only numbers to trust for real-world quality — synthetic validation
 accuracy is optimistic because it's drawn from the same generator/templates
-the model was trained on.
+the model was trained on. `--gold` accepts multiple files; per-file and
+combined metrics are printed.
 
 ```bash
-python -m sankhya.eval_gold --gold tests/gold.jsonl --ckpt models/sankhya.pt
+python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl --ckpt models/sankhya.pt
 ```
 
 or against the exported JSON weights directly (what the JS runtime actually
 runs):
 
 ```bash
-python -m sankhya.eval_gold --gold tests/gold.jsonl \
+python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl \
   --weights-json models/sankhya.weights.json
 # add --int8 with --weights-json models/sankhya.weights.int8.json
 # to check the quantized weights specifically
 ```
 
-Current numbers for the bundled model: span precision 0.90, recall 0.96,
-F1 0.93, value accuracy 0.95 (153/161). Known miss categories: unusual
-typos ("croer"), possessive apostrophes ("do lakh's"), long multi-term
-ranges ("paanch se sadhe saat lakh"), and occasional spurious spans on
-unfamiliar words.
+### Gold results (bundled channels=32 model, torch checkpoint)
+
+| gold set          | examples | spans | precision | recall | F1     | value_acc |
+|--------------------|---------:|------:|----------:|-------:|-------:|----------:|
+| gold.jsonl          |      180 |   161 |    0.9222 | 0.9565 | 0.9390 |    0.9441 |
+| gold_deva.jsonl      |      166 |   141 |    0.9583 | 0.9787 | 0.9684 |    0.9645 |
+| combined             |      346 |   302 |    0.9389 | 0.9669 | 0.9527 |    0.9536 |
+
+int8-quantized JSON weights (what the JS runtime actually ships):
+
+| gold set          | examples | spans | precision | recall | F1     | value_acc |
+|--------------------|---------:|------:|----------:|-------:|-------:|----------:|
+| gold.jsonl          |      180 |   161 |    0.9222 | 0.9565 | 0.9390 |    0.9441 |
+| gold_deva.jsonl      |      166 |   141 |    0.9580 | 0.9716 | 0.9648 |    0.9645 |
+| combined             |      346 |   302 |    0.9387 | 0.9636 | 0.9510 |    0.9536 |
+
+Known miss categories (24 misses, torch, combined gold): unusual typos
+("croer", "five and a half crore" without a unit-noun boundary marker),
+possessive apostrophes ("do lakh's"), long multi-term/mixed-numeral
+constructs ("three n half lakh", "50M"), multi-number range phrases
+("तीस पैंतीस हज़ार", "paanch se sadhe saat lakh"), and occasional spurious
+spans or off-by-a-word boundaries on unfamiliar surrounding words
+("mil", "poora", "raato raat").
 
 ## Ship to the npm package
 

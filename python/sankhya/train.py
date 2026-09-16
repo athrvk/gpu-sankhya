@@ -12,7 +12,7 @@ import torch
 import torch.nn as nn
 
 from . import classes as C
-from .charset import build_charset, normalize_text
+from .charset import build_charset, build_charset_multi, normalize_text
 from .langs import base as langbase
 from .model import SankhyaCNN, count_params
 from .decode import decode_spans
@@ -165,7 +165,7 @@ def main(argv=None):
     ap.add_argument("--batch", type=int, default=128)
     ap.add_argument("--lr", type=float, default=3e-3)
     ap.add_argument("--out", default="models/")
-    ap.add_argument("--lang", default="hi_latn")
+    ap.add_argument("--lang", default="hi_latn", help="comma-separated pack ids, e.g. hi_latn,hi_deva")
     ap.add_argument("--dilation", type=int, default=1)
     ap.add_argument("--channels", type=int, default=32)
     ap.add_argument("--layers", type=int, default=3, choices=[3, 4])
@@ -178,8 +178,9 @@ def main(argv=None):
     os.makedirs(args.out, exist_ok=True)
 
     t0 = time.time()
-    pack = langbase.get_pack(args.lang)
-    vocab = build_charset(pack)
+    lang_ids = [x.strip() for x in args.lang.split(",") if x.strip()]
+    packs = [langbase.get_pack(l) for l in lang_ids]
+    vocab = build_charset_multi(packs) if len(packs) > 1 else build_charset(packs[0])
     char_to_id = build_char_to_id(vocab)
 
     train_ex = load_jsonl(args.train)
