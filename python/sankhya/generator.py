@@ -297,14 +297,16 @@ def build_range_phrase(pack, rng):
     if mode == "digits":
         use_symbol = rng.random() < 0.4
         u, uword, is_symbol = _pick_range_unit(pack, rng, symbol=use_symbol)
+        # "45 sou / 121 sou" (2.7x) reads oddly for sau specifically; keep it tighter.
+        max_ratio = 2.5 if u == "UNIT_SAU" else 3.0
         decimal = rng.random() < 0.3
         if decimal:
             low = round(rng.uniform(1.0, 20.0), 1)
-            ratio = rng.uniform(1.2, 3.0)
+            ratio = rng.uniform(1.2, max_ratio)
             high = round(low * ratio, 1)
             if high <= low:
                 high = round(low + 0.5, 1)
-            high = min(high, low * 3)
+            high = min(high, low * max_ratio)
             low_s = f"{low:g}"
             high_s = f"{high:g}"
             if "." not in low_s:
@@ -313,15 +315,18 @@ def build_range_phrase(pack, rng):
                 high_s += ".0"
         else:
             low = rng.randint(1, 90)
-            ratio = rng.uniform(1.1, 3.0)
-            high = min(int(round(low * ratio)), low * 3)
+            ratio = rng.uniform(1.1, max_ratio)
+            high = min(int(round(low * ratio)), int(low * max_ratio))
             if high <= low:
                 high = low + 1
             low_s, high_s = str(low), str(high)
         assert float(high_s) <= 3 * float(low_s) + 1e-9
         left = _num_tokens_from_digits(low_s)
         left = _maybe_repeat_unit(pack, rng, left, u, uword)
-        connector = _range_connector(pack, rng, allow_juxtaposition=(is_symbol or not use_symbol))
+        # digit pairs must always use an explicit connector - bare-space
+        # juxtaposition ("58 157 hazzar", "1 2 LAKH") only reads naturally
+        # between two WORD forms ("do teen lakh", "dedh do lakh").
+        connector = _range_connector(pack, rng, allow_juxtaposition=False)
         right = _num_tokens_from_digits(high_s)
         space = _sep() if (rng.random() < 0.5 or not is_symbol) else None
         toks = left + [connector] + right + ([space] if space else []) + [(u, uword)]
