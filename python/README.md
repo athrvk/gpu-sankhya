@@ -313,12 +313,26 @@ Override a training default with `--set KEY=VALUE` (repeatable) before
 each entry trains (`--arch --channels --seed --device auto`), exports, and
 evaluates on gold (float32 + int8), writing `output/matrix.json` (every
 entry's val + gold metrics) and `output/matrix.md` (a markdown table,
-printed at the end of the kernel log too). It picks a winning **config**
-(arch:channels) by mean int8 combined gold value_acc across its seeds, and
-within that config the seed with the best val value_acc; that run's
-`models/` and metrics are staged at `output/models/` /
+printed at the end of the kernel log too).
+
+Winner selection (one implementation, `sankhya.eval_matrix.select_matrix_winner`,
+shared by `train_kernel.py` and `eval_matrix.py`):
+1. Winning **config** (arch:channels) = highest mean int8 combined gold
+   value_acc across its seeds.
+2. Within that config, seeds are ranked by val value_acc **rounded to 2
+   decimals** (so near-tied seeds, e.g. 0.9343 vs. 0.9338 vs. 0.9346,
+   aren't decided by noise), tie-broken by higher int8 combined gold F1,
+   then by lower negatives false-positive rate, then by input order.
+
+That winning run's `models/` and metrics are staged at `output/models/` /
 `output/metrics.json` exactly as a single-config run would be (plus a
-`matrix_winner` field), so `run.py pull` needs no changes:
+`matrix_winner` field), so `run.py pull` needs no changes. Every entry
+(not just the winner) also gets its exported weights + gold metrics staged
+at `output/entries/<arch>_<channels>_s<seed>/` (`sankhya.weights.int8.json`,
+`sankhya.weights.json`, `gold_metrics_torch.json`,
+`gold_metrics_json_float32.json`, `gold_metrics_json_int8.json` -- no `.pt`
+or `.onnx`, to keep the download small), so picking a different seed
+afterwards doesn't require a full re-run:
 
 ```bash
 python -m kaggle_train.run push --set MATRIX=v1:32:0,v2:32:0,v2:32:1

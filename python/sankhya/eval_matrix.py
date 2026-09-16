@@ -254,12 +254,25 @@ def eval_matrix_lang_label(path):
 
 def select_matrix_winner(entries):
     """Pick the winning matrix entry from a list of dicts, each with at
-    least `arch`, `channels`, `seed`, `val_value_acc`, `gold_int8_value_acc`.
+    least `arch`, `channels`, `seed`, `val_value_acc`, `gold_int8_value_acc`,
+    and optionally `gold_int8_f1` (default 0.0) and `negatives_fp_rate`
+    (default 0.0), used only to break near-ties.
 
-    Winning **config** (arch:channels) = highest mean `gold_int8_value_acc`
-    across its seeds (ties broken by first config encountered, in input
-    order). Within that config, the winning **seed** = highest
-    `val_value_acc` (ties broken by first entry encountered).
+    This is the single canonical implementation of the matrix winner rule;
+    `kaggle_train/train_kernel.py`'s `select_winner` imports and wraps this
+    function (with a richer `results` shape) rather than duplicating the
+    logic, so there is exactly one place the rule is defined.
+
+    Selection:
+      1. Winning **config** (arch:channels) = highest mean
+         `gold_int8_value_acc` across its seeds. Ties broken by first
+         config encountered, in input order.
+      2. Within that config, the winning **seed** is ranked by
+         `val_value_acc` ROUNDED to 2 decimals (so seeds that are
+         practically tied on val accuracy, e.g. 0.9343 vs 0.9338 vs 0.9346,
+         are treated as equal there); ties broken by higher
+         `gold_int8_f1`; further ties broken by lower `negatives_fp_rate`;
+         remaining ties broken by first entry encountered, in input order.
 
     Returns (winner_entry, config_label) where config_label is "arch:channels".
     """
@@ -285,12 +298,22 @@ def select_matrix_winner(entries):
             best_key = key
 
     winners = by_config[best_key]
+
+    def rank(e):
+        # sort DESCENDING on (rounded val_value_acc, gold_int8_f1) and
+        # ASCENDING on negatives_fp_rate -- negate the ascending term.
+        return (
+            round(e["val_value_acc"], 2),
+            e.get("gold_int8_f1", 0.0),
+            -e.get("negatives_fp_rate", 0.0),
+        )
+
     best_entry = None
-    best_val = None
+    best_rank = None
     for e in winners:
-        v = e["val_value_acc"]
-        if best_val is None or v > best_val:
-            best_val = v
+        r = rank(e)
+        if best_rank is None or r > best_rank:
+            best_rank = r
             best_entry = e
 
     config_label = f"{best_key[0]}:{best_key[1]}"

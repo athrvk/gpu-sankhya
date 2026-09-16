@@ -27,10 +27,24 @@ value always wins for that entry's run. Output:
   - `output/models/` + `output/metrics.json` -- the WINNING run's model dir
     and metrics, in the same shape the legacy single-run path wrote them in
     (plus a `matrix_winner` field), so `run.py pull` keeps working unchanged.
-Winner selection: the winning **config** (arch:channels) is the one with
-the highest mean int8 combined gold value_acc across its seeds; within that
-config, the winning **seed** is the one with the best val value_acc (from
-`ckpt["val_metrics"]`).
+  - `output/entries/<arch>_<channels>_s<seed>/` -- for EVERY entry (not
+    just the winner): `sankhya.weights.int8.json`, `sankhya.weights.json`,
+    and its three `gold_metrics_*.json` files (torch/float32/int8). The
+    `.pt` checkpoint and `.onnx` graph are skipped to keep the download
+    small. This lets you pick a different seed after the fact without a
+    full re-run -- the exported weights and gold metrics for every entry
+    are already there.
+
+Winner selection (implemented once, in `sankhya.eval_matrix.select_matrix_winner`,
+which this file's `select_winner` wraps rather than re-implementing):
+  1. Winning **config** (arch:channels) = highest mean int8 combined gold
+     value_acc across its seeds.
+  2. Within that config, seeds are ranked by val value_acc (from
+     `ckpt["val_metrics"]`) ROUNDED TO 2 DECIMALS -- so seeds that are
+     practically tied (e.g. 0.9343 / 0.9338 / 0.9346) are treated as equal
+     rather than letting noise pick the "winner" -- then, among those tied
+     seeds, by higher int8 combined gold F1, then by lower negatives
+     false-positive rate, then by first entry in `MATRIX` order.
 """
 from __future__ import annotations
 
@@ -231,36 +245,41 @@ def load_val_metrics(pydir, out_dir):
     return ckpt.get("val_metrics", {})
 
 
-def select_winner(results):
+def select_winner(results, pydir):
     """results: list of {"arch","channels","seed","out_dir","val_metrics","gold"}.
-    Winning config (arch:channels) = highest mean int8 combined gold
-    value_acc across its seeds; within it, best seed by val value_acc."""
-    by_config = {}
-    order = []
-    for r in results:
-        key = (r["arch"], r["channels"])
-        if key not in by_config:
-            by_config[key] = []
-            order.append(key)
-        by_config[key].append(r)
 
-    def int8_value_acc(r):
-        return r["gold"].get("json_int8", {}).get("combined", {}).get("value_acc", 0.0)
+    The actual selection rule lives in `sankhya.eval_matrix.select_matrix_winner`
+    (config = highest mean int8 combined gold value_acc across seeds; within
+    a config, seed ranked by val value_acc rounded to 2dp, tie-broken by
+    higher gold int8 F1, then lower negatives fp_rate, then input order) --
+    this wraps it rather than re-implementing it, so there is one place the
+    rule is defined. `pydir` is the cloned repo's `python/` dir, which is
+    always on disk by the time this runs (step_clone already populated it),
+    so the package is importable even when this single file is the only
+    thing Kaggle uploaded as the kernel's code_file.
+    """
+    if pydir not in sys.path:
+        sys.path.insert(0, pydir)
+    from sankhya.eval_matrix import select_matrix_winner
 
-    best_key, best_mean = None, None
-    for key in order:
-        vals = [int8_value_acc(r) for r in by_config[key]]
-        m = sum(vals) / len(vals)
-        if best_mean is None or m > best_mean:
-            best_mean, best_key = m, key
+    def simplify(r):
+        gold_int8 = r["gold"].get("json_int8", {}).get("combined", {})
+        return {
+            "arch": r["arch"], "channels": r["channels"], "seed": r["seed"],
+            "val_value_acc": r["val_metrics"].get("value_acc", 0.0),
+            "gold_int8_value_acc": gold_int8.get("value_acc", 0.0),
+            "gold_int8_f1": gold_int8.get("f1", 0.0),
+            "negatives_fp_rate": gold_int8.get("negatives", {}).get("fp_rate", 0.0),
+        }
 
-    winners = by_config[best_key]
-    best_r, best_val = None, None
-    for r in winners:
-        v = r["val_metrics"].get("value_acc", 0.0)
-        if best_val is None or v > best_val:
-            best_val, best_r = v, r
-    return best_r, f"{best_key[0]}:{best_key[1]}"
+    simple_entries = [simplify(r) for r in results]
+    winner_simple, config_label = select_matrix_winner(simple_entries)
+    winner = next(
+        r for r in results
+        if r["arch"] == winner_simple["arch"] and r["channels"] == winner_simple["channels"]
+        and r["seed"] == winner_simple["seed"]
+    )
+    return winner, config_label
 
 
 def render_matrix_md(results, winner_label):
@@ -289,6 +308,34 @@ def render_matrix_md(results, winner_label):
 results_winner_entry = {}
 
 
+ENTRY_STAGE_FILES = [
+    "sankhya.weights.int8.json",
+    "sankhya.weights.json",
+    "gold_metrics_torch.json",
+    "gold_metrics_json_float32.json",
+    "gold_metrics_json_int8.json",
+]
+
+
+def stage_entries(pydir, results):
+    """Copy every entry's (small) exported weights + gold metrics -- but not
+    the .pt checkpoint or .onnx graph, to keep the download small -- into
+    output/entries/<arch>_<channels>_s<seed>/, so picking a different seed
+    later doesn't need a full re-run."""
+    entries_dir = os.path.join(OUTPUT_DIR, "entries")
+    os.makedirs(entries_dir, exist_ok=True)
+    for r in results:
+        label = f"{r['arch']}_{r['channels']}_s{r['seed']}"
+        dst = os.path.join(entries_dir, label)
+        os.makedirs(dst, exist_ok=True)
+        src_dir = os.path.join(pydir, r["out_dir"])
+        for fname in ENTRY_STAGE_FILES:
+            src = os.path.join(src_dir, fname)
+            if os.path.isfile(src):
+                shutil.copy2(src, os.path.join(dst, fname))
+    print(f"staged {len(results)} entries under {entries_dir}")
+
+
 def step_matrix(pydir):
     banner(f"4-6/6 matrix: {MATRIX}")
     entries = parse_matrix(MATRIX)
@@ -311,8 +358,10 @@ def step_matrix(pydir):
             "wall_time_s": dt,
         })
 
-    winner, winner_label = select_winner(results)
+    winner, winner_label = select_winner(results, pydir)
     results_winner_entry["entry"] = winner
+
+    stage_entries(pydir, results)
 
     matrix_json_path = os.path.join(OUTPUT_DIR, "matrix.json")
     with open(matrix_json_path, "w", encoding="utf-8") as f:

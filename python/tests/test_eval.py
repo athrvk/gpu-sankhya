@@ -117,6 +117,34 @@ def test_matrix_winner_seed_tie_breaks_to_first():
     assert winner["seed"] == 0
 
 
+def test_matrix_winner_rounds_val_acc_and_breaks_by_f1():
+    # 0.9343 / 0.9338 / 0.9346 all round to 0.93 -- practically tied on val
+    # value_acc, so the seed with the best gold F1 should win, not the raw
+    # max val_value_acc.
+    entries = [
+        {"arch": "v2", "channels": 48, "seed": 0, "val_value_acc": 0.9343,
+         "gold_int8_value_acc": 0.90, "gold_int8_f1": 0.952, "negatives_fp_rate": 0.07},
+        {"arch": "v2", "channels": 48, "seed": 1, "val_value_acc": 0.9338,
+         "gold_int8_value_acc": 0.90, "gold_int8_f1": 0.956, "negatives_fp_rate": 0.055},
+        {"arch": "v2", "channels": 48, "seed": 2, "val_value_acc": 0.9346,
+         "gold_int8_value_acc": 0.90, "gold_int8_f1": 0.950, "negatives_fp_rate": 0.091},
+    ]
+    winner, label = select_matrix_winner(entries)
+    assert label == "v2:48"
+    assert winner["seed"] == 1, "seed with best F1 among near-tied val_value_acc should win"
+
+
+def test_matrix_winner_f1_tie_breaks_by_fp_rate():
+    entries = [
+        {"arch": "v1", "channels": 32, "seed": 0, "val_value_acc": 0.90,
+         "gold_int8_value_acc": 0.85, "gold_int8_f1": 0.95, "negatives_fp_rate": 0.10},
+        {"arch": "v1", "channels": 32, "seed": 1, "val_value_acc": 0.90,
+         "gold_int8_value_acc": 0.85, "gold_int8_f1": 0.95, "negatives_fp_rate": 0.02},
+    ]
+    winner, label = select_matrix_winner(entries)
+    assert winner["seed"] == 1, "lower negatives fp_rate should win an F1 tie"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):
