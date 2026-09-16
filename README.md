@@ -404,3 +404,20 @@ npmjs.com for this to work: package page -> Settings -> Trusted publisher,
 with Organization/user `athrvk`, Repository `gpu-sankhya`, Workflow
 filename `publish.yml`. The first release was published manually with
 `npm publish`.
+
+### Publishing to Hugging Face
+
+The `.github/workflows/huggingface.yml` workflow mirrors the shipped model,
+the demo, and the gold evaluation sets to Hugging Face:
+
+- model: https://huggingface.co/athrvk/gpu-sankhya
+- demo Space: https://huggingface.co/spaces/athrvk/gpu-sankhya-demo
+- dataset: https://huggingface.co/datasets/athrvk/gpu-sankhya-gold
+
+It runs on `workflow_dispatch` (choose `all`/`model`/`space`/`dataset`) and
+on push to `master` when `package.json`, `models/default/**`,
+`python/tests/gold*.jsonl`, or `demo/**` change. One-time setup: add an
+`HF_TOKEN` repo secret with a write-scoped Hugging Face token for the
+`athrvk` namespace — without it the workflow prints a notice and skips.
+See `python/README.md`'s "Publishing to Hugging Face" section for the
+underlying `python -m sankhya.hf_push` CLI (including `--dry-run`).

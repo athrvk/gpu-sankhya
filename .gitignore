@@ -4,7 +4,9 @@ dist/
 /data/
 /python/data/
 /python/models/
+# models/default/ (repo root) is tracked: the shipped checkpoint + exports
 /python/models_*/
+/python/hf_out/
 __pycache__/
 *.pyc
 isolate-*.log

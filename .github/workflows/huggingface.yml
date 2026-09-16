@@ -1,0 +1,175 @@
+# Publishes gpu-sankhya artifacts to Hugging Face Hub:
+#   - model:   https://huggingface.co/athrvk/gpu-sankhya       (models/default/*)
+#   - space:   https://huggingface.co/spaces/athrvk/gpu-sankhya-demo (static demo, built from site/)
+#   - dataset: https://huggingface.co/datasets/athrvk/gpu-sankhya-gold (hand-written gold sets)
+#
+# Repos are created on first push (exist_ok) by python/sankhya/hf_push.py,
+# which also generates each repo's README/card from the shipped checkpoint's
+# metrics and weights JSON -- see python/sankhya/hf_push.py for details.
+#
+# One-time setup:
+#   Add a repo secret HF_TOKEN with a Hugging Face token that has write
+#   access to the athrvk namespace (Settings -> Access Tokens on
+#   huggingface.co). Without it, every job here prints a notice and skips
+#   (a fork or a PR without the secret configured is a no-op, not a failure).
+#
+# Triggers:
+#   - workflow_dispatch, with a `target` input (all/model/space/dataset) to
+#     push one artifact on demand.
+#   - push to master touching package.json (version bump -> re-tag the
+#     model), models/default/** (a new checkpoint), python/tests/gold*.jsonl
+#     (gold set changes -> refresh the dataset), or demo/** (refresh the
+#     Space). Each job only runs for the paths it cares about.
+
+name: huggingface
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: What to publish
+        type: choice
+        options: [all, model, space, dataset]
+        default: all
+  push:
+    branches: [master]
+    paths:
+      - package.json
+      - models/default/**
+      - python/tests/gold*.jsonl
+      - demo/**
+
+permissions:
+  contents: read
+
+concurrency:
+  group: huggingface
+  cancel-in-progress: false
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      model: ${{ steps.filter.outputs.model }}
+      space: ${{ steps.filter.outputs.space }}
+      dataset: ${{ steps.filter.outputs.dataset }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            model:
+              - 'package.json'
+              - 'models/default/**'
+            space:
+              - 'demo/**'
+              - 'package.json'
+              - 'models/default/**'
+            dataset:
+              - 'python/tests/gold*.jsonl'
+
+  model:
+    needs: changes
+    if: |
+      always() &&
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.target == 'all' || github.event.inputs.target == 'model')) ||
+      (github.event_name == 'push' && needs.changes.outputs.model == 'true')
+    runs-on: ubuntu-latest
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check HF_TOKEN
+        if: ${{ env.HF_TOKEN == '' }}
+        run: |
+          echo "::notice::HF_TOKEN secret is not set -- skipping Hugging Face model publish. Add a write-scoped token as the HF_TOKEN repo secret to enable this."
+
+      - uses: actions/setup-python@v5
+        if: ${{ env.HF_TOKEN != '' }}
+        with:
+          python-version: '3.12'
+
+      - run: pip install -r python/requirements-hf.txt
+        if: ${{ env.HF_TOKEN != '' }}
+
+      - name: Push model
+        if: ${{ env.HF_TOKEN != '' }}
+        run: python -m sankhya.hf_push model
+        working-directory: python
+
+  space:
+    needs: changes
+    if: |
+      always() &&
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.target == 'all' || github.event.inputs.target == 'space')) ||
+      (github.event_name == 'push' && needs.changes.outputs.space == 'true')
+    runs-on: ubuntu-latest
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check HF_TOKEN
+        if: ${{ env.HF_TOKEN == '' }}
+        run: |
+          echo "::notice::HF_TOKEN secret is not set -- skipping Hugging Face Space publish. Add a write-scoped token as the HF_TOKEN repo secret to enable this."
+
+      - uses: actions/setup-node@v4
+        if: ${{ env.HF_TOKEN != '' }}
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+        if: ${{ env.HF_TOKEN != '' }}
+      - run: npm run build
+        if: ${{ env.HF_TOKEN != '' }}
+      - run: npm run site
+        if: ${{ env.HF_TOKEN != '' }}
+
+      - uses: actions/setup-python@v5
+        if: ${{ env.HF_TOKEN != '' }}
+        with:
+          python-version: '3.12'
+
+      - run: pip install -r python/requirements-hf.txt
+        if: ${{ env.HF_TOKEN != '' }}
+
+      - name: Push space
+        if: ${{ env.HF_TOKEN != '' }}
+        run: python -m sankhya.hf_push space
+        working-directory: python
+
+  dataset:
+    needs: changes
+    if: |
+      always() &&
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.target == 'all' || github.event.inputs.target == 'dataset')) ||
+      (github.event_name == 'push' && needs.changes.outputs.dataset == 'true')
+    runs-on: ubuntu-latest
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check HF_TOKEN
+        if: ${{ env.HF_TOKEN == '' }}
+        run: |
+          echo "::notice::HF_TOKEN secret is not set -- skipping Hugging Face dataset publish. Add a write-scoped token as the HF_TOKEN repo secret to enable this."
+
+      - uses: actions/setup-python@v5
+        if: ${{ env.HF_TOKEN != '' }}
+        with:
+          python-version: '3.12'
+
+      - run: pip install -r python/requirements-hf.txt
+        if: ${{ env.HF_TOKEN != '' }}
+
+      - name: Push dataset
+        if: ${{ env.HF_TOKEN != '' }}
+        run: python -m sankhya.hf_push dataset
+        working-directory: python

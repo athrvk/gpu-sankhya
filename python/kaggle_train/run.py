@@ -189,6 +189,41 @@ def cmd_pull(args):
     shutil.copyfile(int8_src, default_weights)
     print(f"copied {int8_src} -> {default_weights}")
 
+    # Stage the shipped checkpoint + exports in models/default/ (tracked at
+    # the repo root) so they can be published (e.g. to Hugging Face -- see
+    # `python -m sankhya.hf_push`).
+    staged_dir = int8_src.parent  # the directory holding the winning run's files
+    models_default = REPO_ROOT / "models" / "default"
+    models_default.mkdir(parents=True, exist_ok=True)
+    model_files = [
+        "sankhya.pt", "sankhya.onnx", "sankhya.weights.json",
+        "sankhya.weights.int8.json", "charset.json", "classes.json",
+    ]
+    copied = []
+    for name in model_files:
+        src = staged_dir / name
+        if src.is_file():
+            shutil.copyfile(src, models_default / name)
+            copied.append(name)
+    for src in sorted(staged_dir.glob("gold_metrics_*.json")):
+        shutil.copyfile(src, models_default / src.name)
+        copied.append(src.name)
+
+    output_dir = out_dir / "output"
+    matrix_src = output_dir / "matrix.md"
+    metrics_src = output_dir / "metrics.json"
+    if matrix_src.is_file():
+        shutil.copyfile(matrix_src, models_default / "matrix.md")
+        copied.append("matrix.md")
+    if metrics_src.is_file():
+        shutil.copyfile(metrics_src, models_default / "kaggle_metrics.json")
+        copied.append("kaggle_metrics.json")
+
+    if copied:
+        print(f"copied to {models_default}: {', '.join(copied)}")
+    else:
+        print(f"warning: no model files found to copy into {models_default}")
+
     fixtures_cmd = [
         sys.executable, "-m", "sankhya.make_fixtures",
         "--weights", str(default_weights),
