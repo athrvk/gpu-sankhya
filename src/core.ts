@@ -189,6 +189,20 @@ export function evaluate(rawTokens: Tok[]): Result {
 
     let [v1, u1] = amounts[0];
     const [v2, u2] = amounts[1];
+
+    // R6: a RANGE connector that actually sits between a DESCENDING
+    // additive chain (e.g. "ek lakh dus hazaar" mistagged RANGE on the
+    // space) -- both sides already carry their own unit and the left
+    // value is strictly greater than the right -- is evaluated as one
+    // additive amount instead of a [low, high] range. A genuine range
+    // ("2-3 lakh", "paanch se sadhe saat lakh") has only ONE side carrying
+    // a unit (the other is a bare number/prefix scaled by it below), so it
+    // never hits this branch.
+    if (u1 !== null && u2 !== null && v1 > v2) {
+      const total = num(v1 + v2);
+      return { value: total, range: null, unit: C.UNIT_NAME[u1] ?? null, classes: allClasses, currency: null };
+    }
+
     let effUnit: string | null;
     if (u1 === null && u2 !== null) {
       v1 = v1 * C.unitValue(u2);
@@ -214,6 +228,43 @@ export function evaluate(rawTokens: Tok[]): Result {
  * sorted longest-first so `detectCurrency` tries the longest (most
  * specific) marker before a shorter one that might be its prefix (e.g.
  * "Rs." before "Rs", "रुपये" before a shorter overlapping marker). */
+/** R3: true when a span's meaningful tokens are ONLY digits (with
+ * DOT/COMMA/SEP glue) -- no UNIT_/PFX_/CARD_ token at all. Such a span is
+ * dropped by the caller unless a currency marker is detected for it. */
+export function isBareDigits(tokens: Tok[]): boolean {
+  let hasDigits = false;
+  for (const [cls] of tokens) {
+    if (cls === "DIGITS") hasDigits = true;
+    else if (cls.startsWith("UNIT_") || cls.startsWith("PFX_") || cls.startsWith("CARD_")) return false;
+  }
+  return hasDigits;
+}
+
+/** R3 (narrowed): whether a bare-digits span (see isBareDigits) with NO
+ * detected currency should be dropped. Most bare numbers ARE amounts
+ * (rent, prices, quantities: "15000", "2,50,00,000", "125,000") and must
+ * be kept; only the two genuinely ambiguous shapes are dropped:
+ *
+ *   (a) short (<=4 digits) AND ungrouped (no comma) -- route numbers,
+ *       OTPs, years, house numbers: "1", "66", "4521", "2024", "302".
+ *   (b) very long (>=10 digits) -- phone numbers: "9876543210".
+ *
+ * A grouping comma (Indian or Western) is itself a strong signal of a
+ * real amount, so it exempts an otherwise-short span from rule (a):
+ * "1,00,000" (6 digits, comma) is kept, not dropped. */
+export function shouldDropBareDigits(tokens: Tok[]): boolean {
+  if (!isBareDigits(tokens)) return false;
+  let digitCount = 0;
+  let hasComma = false;
+  for (const [cls, text] of tokens) {
+    if (cls === "DIGITS") digitCount += text.length;
+    else if (cls === "COMMA") hasComma = true;
+  }
+  if (digitCount <= 4 && !hasComma) return true;
+  if (digitCount >= 10) return true;
+  return false;
+}
+
 export function mergeLangPacks(...packs: LangPack[]): LangPack {
   const byLenDesc = (a: string, b: string) => b.length - a.length;
   const dedupe = (lists: string[][]) => [...new Set(lists.flat())].sort(byLenDesc);
@@ -223,9 +274,17 @@ export function mergeLangPacks(...packs: LangPack[]): LangPack {
   };
 }
 
+/** Scan up to 8 chars before/after [start,end) for a currency marker. The
+ * window has to be wider than the longest marker word (6 chars, e.g.
+ * "rupaye"/"rupees"): the span boundary sits right after the number, so
+ * the gap before the marker word starts (whitespace, and occasionally
+ * punctuation like ", ") eats into a same-sized window and truncates the
+ * word -- "1200 rupees" with a 6-char after-window is " rupee" (missing
+ * the final "s"), so "rupees" never matches with startsWith(). 8 leaves
+ * slack for a couple of separator chars ahead of the longest marker. */
 export function detectCurrency(text: string, start: number, end: number, pack: LangPack): "INR" | null {
-  const before = text.slice(Math.max(0, start - 4), start);
-  const after = text.slice(end, end + 6);
+  const before = text.slice(Math.max(0, start - 8), start);
+  const after = text.slice(end, end + 8);
 
   const beforeStripped = before.replace(/\s+$/, "");
   const bs = beforeStripped.toLowerCase();

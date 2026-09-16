@@ -111,6 +111,11 @@ CURRENCY_WORDS_AFTER = ["रुपये", "रुपए", "रूपये", "�
 APPROXIMATORS = ["करीब", "लगभग", "तकरीबन", "कोई", "क़रीब"]
 RANGE_CONNECTORS = [" से ", "-", " या ", " to "]
 
+# joins TWO/THREE independent quantity spans in one text ("सवा लाख और डेढ़
+# लाख"). Distinct from RANGE_CONNECTORS: "... से लेकर ... तक" is a RANGE
+# (one span, two amounts) and is never used here.
+CONJ_CONNECTORS = [" और ", " या ", " या फिर ", ", ", " नहीं तो "]
+
 TEMPLATES = {
     "casual": [
         "भाई {A} {P} में हो जाएगा क्या",
@@ -194,6 +199,8 @@ TEMPLATES = {
         "{P1} खत्म होकर {P2} बचा",
         "उसने {P1} दिया मैंने {P2} लिया",
         "{P1} लगाया {P2} कमाया",
+        "{P1} में {P2} फ्लैट, हर फ्लैट अलग कीमत",
+        "सोसाइटी में {P1} घर हैं, औसत {P2} का",
     ],
     "bare": [
         "{P}",
@@ -242,6 +249,29 @@ TEMPLATES = {
         "कमरा नंबर 9 रिज़र्व है",
         "ऑर्डर #45 आ गया",
         "सीट नंबर 23 बुक कर दी",
+        # -pati / indefinite-plural hard negatives (§(c)): net still tags these
+        "लखपति बन गया वो",
+        "करोड़पति बन गया आखिर",
+        "लाखों में बिक गया",
+        "करोड़ों का नुकसान हुआ",
+        # unit-noun abbreviations after digits, not scale units
+        "10 किमी दूर है घर",
+        "5 किग्रा आटा चाहिए",
+        "100 किमी/घं से गया",
+        # ordinals
+        "पहला इनाम जीता उसने",
+        "दूसरी मंज़िल पर रहता हूं",
+        "तीसरा इनाम मिला मुझे",
+        "चौथी मंज़िल तक जाओ",
+        # bare id-like numbers
+        "रूट 66 पे गया था",
+        "मोबाइल 98765 43210 है मेरा",
+        "फ्लैट नंबर 302 है मेरा",
+        # duration/time phrases that use prefix words - must stay O, not a span
+        "सवा घंटा लग गया",
+        "डेढ़ घंटे में आ जाऊंगा",
+        "साढ़े तीन बजे मिलते हैं",
+        "पौने पांच बजे निकलना",
     ],
 }
 
@@ -268,6 +298,7 @@ PACK = base.LanguagePack(
     blocked_surfaces=BLOCKED_SURFACES,
     filler_words=FILLER_WORDS,
     duration_nouns=DURATION_NOUNS,
+    conj_connectors=CONJ_CONNECTORS,
 )
 
 _forms_for_filter = PACK.all_forms()

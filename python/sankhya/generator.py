@@ -298,6 +298,28 @@ def build_term_tokens(pack, rng, structure, unit_cls=None):
         uword, _ = _safe_word(pack, rng, u)
         toks.append((u, uword))
 
+    elif structure == "chain_trailing_bare":
+        # (b) trailing/leading small-cardinal additive chains where the LAST
+        # term has no unit of its own: "ek hazaar ek" (1001), "do lakh
+        # paanch" (200005). Core already evaluates a bare trailing NUM as an
+        # implicit +N (unit=1); this just adds the generator surface for it.
+        n_units = rng.choice([1, 2])
+        units = rng.sample(["UNIT_CRORE", "UNIT_LAKH", "UNIT_HAZAAR"], k=n_units)
+        units.sort(key=lambda u: -C.unit_value(u))
+        for i, u in enumerate(units):
+            if i > 0:
+                toks.append(_sep())
+            n = rng.randint(1, 99)
+            card = f"CARD_{n}"
+            nword, _ = _safe_word(pack, rng, card)
+            uword, _ = _safe_word(pack, rng, u)
+            toks += [(card, nword), _sep(), (u, uword)]
+        toks.append(_sep())
+        tail_n = rng.randint(1, 9)
+        tail_card = f"CARD_{tail_n}"
+        tail_word, _ = _safe_word(pack, rng, tail_card)
+        toks.append((tail_card, tail_word))
+
     elif structure == "unit_chain":
         # "unit + cardinal + unit" descending additive chain, e.g. "hazaar do sau" = 1200
         big, small = "UNIT_HAZAAR", "UNIT_SAU"
@@ -323,7 +345,22 @@ _STRUCTURE_WEIGHTS = [
     ("digits_word_unit", 15), ("digits_symbol", 15), ("digits_currency", 8),
     ("chain", 7), ("english_fraction", 4), ("bare_card_currency", 4),
     ("mult_chain", 5), ("bare_unit_currency", 3), ("unit_chain", 2),
+    ("chain_trailing_bare", 6),
 ]
+
+
+def _maybe_possessive(rng, toks, p=0.02):
+    """(d) possessive/plural noise on units: "lakh's", "lakhs'", "crore's",
+    "2lakh's" - the apostrophe+letters are O, the unit itself stays a unit
+    (the value is unaffected). Only fires when the phrase actually ends on a
+    unit token, and appends an O-labelled suffix glued to it."""
+    if not toks or rng.random() >= p:
+        return toks
+    last_cls, _ = toks[-1]
+    if not C.is_unit(last_cls):
+        return toks
+    suffix = rng.choice(["'s", "'"])
+    return toks + [("O", suffix)]
 
 
 def build_phrase(pack, rng, structure=None, exclude_currency_bare=False):
@@ -337,6 +374,7 @@ def build_phrase(pack, rng, structure=None, exclude_currency_bare=False):
         weights = [w for _, w in pool]
         structure = rng.choices(names, weights=weights)[0]
     toks = build_term_tokens(pack, rng, structure)
+    toks = _maybe_possessive(rng, toks)
     return toks, structure
 
 
@@ -449,6 +487,27 @@ def build_range_phrase(pack, rng):
     connector = _range_connector(pack, rng)
     toks = [left_tok, connector, right_tok, _sep(), (u, uword)]
     return toks
+
+
+def build_conjunction_phrase(pack, rng, ppack):
+    """(a) TWO (sometimes three) independent quantity spans in one text
+    joined by a conjunction, e.g. "sava lakh aur dedh lakh", "50k ya 60k".
+    Each side is its own span (own B tag); the connector is O. NOT a range
+    (that is a single span via build_range_phrase/RANGE class)."""
+    n_spans = 3 if rng.random() < 0.15 else 2
+    parts = [build_phrase(ppack, rng, exclude_currency_bare=True)[0] for _ in range(n_spans)]
+    connectors = pack.conj_connectors or [" aur "]
+    out = ""
+    span_defs = []
+    for i, toks in enumerate(parts):
+        if i > 0:
+            out += rng.choice(connectors)
+        start = len(out)
+        seg_text, _ = _tokens_to_text_and_labels(toks)
+        out += seg_text
+        end = len(out)
+        span_defs.append((start, end, toks))
+    return out, span_defs
 
 
 def _resolve_currency_marker(pack, rng, force=False, next_is_digit=False):
@@ -787,7 +846,7 @@ def _sample_example_once(pack, rng, phrase_pack=None, unk_p=P_UNK):
     family_weights = [
         ("casual", 16), ("classifieds", 16), ("news", 13), ("salary", 9),
         ("ranges", 8), ("two_spans", 10), ("bare", 12), ("short_context", 8),
-        ("negatives", 12),
+        ("negatives", 12), ("multi_conj", 7),
     ]
     names = [f for f, _ in family_weights]
     weights = [w for _, w in family_weights]
@@ -797,6 +856,13 @@ def _sample_example_once(pack, rng, phrase_pack=None, unk_p=P_UNK):
         text = _build_negative_text(pack, rng)
         text = _apply_casing_and_wrap(pack, rng, text)
         return _finalize(pack, rng, text, [], is_negative=True, currency_pack=currency_pack)
+
+    if family == "multi_conj":
+        out, span_defs = build_conjunction_phrase(pack, rng, ppack)
+        out = _insert_fillers(pack, rng, out, span_defs)
+        out = _insert_unk_noise(pack, rng, out, span_defs, p_unk=unk_p)
+        out = _apply_casing_and_wrap(pack, rng, out)
+        return _finalize(pack, rng, out, _recompute_offsets(out, span_defs), is_negative=False, currency_pack=currency_pack)
 
     # "bare": at least half are TRULY bare - the phrase IS the entire text,
     # nothing else: no chat-fragment wrap, no filler, no punctuation. This is

@@ -130,6 +130,10 @@ interface Sankhya {
   actually obtained. Result is cached, so repeated calls only probe once.
   `parseBatch`'s `"auto"` backend uses this (not `isWebGPUAvailable()`)
   to decide whether to try the GPU path.
+- **Non-string input**: `parse`, `parseBatch`, and `inspect` all tolerate
+  a non-string argument (`null`, `undefined`, a number, object, array,
+  boolean, ...) by treating it as no input rather than throwing —
+  `parse(null)` returns `[]` instead of crashing.
 - **`inspect(text) => Inspection`** — synchronous CPU inspection of the
   raw model output before decode/repair: `{ text, chars: [{ch, bio,
   bioProb, cls, clsId}], spans, ms }`, one entry per character with its
@@ -204,40 +208,51 @@ out-of-vocab "unk noise" augmentation so the model has actually seen
 Python and JS runtimes for anyone using older exported weights.
 
 On synthetic validation data (drawn from the same generator/templates as
-training): 0.932 value accuracy. This number is optimistic — it's testing
+training): 0.925 value accuracy. This number is optimistic — it's testing
 the model on its own distribution.
 
 On two hand-written gold sets, written independently of the generator —
-`python/tests/gold.jsonl` (romanised Hindi, 184 sentences / 168 spans)
-and `python/tests/gold_deva.jsonl` (Devanagari Hindi, 169 sentences / 141
+`python/tests/gold.jsonl` (romanised Hindi, 214 sentences / 188 spans)
+and `python/tests/gold_deva.jsonl` (Devanagari Hindi, 182 sentences / 151
 spans) — evaluated against the shipped int8-quantized weights:
 
 | gold set | examples | spans | value accuracy | span precision | span recall | span F1 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| gold.jsonl (romanised) | 184 | 168 | 0.9515 | 0.8971 | 0.9515 | 0.9235 |
-| gold_deva.jsonl (Devanagari) | 169 | 141 | 0.9861 | 0.9662 | 0.9931 | 0.9795 |
-| combined | 353 | 309 | 0.9676 | 0.9288 | 0.9709 | 0.9494 |
+| gold.jsonl (romanised) | 214 | 188 | 0.9255 | 0.9167 | 0.9362 | 0.9263 |
+| gold_deva.jsonl (Devanagari) | 182 | 151 | 0.9735 | 0.9737 | 0.9801 | 0.9769 |
+| combined | 396 | 339 | 0.9469 | 0.9419 | 0.9558 | 0.9488 |
 
-Negatives (zero-gold-span examples, 55 total): 4 false positives (7.3%).
-Per-category value accuracy: digits 0.977, words 0.964, prefix 0.948,
-range 0.917, currency 0.979, multi_unit 1.0, symbol_unit 1.0,
-mixed_script 1.0, long 0.75.
+Negatives (zero-gold-span examples, 73 total): 0 false positives.
+Miss summary: missed 2, spurious 7, wrong value 3, wrong boundary 13.
+Per-category value accuracy: digits 0.967, words 0.940, prefix 0.926,
+range 0.917, currency 1.0, multi_unit 0.952, symbol_unit 0.970,
+mixed_script 1.0, long 0.80.
 
-Compared to the previously shipped `v1` model (0.9441 / 0.9645 / 0.9536
-combined value acc, F1 0.9510, 2/55 negatives false positives): this
-model gains about 1.4 points of value accuracy and is materially more
-robust to input containing characters outside its training vocabulary,
-at the cost of slightly lower span precision — it produces a few more
-spurious spans on unfamiliar words. That's a known, measured trade-off,
-not an oversight.
+For comparison, the previous shipped weights scored, on this same
+enlarged gold set: 0.9096 (romanised) / 0.9603 (Devanagari) / 0.9322
+combined value acc, F1 0.9258, 4/73 negatives false positives (5.5%).
+(Their numbers on the older, smaller 353-example gold set were 0.952 /
+0.986 / 0.968 — the new gold set is deliberately harder: it adds
+conjunction-joined multi-span sentences, trailing-cardinal chains,
+possessive noise, in-context typos, cardinal spelling variants, and 18
+more negative examples.) This round also ran a 198-case hand-written
+edge-case probe across 12 categories (whitespace/short input, long
+input, Unicode, numeric forms, prefix semantics, compound units,
+currency, negatives, multi-span strings, noise/typos, Devanagari
+equivalents, API contract) targeting decoder and boundary bugs rather
+than the gold distribution itself; the fixes below took it from 146
+pass / 17 spurious / 8 wrong value / 7 crashes to 179 pass / 0 crashes /
+5 spurious / 1 wrong value (remaining misses are mostly boundary/range
+edge cases, tracked below).
 
 **The gold numbers are the ones to trust.** Known miss categories, in rough
 order of frequency:
 
+- wrong span boundaries on multi-span/range/connector phrases (the
+  largest single category this round)
+- wrong value on a handful of prefix/compound constructs
 - unusual typos the noise model doesn't cover (e.g. "croer" for "crore")
-- possessive apostrophes ("do lakh's")
 - long multi-term/mixed-numeral constructs ("three n half lakh", "50M")
-- multi-number range phrases ("तीस पैंतीस हज़ार", "paanch se sadhe saat lakh")
 - occasional spurious spans triggered by unfamiliar words near number-ish
   context
 
@@ -280,10 +295,42 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   majority vote over character-type sub-runs (fixes a stray misclassified
   character inside an otherwise-consistent digit or letter run), plus a
   few punctuation-specific rules.
+- **Word integrity**: a `UNIT_`/`PFX_`/`CARD_` token must line up with the
+  letter-word it sits in — a letters-run that's only partially meaningful
+  (some characters fell back to `O`) has all of it retagged `O` (e.g.
+  `"10 km"`), while a run legitimately split into several back-to-back
+  meaningful sub-words is left alone (e.g. `"dedhlakh"` = `PFX_DEDH` +
+  `UNIT_LAKH`). A one-character symbol unit (`k`/`K`/`l`/`L`) is additionally
+  only valid when the next character isn't a letter, so `"20k logon"`
+  keeps its `k` but `"10 km"`'s `k` doesn't survive alone either.
+- **Bare-digits gate**: a span whose only meaningful tokens are digits (no
+  unit/prefix/cardinal word at all) with no detected currency marker is
+  dropped only when it's short and ungrouped (≤4 digits, no comma — route
+  numbers, OTPs, years: `"1"`, `"route 66"`, `"OTP 4521"`, `"2024"`) or very
+  long (≥10 digits — phone numbers: `"9876543210"`). Everything else is
+  kept as a plain (unitless) amount — `"15000"`, `"1,00,000"`,
+  `"2,50,00,000"` all parse; `"₹75"` / `"Rs 2,50,000/-"` / `"1200 rupees"`
+  still parse with `currency: "INR"`. The currency-marker look-ahead
+  scans 8 characters past the amount for a trailing marker word (up from
+  a shorter window that missed `"1200 rupees"` — `"rupees"` alone runs to
+  6 characters plus the leading space).
+- **Range-connector repair**: a bare `-`/`–`/`—`/`/` between two amounts
+  becomes a `RANGE` tag (spaces around it stay `SEP`) when the left side
+  can end an amount by itself and the right side can start a fresh one
+  (`"2 lakh/3 lakh"`, `"दो-तीन लाख"`) — but not when it's really one
+  compound number, e.g. a prefix glued straight to a unit (`"dedh-lakh"`
+  stays one span, not a range).
+- **Possessive trim**: a trailing `'s`/`’s` (1-2 letters) is stripped from
+  the end of a word and excluded from the span (`"2 lakh's"` → `"2 lakh"`).
 - **Confidence filter**: a span's confidence is the mean of the max BIO
   softmax probability per character; spans below 0.5 are dropped.
 - Only after all of the above does the deterministic arithmetic core run
-  on the resulting token sequence.
+  on the resulting token sequence, which also treats a `RANGE` connector
+  between two amounts that BOTH already carry a unit and are strictly
+  *descending* (e.g. `"ek lakh dus hazaar"` mistagged `RANGE` on the
+  space) as one additive amount rather than a `[low, high]` range —
+  genuine ranges (only one side has a unit, or both do but ascending) are
+  unaffected.
 
 One more detail that matters more than it looks like it should: the
 runtime right-pads the character-id array with 24 pad tokens before
@@ -310,16 +357,30 @@ outputs are discarded; only the real characters' predictions are used.
 - **Offsets are into the normalized string.** `parse()`'s `start`/`end`
   index `normalizeText(text)`, not the raw input, in the rare case NFC
   normalization changes the string's length (see `normalizeText` in the
-  API section above).
+  API section above); in JS, an astral (surrogate-pair) character such as
+  an emoji also counts as two UTF-16 units in those offsets, same as any
+  other JS string indexing.
 - Text longer than 128 characters is processed with a sliding window
   (128-char windows, 16-char overlap) and results are merged/deduplicated
   by span; extremely long inputs may still miss a span that straddles a
   window boundary in an unlucky way.
+- **Bare single cardinal words without a unit are not reliably
+  extracted.** `"unnasi"` alone produces no span, while `"unnasi hazaar"`
+  correctly resolves to 79000 — a bare number word needs a unit, prefix,
+  or digit context to be tagged.
+- **Long multi-term ranges still split incorrectly.** Constructs like
+  `"paanch se sadhe saat lakh"` (a range where one side itself carries a
+  prefix word) are not reliably decoded as a single range.
+- **Fullwidth and Arabic-Indic digits are not normalised.** Only
+  Devanagari digits (U+0966-U+096F) are mapped by `normalizeText`;
+  fullwidth (`２`) and Arabic-Indic (`٢`) digit forms are left as unknown
+  characters, so a phrase like `"２ lakh"` loses the digit and falls back
+  to the unit's default value.
 - Model quality: see Accuracy above. The known miss categories there
-  (unusual typos, possessive apostrophes, long multi-term ranges,
-  occasional spurious spans) are model-quality issues, not bugs in the
-  arithmetic core, which is unit-tested directly and independently of the
-  model in `test/core.test.ts`.
+  (wrong span boundaries on multi-span/range phrases, unusual typos,
+  long multi-term ranges, occasional spurious spans) are model-quality
+  issues, not bugs in the arithmetic core, which is unit-tested directly
+  and independently of the model in `test/core.test.ts`.
 
 ## Repository layout
 

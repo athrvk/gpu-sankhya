@@ -28,6 +28,11 @@ class LanguagePack:
     # duration/time/count nouns for "CARD/DIGITS + noun" negatives
     # ("teen din baad", "das minute mein") - bare numbers with no unit/currency
     duration_nouns: List[str] = field(default_factory=list)
+    # conjunction words that join TWO (sometimes three) independent quantity
+    # spans in one text ("sava lakh aur dedh lakh") - the connector itself is
+    # O, each side is its own span. Do not confuse with range_connectors
+    # ("se lekar ... tak" etc): a range is ONE span, this is several.
+    conj_connectors: List[str] = field(default_factory=list)
 
     def noise(self, word: str, rng) -> str:
         if self.noise_fn is not None:

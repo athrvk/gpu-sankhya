@@ -3,7 +3,7 @@ import { loadWeights, type LoadedWeights } from "./weights.ts";
 import { buildCharToId, encodeChars, makeWindows, normalizeText, MAX_LEN, PADDED_MAX, paddedLength } from "./charset.ts";
 import { forward, softmaxRow, argmaxRow, Scratch } from "./infer-cpu.ts";
 import { decodeSpans } from "./decode.ts";
-import { evaluate, detectCurrency, mergeLangPacks } from "./core.ts";
+import { evaluate, detectCurrency, mergeLangPacks, shouldDropBareDigits } from "./core.ts";
 import { HI_LATN } from "./lang-hi-latn.ts";
 import { HI_DEVA } from "./lang-hi-deva.ts";
 import { CLASSES } from "./classes.ts";
@@ -50,6 +50,10 @@ export class Parser {
    * input, which already arrives in NFC form, normalization never changes
    * string length, so offsets and `span` are identical either way. */
   parse(text: string, opts: ParseOptions = {}): Sankhya[] {
+    // R1: non-string input (null/undefined/number/object/...) is treated
+    // as "" rather than throwing -- callers passing through loosely-typed
+    // data (form fields, JSON with an optional key, etc.) get [] back.
+    if (typeof text !== "string") return [];
     const original = text;
     text = normalizeText(text);
     const useOriginalSpan = original.length === text.length;
@@ -113,8 +117,13 @@ export class Parser {
     const out: Sankhya[] = [];
     for (const span of spans) {
       const tokens: Array<[string, string]> = span.tokens.map(([cid, txt]) => [CLASSES[cid], txt]);
-      const res = evaluate(tokens);
       const currency = detectCurrency(sub, span.start, span.end, CURRENCY_PACK);
+      // R3: drop a digits-only span (no UNIT_/PFX_/CARD_) unless a
+      // currency marker was found for it, narrowed to short-ungrouped
+      // (<=4 digits, no comma) or very-long (>=10 digits) spans -- see
+      // shouldDropBareDigits().
+      if (shouldDropBareDigits(tokens) && currency === null) continue;
+      const res = evaluate(tokens);
       out.push({
         span: span.text,
         start: span.start + offset,
@@ -137,6 +146,7 @@ export class Parser {
    * the first window that covers it. */
   inspect(text: string): Inspection {
     const t0 = performance.now();
+    if (typeof text !== "string") text = ""; // R1: non-string -> "" (empty chars/spans)
     const normalized = normalizeText(text);
     const windows = makeWindows(normalized.length);
     const chars: CharTag[] = new Array(normalized.length);
@@ -191,6 +201,9 @@ export class Parser {
   /** Batched parse. Uses WebGPU when requested/available and the batch is
    * large enough to be worthwhile; falls back to CPU otherwise. */
   async parseBatch(texts: string[], opts: ParseOptions = {}): Promise<Sankhya[][]> {
+    // R1: non-string entries (null/undefined/...) are treated as "" rather
+    // than throwing, same as parse().
+    texts = texts.map((t) => (typeof t === "string" ? t : ""));
     const backend = opts.backend ?? this.defaultBackend;
     const useGpu =
       backend === "webgpu" ||

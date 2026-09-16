@@ -1,14 +1,24 @@
 """Decode per-char BIO + class predictions into spans."""
 from __future__ import annotations
 
+import re
 import unicodedata
+from collections import Counter
 from typing import List, Optional, Sequence
 
 from . import classes as C
 
 _TRIM_CLASSES = {"SEP", "RANGE", "DOT", "COMMA"}
+# R2: after word-integrity/possessive repair a partially-retagged word can
+# leave an "O" token sitting at a span edge; trimming it away too (in
+# addition to the original SEP/RANGE/DOT/COMMA) is how start/end get
+# re-derived to the min/max of the remaining non-O chars.
+_TRIM_CLASSES_FINAL = _TRIM_CLASSES | {"O"}
 _MEANINGFUL_PREFIXES = ("PFX_", "CARD_", "UNIT_")
-_RANGE_CONNECTORS = ("-", "–", "/")  # hyphen, en-dash, slash
+_RANGE_CONNECTORS = ("-", "–", "—", "/")  # hyphen, en-dash, em-dash, slash
+_O_ID = C.CLASS_TO_ID["O"]
+_POSSESSIVE_RE = re.compile(r"[\'’]([A-Za-zऀ-ॿ]{1,2})(?![A-Za-zऀ-ॿ])")
+_SYMBOL_UNIT_CHARS = set("kKlL")
 
 
 def _is_meaningful(cls_name: str) -> bool:
@@ -171,6 +181,59 @@ def extend_digit_spans(text: str, bio_ids: List[int]) -> List[int]:
     return out
 
 
+def _run_repr_class(run_type: str, rs: int, re_: int, cls_ids: List[int]) -> Optional[str]:
+    """Best-guess resulting class name for a run, without mutating cls_ids.
+    Used by the R4 connector check to look at a letters-run neighbour that
+    has not been processed yet (it comes after the connector in scan order).
+    """
+    if run_type == "digit":
+        return "DIGITS"
+    if run_type == "letter":
+        raw_run = [cls_ids[k] for k in range(rs, re_)]
+        new_run = _repair_letters_run(raw_run)
+        cnt = Counter(new_run)
+        best_id = max(cnt.items(), key=lambda kv: kv[1])[0]
+        return C.CLASSES[best_id]
+    return None
+
+
+def _effective_neighbor(runs, idx: int, direction: int):
+    """The adjacent digit/letter run in `direction`, skipping at most one
+    intervening space run (so "2 - 3" and "2-3" are treated the same)."""
+    j = idx + direction
+    if j < 0 or j >= len(runs):
+        return None
+    if runs[j][0] == "space":
+        j += direction
+        if j < 0 or j >= len(runs):
+            return None
+    return runs[j] if runs[j][0] in ("digit", "letter") else None
+
+
+def _connector_is_range(runs, idx: int, cls_ids: List[int]) -> bool:
+    """R4: true when the connector genuinely sits between two SEPARATE
+    numeric amounts (a real range), not inside one compound number.
+
+    The left neighbour must be able to END an amount by itself (any
+    meaningful class: it may be a bare number/prefix, e.g. "2-3", or a
+    number that has already picked up a unit, e.g. "2 lakh/3 lakh"). The
+    right neighbour must be able to START a fresh amount: DIGITS/CARD_/
+    PFX_, but NOT a bare UNIT_ -- a unit can only ATTACH to a number that
+    precedes it, so "dedh-lakh" (PFX_DHAI - UNIT_LAKH, one compound number
+    "1.5 lakh") must stay SEP, while "2 lakh/3 lakh" (UNIT_LAKH - DIGITS,
+    two separate amounts) becomes RANGE.
+    """
+    left = _effective_neighbor(runs, idx, -1)
+    right = _effective_neighbor(runs, idx, 1)
+    if left is None or right is None:
+        return False
+    left_cls = _run_repr_class(left[0], left[1], left[2], cls_ids)
+    right_cls = _run_repr_class(right[0], right[1], right[2], cls_ids)
+    if not left_cls or not right_cls or not _is_meaningful(left_cls):
+        return False
+    return right_cls == "DIGITS" or right_cls.startswith(("CARD_", "PFX_"))
+
+
 def repair_classes(text: str, start: int, end: int, cls_ids: List[int]) -> List[int]:
     """Deterministically repair per-char class predictions within [start, end)
     of a decoded span, using character-type structure rather than the raw
@@ -226,7 +289,7 @@ def repair_classes(text: str, start: int, end: int, cls_ids: List[int]) -> List[
 
             if length == 1 and ch in (".", ",") and prev_type == "digit" and next_type == "digit":
                 new_cls = dot_id if ch == "." else comma_id
-            elif ch in _RANGE_CONNECTORS and prev_type == "digit" and next_type == "digit":
+            elif length == 1 and ch in _RANGE_CONNECTORS and _connector_is_range(runs, idx, cls_ids):
                 new_cls = range_id
             elif ch == "-" and prev_type == "letter" and next_type == "letter":
                 new_cls = sep_id
@@ -235,6 +298,68 @@ def repair_classes(text: str, start: int, end: int, cls_ids: List[int]) -> List[
             for k in range(rs, re_):
                 out[k] = new_cls
 
+    return out
+
+
+def _letter_runs(text: str) -> List[tuple]:
+    """[(start, end), ...] maximal letter/mark runs over the WHOLE text (not
+    just one span) -- word integrity needs the true word boundaries, which
+    can extend outside a span that was cut short mid-word."""
+    runs = []
+    i, n = 0, len(text)
+    while i < n:
+        if _char_type(text[i]) == "letter":
+            j = i + 1
+            while j < n and _char_type(text[j]) == "letter":
+                j += 1
+            runs.append((i, j))
+            i = j
+        else:
+            i += 1
+    return runs
+
+
+def _is_word_class(cname: str) -> bool:
+    return cname.startswith(_MEANINGFUL_PREFIXES) and cname != "DIGITS"
+
+
+def _repair_word_integrity(text: str, s: int, e: int, cls_ids: List[int], letter_runs: List[tuple]) -> List[int]:
+    """R2: a word-class (UNIT_/PFX_/CARD_) token must cover its entire
+    letter word. Checked per WHOLE letters-run rather than per token, so a
+    run legitimately split into several back-to-back meaningful tokens
+    (e.g. "dedhlakh" = PFX_DEDH|UNIT_LAKH, both length-4 sub-runs) is left
+    alone; a run that is only PARTIALLY meaningful (some chars fall back to
+    O, e.g. "km" tagged UNIT_.../O) has ALL its meaningful chars retagged
+    O too -- a partial match without an explanation for the rest of the
+    word is untrustworthy. A single-character symbol unit (k/K/l/L) is
+    additionally only valid when the following character is not a letter,
+    even when it fully (and only) covers its own run."""
+    out = list(cls_ids)
+    for rs, re_ in letter_runs:
+        if re_ <= s or rs >= e:
+            continue  # run doesn't touch this span at all
+        crs, cre = max(rs, s), min(re_, e)
+        fully_covered = rs >= s and re_ <= e and all(_is_word_class(C.CLASSES[out[k]]) for k in range(rs, re_))
+        if fully_covered:
+            if re_ - rs == 1 and C.CLASSES[out[rs]].startswith("UNIT_") and text[rs] in _SYMBOL_UNIT_CHARS:
+                if re_ < len(text) and _char_type(text[re_]) == "letter":
+                    out[rs] = _O_ID
+            continue
+        for k in range(crs, cre):
+            if _is_word_class(C.CLASSES[out[k]]):
+                out[k] = _O_ID
+    return out
+
+
+def _repair_possessive(text: str, s: int, e: int, cls_ids: List[int]) -> List[int]:
+    """R5: an apostrophe followed by 1-2 letters at the end of a word (e.g.
+    "lakh's") is a possessive/genitive suffix, not part of the amount --
+    retag it (and those letters) O."""
+    out = list(cls_ids)
+    span_text = text[s:e]
+    for m in _POSSESSIVE_RE.finditer(span_text):
+        for k in range(s + m.start(), s + m.end()):
+            out[k] = _O_ID
     return out
 
 
@@ -294,10 +419,13 @@ def decode_spans(
         spans.append((start, n))
 
     work_cls = list(cls_ids)
+    letter_runs = _letter_runs(text)
 
     out = []
     for s, e in spans:
         work_cls = repair_classes(text, s, e, work_cls)
+        work_cls = _repair_word_integrity(text, s, e, work_cls, letter_runs)
+        work_cls = _repair_possessive(text, s, e, work_cls)
 
         # token runs with (cls_id, start, end) offsets
         run_start = s
@@ -307,11 +435,14 @@ def decode_spans(
                 orig_toks.append((work_cls[run_start], run_start, j))
                 run_start = j
 
-        # trim leading/trailing trim-classes
+        # trim leading/trailing trim-classes (SEP/RANGE/DOT/COMMA, plus O --
+        # R2/R5 above can leave a now-meaningless O token at an edge, and
+        # re-deriving start/end to the min/max of the remaining non-O chars
+        # means trimming it away here too)
         lo, hi = 0, len(orig_toks)
-        while lo < hi and C.CLASSES[orig_toks[lo][0]] in _TRIM_CLASSES:
+        while lo < hi and C.CLASSES[orig_toks[lo][0]] in _TRIM_CLASSES_FINAL:
             lo += 1
-        while hi > lo and C.CLASSES[orig_toks[hi - 1][0]] in _TRIM_CLASSES:
+        while hi > lo and C.CLASSES[orig_toks[hi - 1][0]] in _TRIM_CLASSES_FINAL:
             hi -= 1
         kept = orig_toks[lo:hi]
         if not kept:

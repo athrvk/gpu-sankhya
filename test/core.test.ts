@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { evaluate, detectCurrency, mergeLangPacks } from "../src/core.ts";
+import { evaluate, detectCurrency, mergeLangPacks, isBareDigits, shouldDropBareDigits } from "../src/core.ts";
 import { HI_LATN } from "../src/lang-hi-latn.ts";
 import { HI_DEVA } from "../src/lang-hi-deva.ts";
 
@@ -217,4 +217,93 @@ test("three n half lakh (PFX collapse: CARD_3 + collapsed PFX_SAADHE)", () => {
     ["UNIT_LAKH", "lakh"],
   );
   assert.equal(r.value, 350000);
+});
+
+test("R6: descending RANGE chain (both sides carry units, left > right) evaluates additively", () => {
+  // "ek lakh dus hazaar" mistagged RANGE on the space between.
+  const r = ev(
+    ["CARD_1", "ek"], ["SEP", " "], ["UNIT_LAKH", "lakh"],
+    ["RANGE", " "],
+    ["CARD_10", "dus"], ["SEP", " "], ["UNIT_HAZAAR", "hazaar"],
+  );
+  assert.equal(r.value, 110000);
+  assert.equal(r.range, null);
+  assert.equal(r.unit, "lakh");
+});
+
+test("R6: ascending range with only ONE side carrying a unit stays a true range", () => {
+  const r = ev(["DIGITS", "2"], ["RANGE", "-"], ["DIGITS", "3"], ["SEP", " "], ["UNIT_LAKH", "lakh"]);
+  assert.equal(r.value, 200000);
+  assert.deepEqual(r.range, [200000, 300000]);
+});
+
+test("R6: true range with BOTH sides carrying units, ascending, stays a range", () => {
+  const r = ev(
+    ["DIGITS", "5"], ["SEP", " "], ["UNIT_LAKH", "lakh"],
+    ["RANGE", "-"],
+    ["DIGITS", "10"], ["SEP", " "], ["UNIT_LAKH", "lakh"],
+  );
+  assert.equal(r.value, 500000);
+  assert.deepEqual(r.range, [500000, 1000000]);
+});
+
+test("R3: isBareDigits true for digits-only token sequences", () => {
+  assert.equal(isBareDigits([["DIGITS", "1"]]), true);
+  assert.equal(
+    isBareDigits([["DIGITS", "1"], ["COMMA", ","], ["DIGITS", "00"], ["COMMA", ","], ["DIGITS", "000"]]),
+    true,
+  );
+});
+
+test("R3: isBareDigits false with a UNIT_/CARD_/PFX_ token present", () => {
+  assert.equal(isBareDigits([["DIGITS", "2"], ["SEP", " "], ["UNIT_LAKH", "lakh"]]), false);
+  assert.equal(isBareDigits([["CARD_2", "do"], ["SEP", " "], ["UNIT_LAKH", "lakh"]]), false);
+  assert.equal(isBareDigits([["PFX_SAVA", "sava"], ["SEP", " "], ["UNIT_LAKH", "lakh"]]), false);
+});
+
+test("R3: isBareDigits false when there are no digits at all", () => {
+  assert.equal(isBareDigits([["SEP", " "]]), false);
+});
+
+test("R3 (narrowed): should_drop_bare_digits drops short ungrouped digit-only spans", () => {
+  assert.equal(shouldDropBareDigits([["DIGITS", "1"]]), true);
+  assert.equal(shouldDropBareDigits([["DIGITS", "66"]]), true);
+  assert.equal(shouldDropBareDigits([["DIGITS", "4521"]]), true);
+  assert.equal(shouldDropBareDigits([["DIGITS", "2024"]]), true);
+});
+
+test("R3 (narrowed): should_drop_bare_digits drops phone-number-length spans", () => {
+  assert.equal(shouldDropBareDigits([["DIGITS", "9876543210"]]), true);
+});
+
+test("R3 (narrowed): should_drop_bare_digits keeps mid-length bare amounts", () => {
+  assert.equal(shouldDropBareDigits([["DIGITS", "15000"]]), false);
+  assert.equal(shouldDropBareDigits([["DIGITS", "85000"]]), false);
+  assert.equal(shouldDropBareDigits([["DIGITS", "62000"]]), false);
+});
+
+test("R3 (narrowed): should_drop_bare_digits keeps a grouped short amount ('1,00,000')", () => {
+  const toks: Tok[] = [["DIGITS", "1"], ["COMMA", ","], ["DIGITS", "00"], ["COMMA", ","], ["DIGITS", "000"]];
+  assert.equal(shouldDropBareDigits(toks), false);
+});
+
+test("R3 (narrowed): should_drop_bare_digits keeps a grouped 8-digit amount ('2,50,00,000')", () => {
+  const toks: Tok[] = [
+    ["DIGITS", "2"], ["COMMA", ","], ["DIGITS", "50"], ["COMMA", ","], ["DIGITS", "00"], ["COMMA", ","], ["DIGITS", "000"],
+  ];
+  assert.equal(shouldDropBareDigits(toks), false);
+});
+
+test("R3 (narrowed): should_drop_bare_digits is false when not bare digits at all", () => {
+  assert.equal(shouldDropBareDigits([["DIGITS", "2"], ["SEP", " "], ["UNIT_LAKH", "lakh"]]), false);
+});
+
+test("detectCurrency: window wide enough for 'rupees' after a short number", () => {
+  const text = "1200 rupees mein mil gaya";
+  assert.equal(detectCurrency(text, 0, 4, HI_LATN), "INR");
+});
+
+test("detectCurrency: glued symbol before digits ('₹85000')", () => {
+  const text = "₹85000";
+  assert.equal(detectCurrency(text, 1, 6, HI_LATN), "INR");
 });

@@ -3,8 +3,16 @@
 import { CLASSES, CLASS_TO_ID } from "./classes.ts";
 
 const TRIM_CLASSES = new Set(["SEP", "RANGE", "DOT", "COMMA"]);
+// R2/R5: after word-integrity/possessive repair a partially-retagged word
+// can leave an "O" token sitting at a span edge; trimming it away too (in
+// addition to the original SEP/RANGE/DOT/COMMA) is how start/end get
+// re-derived to the min/max of the remaining non-O chars.
+const TRIM_CLASSES_FINAL = new Set([...TRIM_CLASSES, "O"]);
 const MEANINGFUL_PREFIXES = ["PFX_", "CARD_", "UNIT_"];
 const NUMERIC_PREFIXES = ["PFX_", "CARD_", "UNIT_"];
+const RANGE_CONNECTORS = new Set(["-", "–", "—", "/"]); // hyphen, en-dash, em-dash, slash
+const SYMBOL_UNIT_CHARS = new Set(["k", "K", "l", "L"]);
+const POSSESSIVE_RE = /['’]([A-Za-zऀ-ॿ]{1,2})(?![A-Za-zऀ-ॿ])/g;
 
 function isMeaningful(clsName: string): boolean {
   return MEANINGFUL_PREFIXES.some((p) => clsName.startsWith(p)) || clsName === "DIGITS";
@@ -167,6 +175,69 @@ function repairLetterRun(ids: number[] | Int32Array, start: number, end: number)
   return out;
 }
 
+function isMeaningfulName(clsName: string): boolean {
+  return MEANINGFUL_PREFIXES.some((p) => clsName.startsWith(p)) || clsName === "DIGITS";
+}
+
+/** Best-guess resulting class name for a run, without mutating the working
+ * class array. Used by the R4 connector check to look at a letters-run
+ * neighbour that has not been processed yet (it comes after the connector
+ * in scan order). */
+function runReprClass(runType: CharType, rs: number, re: number, ids: number[] | Int32Array): string | null {
+  if (runType === "digit") return "DIGITS";
+  if (runType === "letter") {
+    const winners = repairLetterRun(ids, rs, re);
+    const counts = new Map<number, number>();
+    for (const [i, j, cls] of winners) {
+      counts.set(cls, (counts.get(cls) ?? 0) + (j - i));
+    }
+    let bestId = -1;
+    let bestCount = -1;
+    for (const [cls, count] of counts) {
+      if (count > bestCount) {
+        bestCount = count;
+        bestId = cls;
+      }
+    }
+    return bestId >= 0 ? CLASSES[bestId] : null;
+  }
+  return null;
+}
+
+/** The adjacent digit/letter run in `direction`, skipping at most one
+ * intervening space run (so "2 - 3" and "2-3" are treated the same). */
+function effectiveNeighbor(runs: Run[], idx: number, direction: 1 | -1): Run | null {
+  let j = idx + direction;
+  if (j < 0 || j >= runs.length) return null;
+  if (runs[j].type === "space") {
+    j += direction;
+    if (j < 0 || j >= runs.length) return null;
+  }
+  const r = runs[j];
+  return r.type === "digit" || r.type === "letter" ? r : null;
+}
+
+/** R4: true when the connector genuinely sits between two SEPARATE numeric
+ * amounts (a real range), not inside one compound number.
+ *
+ * The left neighbour must be able to END an amount by itself (any
+ * meaningful class: it may be a bare number/prefix, e.g. "2-3", or a
+ * number that has already picked up a unit, e.g. "2 lakh/3 lakh"). The
+ * right neighbour must be able to START a fresh amount: DIGITS/CARD_/PFX_,
+ * but NOT a bare UNIT_ -- a unit can only ATTACH to a number that precedes
+ * it, so "dedh-lakh" (PFX_DHAI - UNIT_LAKH, one compound number "1.5
+ * lakh") must stay SEP, while "2 lakh/3 lakh" (UNIT_LAKH - DIGITS, two
+ * separate amounts) becomes RANGE. */
+function connectorIsRange(runs: Run[], idx: number, ids: number[] | Int32Array): boolean {
+  const left = effectiveNeighbor(runs, idx, -1);
+  const right = effectiveNeighbor(runs, idx, 1);
+  if (!left || !right) return false;
+  const leftCls = runReprClass(left.type, left.start, left.end, ids);
+  const rightCls = runReprClass(right.type, right.start, right.end, ids);
+  if (!leftCls || !rightCls || !isMeaningfulName(leftCls)) return false;
+  return rightCls === "DIGITS" || rightCls.startsWith("CARD_") || rightCls.startsWith("PFX_");
+}
+
 /** Class-repair: split a span into maximal runs by char type (letters / digits /
  * whitespace / other punctuation) and normalise the class tag of each run
  * deterministically from that structure, rather than trusting the raw
@@ -215,7 +286,7 @@ export function repairClasses(spanText: string, ids: number[] | Int32Array): num
       const ch = spanText[start];
       if ((ch === "." || ch === ",") && prevType === "digit" && nextType === "digit") {
         id = ch === "." ? ID_DOT : ID_COMMA;
-      } else if ((ch === "-" || ch === "–" || ch === "/") && prevType === "digit" && nextType === "digit") {
+      } else if (RANGE_CONNECTORS.has(ch) && connectorIsRange(runs, ri, ids)) {
         id = ID_RANGE;
       } else if (ch === "-" && prevType === "letter" && nextType === "letter") {
         id = ID_SEP;
@@ -267,6 +338,88 @@ function extendDigitRun(text: string, s: number, e: number): number {
   return ee;
 }
 
+/** [start, end) maximal letter/mark runs over the WHOLE text (not just one
+ * span) -- word integrity needs the true word boundaries, which can extend
+ * outside a span that was cut short mid-word. */
+export function letterRuns(text: string): Array<[number, number]> {
+  const runs: Array<[number, number]> = [];
+  let i = 0;
+  const n = text.length;
+  while (i < n) {
+    if (charType(text[i]) === "letter") {
+      let j = i + 1;
+      while (j < n && charType(text[j]) === "letter") j++;
+      runs.push([i, j]);
+      i = j;
+    } else {
+      i++;
+    }
+  }
+  return runs;
+}
+
+function isWordClass(cname: string): boolean {
+  return MEANINGFUL_PREFIXES.some((p) => cname.startsWith(p)) && cname !== "DIGITS";
+}
+
+/** R2: a word-class (UNIT_/PFX_/CARD_) token must cover its entire letter
+ * word. Checked per WHOLE letters-run rather than per token, so a run
+ * legitimately split into several back-to-back meaningful tokens (e.g.
+ * "dedhlakh" = PFX_DEDH|UNIT_LAKH, both length-4 sub-runs) is left alone; a
+ * run that is only PARTIALLY meaningful (some chars fall back to O, e.g.
+ * "km" tagged UNIT_.../O) has ALL its meaningful chars retagged O too -- a
+ * partial match without an explanation for the rest of the word is
+ * untrustworthy. A single-character symbol unit (k/K/l/L) is additionally
+ * only valid when the following character is not a letter, even when it
+ * fully (and only) covers its own run. */
+export function repairWordIntegrity(
+  text: string,
+  s: number,
+  e: number,
+  ids: number[] | Int32Array,
+  runs: Array<[number, number]>,
+): number[] {
+  const out = Array.from({ length: ids.length }, (_, i) => ids[i] as number);
+  for (const [rs, re] of runs) {
+    if (re <= s || rs >= e) continue; // run doesn't touch this span at all
+    const crs = Math.max(rs, s);
+    const cre = Math.min(re, e);
+    let fullyCovered = rs >= s && re <= e;
+    if (fullyCovered) {
+      for (let k = rs; k < re; k++) {
+        if (!isWordClass(CLASSES[out[k]])) {
+          fullyCovered = false;
+          break;
+        }
+      }
+    }
+    if (fullyCovered) {
+      if (re - rs === 1 && CLASSES[out[rs]].startsWith("UNIT_") && SYMBOL_UNIT_CHARS.has(text[rs])) {
+        if (re < text.length && charType(text[re]) === "letter") out[rs] = ID_O;
+      }
+      continue;
+    }
+    for (let k = crs; k < cre; k++) {
+      if (isWordClass(CLASSES[out[k]])) out[k] = ID_O;
+    }
+  }
+  return out;
+}
+
+/** R5: an apostrophe followed by 1-2 letters at the end of a word (e.g.
+ * "lakh's") is a possessive/genitive suffix, not part of the amount --
+ * retag it (and those letters) O. */
+function repairPossessive(text: string, s: number, e: number, ids: number[] | Int32Array): number[] {
+  const out = Array.from({ length: ids.length }, (_, i) => ids[i] as number);
+  const spanText = text.slice(s, e);
+  POSSESSIVE_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = POSSESSIVE_RE.exec(spanText))) {
+    for (let k = s + m.index; k < s + m.index + m[0].length; k++) out[k] = ID_O;
+  }
+  return out;
+}
+
 export function decodeSpans(
   text: string,
   bioIds: number[] | Int32Array,
@@ -296,25 +449,35 @@ export function decodeSpans(
     spans[k] = [spans[k][0], extendDigitRun(text, spans[k][0], spans[k][1])];
   }
 
+  const allLetterRuns = letterRuns(text);
+  let workCls = Array.from({ length: n }, (_, i) => clsIds[i] as number);
+
   const out: DecodedSpan[] = [];
   for (const [s, e] of spans) {
     const spanText = text.slice(s, e);
-    const localIds = Array.from({ length: e - s }, (_, i) => clsIds[s + i]);
+    const localIds = Array.from({ length: e - s }, (_, i) => workCls[s + i]);
     const repaired = repairClasses(spanText, localIds);
+    for (let i = s; i < e; i++) workCls[i] = repaired[i - s];
+    workCls = repairWordIntegrity(text, s, e, workCls, allLetterRuns);
+    workCls = repairPossessive(text, s, e, workCls);
 
     let runStart = s;
     const origToks: Array<[number, number, number]> = [];
     for (let j = s + 1; j <= e; j++) {
-      if (j === e || repaired[j - s] !== repaired[runStart - s]) {
-        origToks.push([repaired[runStart - s], runStart, j]);
+      if (j === e || workCls[j] !== workCls[runStart]) {
+        origToks.push([workCls[runStart], runStart, j]);
         runStart = j;
       }
     }
 
+    // trim leading/trailing trim-classes (SEP/RANGE/DOT/COMMA, plus O --
+    // R2/R5 above can leave a now-meaningless O token at an edge, and
+    // re-deriving start/end to the min/max of the remaining non-O chars
+    // means trimming it away here too)
     let lo = 0;
     let hi = origToks.length;
-    while (lo < hi && TRIM_CLASSES.has(CLASSES[origToks[lo][0]])) lo++;
-    while (hi > lo && TRIM_CLASSES.has(CLASSES[origToks[hi - 1][0]])) hi--;
+    while (lo < hi && TRIM_CLASSES_FINAL.has(CLASSES[origToks[lo][0]])) lo++;
+    while (hi > lo && TRIM_CLASSES_FINAL.has(CLASSES[origToks[hi - 1][0]])) hi--;
     const kept = origToks.slice(lo, hi);
     if (kept.length === 0) continue;
     const newStart = kept[0][1];

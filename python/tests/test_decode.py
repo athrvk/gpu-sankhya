@@ -245,6 +245,119 @@ def test_decode_spans_repairs_range_hyphen():
     assert tok_classes == ["DIGITS", "RANGE", "DIGITS", "SEP", "UNIT_LAKH"]
 
 
+def test_word_integrity_partial_unit_token_retagged_o():
+    # "10 km" -- the letters-run "km" is only PARTIALLY meaningful (the "m"
+    # fell back to O rather than joining "k"'s class), so the whole run
+    # (including the "k" that WAS tagged UNIT_) gets retagged O -- a
+    # partial match without an explanation for the rest of the word is
+    # untrustworthy.
+    from sankhya.decode import _repair_word_integrity, _letter_runs
+    text = "10 km"
+    cls = [DIGITS, DIGITS, SEP, UNIT_HAZAAR, O]
+    out = _repair_word_integrity(text, 0, len(text), cls, _letter_runs(text))
+    assert cnames(out, 3, 5) == ["O", "O"]
+
+
+def test_word_integrity_dedhlakh_joined_not_split():
+    # "dedhlakh" -- a letters-run legitimately split into two back-to-back
+    # meaningful sub-words (PFX_DEDH|UNIT_LAKH) must be left untouched, even
+    # though neither token covers the WHOLE run by itself.
+    from sankhya.decode import _repair_word_integrity, _letter_runs
+    text = "dedhlakh"
+    cls = [PFX_DEDH] * 4 + [UNIT_LAKH] * 4
+    out = _repair_word_integrity(text, 0, len(text), cls, _letter_runs(text))
+    assert cnames(out, 0, 8) == ["PFX_DEDH"] * 4 + ["UNIT_LAKH"] * 4
+
+
+def test_word_integrity_whole_word_unit_kept():
+    # a UNIT_ token that exactly covers its own letters-run (the whole
+    # glued number+symbol word "k" in "20k") is left alone.
+    from sankhya.decode import _repair_word_integrity, _letter_runs
+    text = "20k"
+    cls = [DIGITS, DIGITS, UNIT_HAZAAR]
+    out = _repair_word_integrity(text, 0, len(text), cls, _letter_runs(text))
+    assert cnames(out, 2, 3) == ["UNIT_HAZAAR"]
+
+
+def test_word_integrity_symbol_unit_followed_by_letter_dropped():
+    # a one-char UNIT_ token ("k") that covers its whole (artificially
+    # one-char) letters-run is still invalid if the very next char is a
+    # letter -- isolates the extra single-char symbol-unit guard from the
+    # (more common) "doesn't cover the whole run" path above.
+    from sankhya.decode import _repair_word_integrity
+    text = "5kg"
+    cls = [DIGITS, UNIT_HAZAAR, O]
+    out = _repair_word_integrity(text, 0, len(text), cls, [(1, 2), (2, 3)])
+    assert cnames(out, 1, 2) == ["O"]
+
+
+def test_word_integrity_symbol_unit_at_word_end_kept():
+    # "20k logon" -- "k" is a whole one-char run followed by a space, not a
+    # letter, so it stays valid.
+    from sankhya.decode import _repair_word_integrity, _letter_runs
+    text = "20k logon"
+    cls = [DIGITS, DIGITS, UNIT_HAZAAR, O, O, O, O, O, O]
+    out = _repair_word_integrity(text, 0, len(text), cls, _letter_runs(text))
+    assert cnames(out, 2, 3) == ["UNIT_HAZAAR"]
+
+
+def test_range_connector_unit_then_digits_is_range():
+    # "2 lakh/3 lakh" -- connector between a closed UNIT_LAKH amount and a
+    # fresh DIGITS amount is a real range.
+    text = "2 lakh/3 lakh"
+    bio = [1] + [2] * (len(text) - 1)
+    cls = (
+        [DIGITS, SEP, UNIT_LAKH, UNIT_LAKH, UNIT_LAKH, UNIT_LAKH]
+        + [O]  # "/"
+        + [DIGITS, SEP, UNIT_LAKH, UNIT_LAKH, UNIT_LAKH, UNIT_LAKH]
+    )
+    spans = decode_spans(text, bio, cls)
+    assert len(spans) == 1
+    tok_classes = [C.CLASSES[cid] for cid, _ in spans[0]["tokens"]]
+    assert tok_classes == [
+        "DIGITS", "SEP", "UNIT_LAKH", "RANGE", "DIGITS", "SEP", "UNIT_LAKH",
+    ]
+
+
+def test_range_connector_prefix_then_unit_stays_sep():
+    # "dedh-lakh" is ONE compound number (PFX_DHAI directly glued to
+    # UNIT_LAKH); a unit can never START a fresh amount, so the hyphen must
+    # stay SEP, not become RANGE.
+    text = "dedh-lakh"
+    raw = [PFX_DHAI] * 4 + [O] + [UNIT_LAKH] * 4
+    repaired = repair_classes(text, 0, len(text), raw)
+    assert cnames(repaired, 4, 5) == ["SEP"]
+
+
+def test_range_connector_deva_card_to_card_is_range():
+    # "दो-तीन" -- Devanagari CARD_ words either side of a bare hyphen.
+    text = "दो-तीन"
+    CARD_2 = C.CLASS_TO_ID["CARD_2"]
+    CARD_3 = C.CLASS_TO_ID["CARD_3"]
+    raw = [CARD_2, CARD_2] + [O] + [CARD_3, CARD_3, CARD_3]
+    repaired = repair_classes(text, 0, len(text), raw)
+    assert cnames(repaired, 2, 3) == ["RANGE"]
+
+
+def test_possessive_trim_apostrophe_s():
+    # "2 lakh's ka scam" -- possessive "'s" is not part of the amount.
+    text = "2 lakh's ka scam"
+    bio = [1] + [2] * (len("2 lakh's") - 1) + [0] * (len(text) - len("2 lakh's"))
+    cls = [DIGITS, SEP, UNIT_LAKH, UNIT_LAKH, UNIT_LAKH, UNIT_LAKH, O, O] + [O] * (len(text) - 8)
+    spans = decode_spans(text, bio, cls)
+    assert len(spans) == 1
+    assert spans[0]["text"] == "2 lakh"
+
+
+def test_possessive_trim_no_space():
+    text = "2lakh's"
+    bio = [1] + [2] * (len(text) - 1)
+    cls = [DIGITS, UNIT_LAKH, UNIT_LAKH, UNIT_LAKH, UNIT_LAKH, O, O]
+    spans = decode_spans(text, bio, cls)
+    assert len(spans) == 1
+    assert spans[0]["text"] == "2lakh"
+
+
 if __name__ == "__main__":
     import types
     mod = types.ModuleType("m")

@@ -68,8 +68,12 @@ def run(weights_path: str, examples: list, lang: str = "hi_latn"):
         spans = []
         for d in decoded:
             toks = [(class_names[cid], sub) for cid, sub in d["tokens"]]
-            res = core.evaluate(toks)
             currency = core.detect_currency(text, d["start"], d["end"], pack)
+            # R3: drop a digits-only span (no UNIT_/PFX_/CARD_) unless a
+            # currency marker was found for it.
+            if core.should_drop_bare_digits(toks) and currency is None:
+                continue
+            res = core.evaluate(toks)
             spans.append({
                 "start": d["start"],
                 "end": d["end"],
