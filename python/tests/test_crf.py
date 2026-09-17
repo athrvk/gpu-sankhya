@@ -246,3 +246,22 @@ def test_legacy_weights_bio_path_is_argmax():
     bio_logits = rng.randn(30, 3).astype(np.float32)
     path = np_infer.bio_path(bio_logits, weights)
     assert path == bio_logits.argmax(-1).tolist()
+
+
+def test_nll_is_not_a_python_loop_over_the_batch():
+    """Guard against the regression that cost a 3-hour Kaggle sweep: the CRF
+    loss must scale like a vectorised op, not a per-example Python loop.
+    B=128, L=128 forward+backward must stay well under 0.3 s on CPU; the
+    per-example reference takes ~1 s here."""
+    import time
+    torch.manual_seed(0)
+    crf = CRF()
+    emis = torch.randn(128, 128, 3, requires_grad=True)
+    tags = torch.randint(0, 3, (128, 128))
+    mask = torch.ones(128, 128)
+    crf.nll(emis, tags, mask).backward()  # warm-up
+    t0 = time.perf_counter()
+    for _ in range(3):
+        crf.nll(emis, tags, mask).backward()
+    per_iter = (time.perf_counter() - t0) / 3
+    assert per_iter < 0.3, f"CRF nll too slow: {per_iter:.3f}s per B=128,L=128 batch"
