@@ -1,0 +1,531 @@
+{"text": "અરે મમ્મી, ટ્યુશનની ફી સવા બે લાખ થઈ ગઈ આ વર્ષે", "lang": "gu_gujr", "phrases": [{"phrase": "સવા બે લાખ", "value": 225000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "ક્લાસની ફી પહેલા પચ્ચીસ હજાર હતી હવે ચાલીસ હજાર થઈ ગઈ છે", "lang": "gu_gujr", "phrases": [{"phrase": "પચ્ચીસ હજાર", "value": 25000}, {"phrase": "ચાલીસ હજાર", "value": 40000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "2BHK છે સાહેબ, સોસાયટીમાં બધી સુવિધા, કિંમત ફક્ત પોણા ત્રણ લાખ ડાઉનપેમેન્ટ", "lang": "gu_gujr", "phrases": [{"phrase": "પોણા ત્રણ લાખ", "value": 275000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ફ્લેટ બુક કરવો હોય તો ટોકન સાડા ચાર હજાર પહેલા ભરવો પડશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર હજાર", "value": 4500}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "આ વર્ષે ડુંગળીનો ભાવ માર્કેટમાં ૧૮ થી ૨૨ રૂપિયા કિલો છે", "lang": "gu_gujr", "phrases": [{"phrase": "૧૮ થી ૨૨ રૂપિયા", "value": 18, "range": [18, 22]}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "સોયાબીન વેચીને આ વર્ષે ઓગણીસ હજાર જ મળ્યા એકર દીઠ", "lang": "gu_gujr", "phrases": [{"phrase": "ઓગણીસ હજાર", "value": 19000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "સ્ટાઈપેન્ડ મહિને આઠ હજાર મળે છે, એમાંથી જ હોસ્ટેલનું ભાડું ભરું છું", "lang": "gu_gujr", "phrases": [{"phrase": "આઠ હજાર", "value": 8000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "પીએચડીનું સ્ટાઈપેન્ડ સાડા બાર હજાર હતું, હવે વધીને સોળ હજાર થયું", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બાર હજાર", "value": 12500}, {"phrase": "સોળ હજાર", "value": 16000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "લગ્નના જમણનું ક્વોટેશન દોઢ લાખ આપ્યું છે, બસ્સો મહેમાનો માટે", "lang": "gu_gujr", "phrases": [{"phrase": "દોઢ લાખ", "value": 150000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "સગાઈના કેટરિંગ માટે સિત્તેર હજાર લાગશે, સ્ટાર્ટર સાથે ગણીને", "lang": "gu_gujr", "phrases": [{"phrase": "સિત્તેર હજાર", "value": 70000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "રિક્ષાવાળો કહે છે સો રૂપિયા, સ્ટેન્ડથી આટલું નજીક છે તોય", "lang": "gu_gujr", "phrases": [{"phrase": "સો રૂપિયા", "value": 100}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "મીટર પ્રમાણે જવાનું કહ્યું તો સાઠ રૂપિયા બતાવે છે, મીટર પ્રમાણે જ આપીશ", "lang": "gu_gujr", "phrases": [{"phrase": "સાઠ રૂપિયા", "value": 60}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "મકાનમાલિકે ડિપોઝિટ તરીકે પચાસ હજાર માંગ્યા છે એડવાન્સમાં", "lang": "gu_gujr", "phrases": [{"phrase": "પચાસ હજાર", "value": 50000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ડિપોઝિટ પાછી જોઈતી હોય તો ઘર સાફ રાખજો, નહીં તો પાંચ હજાર કાપશે", "lang": "gu_gujr", "phrases": [{"phrase": "પાંચ હજાર", "value": 5000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ફોરવર્ડ આવ્યો છે કે લકી ડ્રોમાં પચ્ચીસ લાખનું ઇનામ લાગ્યું છે તમને", "lang": "gu_gujr", "phrases": [{"phrase": "પચ્ચીસ લાખનું", "value": 2500000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "આવા મેસેજ ફોરવર્ડ ના કરો યાર, કોઈ મફતમાં અઢી કરોડ નથી આપતું", "lang": "gu_gujr", "phrases": [{"phrase": "અઢી કરોડ", "value": 25000000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "બ્રેકિંગ: રાજ્યનું બજેટ છ લાખ કરોડનું, ખેતી માટે ખાસ જોગવાઈ", "lang": "gu_gujr", "phrases": [{"phrase": "છ લાખ કરોડનું", "value": 60000000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "હાઈવે પ્રોજેક્ટ માટે કેન્દ્ર તરફથી બારસો કરોડનું ફંડ મંજૂર થયું", "lang": "gu_gujr", "phrases": [{"phrase": "બારસો કરોડનું", "value": 12000000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "હા ભાઈ, મારા બાપની પણ લોટરી લાગી હોય એમ કહો, એક કરોડની", "lang": "gu_gujr", "phrases": [{"phrase": "એક કરોડની", "value": 10000000}], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "અચ્છા, એટલે તારી પાસે લાખો રૂપિયા પડ્યા છે અને તોય ઉધાર માંગે છે", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "બાઈક વેચવાની છે, બે વર્ષ જૂની, બાવીસ હજાર કિમી ચાલી છે, ભાવ પચ્ચીસ હજાર", "lang": "gu_gujr", "phrases": [{"phrase": "પચ્ચીસ હજાર", "value": 25000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "સ્પ્લેન્ડર વેચું છું, ચાલીસ હજાર કિમી થયા છે, કિંમત અઢાર હજાર ફિક્સ", "lang": "gu_gujr", "phrases": [{"phrase": "અઢાર હજાર", "value": 18000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "EMI આજે ભરવાની છે, ખાતામાં ફક્ત બારસો રૂપિયા છે જરા જોજે", "lang": "gu_gujr", "phrases": [{"phrase": "બારસો રૂપિયા", "value": 1200}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "તમારી EMI સાડા છ હજાર કાલે કપાશે, ખાતામાં બેલેન્સ રાખજો", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા છ હજાર", "value": 6500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "અરે યાર, અવાજ બરાબર આવે છે? હું કહેતો હતો કે ગાડીનો હપ્તો ત્રણ હજાર છે", "lang": "gu_gujr", "phrases": [{"phrase": "ત્રણ હજાર", "value": 3000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "અલી સાંભળ, પેલા દુકાનદારે સાડા ત્રણ હજારમાં મોબાઈલ કવર આપ્યું મને", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજારમાં", "value": 3500}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "શાકવાળાએ ટામેટા પચાસ રૂપિયા કિલો કહ્યું, કાલે તો ત્રીસ હતું ને", "lang": "gu_gujr", "phrases": [{"phrase": "પચાસ રૂપિયા", "value": 50}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "માછલી ખરીદતી વખતે ત્રણસો રૂપિયા કિલો કહ્યું બહેને, રકઝક કરવી પડી", "lang": "gu_gujr", "phrases": [{"phrase": "ત્રણસો રૂપિયા", "value": 300}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "કાલનો ફોન નંબર 9823456712 સેવ કરી લેજે બરાબર", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "કાલે સવારે સાડા સાત વાગ્યે સ્ટેશને આવજે", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "15 જૂને પરીક્ષા છે, બરાબર વાંચજે", "lang": "gu_gujr", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "પિનકોડ 380001 નાખજે ફોર્મમાં, ભૂલતો નહીં", "lang": "gu_gujr", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "દાદાની ઉંમર બ્યાસી વર્ષ છે, તબિયત સારી છે", "lang": "gu_gujr", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "ત્રણ કલાક લાઈનમાં ઊભા રહ્યા પછી ટોકન મળ્યું છેવટે", "lang": "gu_gujr", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "કાર્યક્રમમાં સાતસો લોકો ભેગા થયા હતા હોલમાં", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "ગામમાં હજારો લોકો ભેગા થયા હતા મેળા માટે ગઈકાલે", "lang": "gu_gujr", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "એ હવે કરોડપતિ થઈ ગયો કહે છે, ગાડી બંગલો બધું થઈ ગયું", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "સીટ નંબર અડતાલીસ છે તારી, ટિકિટ પર ચેક કરી લેજે", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "શેર માર્કેટમાં આજે સાડા ત્રણ ટકા ઘટાડો થયો, રોકાણકારો ગભરાયેલા છે", "lang": "gu_gujr", "phrases": [], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "ટાટા મોટર્સનો શેર આજે બત્રીસ રૂપિયાથી વધ્યો, સારું થયું લીધો હતો", "lang": "gu_gujr", "phrases": [{"phrase": "બત્રીસ રૂપિયાથી", "value": 32}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "ક્રિપ્ટોમાં રોકેલા સાડા બાર હજાર હવે પચ્ચીસ હજાર થઈ ગયા, સરસ નફો", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બાર હજાર", "value": 12500}, {"phrase": "પચ્ચીસ હજાર", "value": 25000}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "ડિલિવરી બોયને રોજ સાડા આઠસો રૂપિયા મળે છે, પેટ્રોલનો ખર્ચ અલગ", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા આઠસો રૂપિયા", "value": 850}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "સ્વિગીથી આ મહિને અઢાર હજાર કમાયા, દિવાળીનો બોનસ અલગ", "lang": "gu_gujr", "phrases": [{"phrase": "અઢાર હજાર", "value": 18000}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "અરે, ફ્રીલાન્સિંગમાંથી આ વર્ષે કેટલું કમાયો? મારું પોણો લાખ થયું", "lang": "gu_gujr", "phrases": [{"phrase": "પોણો લાખ", "value": 75000}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "નવી જોબમાં પેકેજ સાડા છ લાખ મળ્યું, ઈનહેન્ડ થોડું ઓછું લાગે છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા છ લાખ", "value": 650000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "બેંકમાં મેનેજરે કહ્યું કે હોમ લોન માટે આવકનો દાખલો બત્રીસ હજાર જોઈએ", "lang": "gu_gujr", "phrases": [{"phrase": "બત્રીસ હજાર", "value": 32000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "ગાડીની લોન લેતી વખતે ડાઉનપેમેન્ટ પોણા બે લાખ ભરવું પડ્યું", "lang": "gu_gujr", "phrases": [{"phrase": "પોણા બે લાખ", "value": 175000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "જમીન વેચવા કાઢી છે ગામ બહાર, એકર દીઠ ભાવ અઢી લાખ કહે છે દલાલ", "lang": "gu_gujr", "phrases": [{"phrase": "અઢી લાખ", "value": 250000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "પ્લોટ જોયો મેં, બ્રોકર કહે છે અઢાર લાખમાં થશે, પણ રજિસ્ટ્રી ખર્ચ અલગ", "lang": "gu_gujr", "phrases": [{"phrase": "અઢાર લાખમાં", "value": 1800000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "અલ્યા સાંભળ, માર્કેટમાં આજે કપાસ પાંચ હજાર છસ્સો રૂપિયા ક્વિન્ટલ ગયો", "lang": "gu_gujr", "phrases": [{"phrase": "પાંચ હજાર છસ્સો રૂપિયા", "value": 5600}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "ચણા લઈને ગયો હતો માર્કેટમાં, ભાવ ફક્ત બેંતાલીસસો રૂપિયા ક્વિન્ટલ મળ્યો", "lang": "gu_gujr", "phrases": [{"phrase": "બેંતાલીસસો રૂપિયા", "value": 4200}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "અલી, દુલ્હનના ઘરેણાનું બજેટ સાડા ત્રણ લાખ નક્કી કર્યું છે અમે ઘરે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ લાખ", "value": 350000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "મંડપવાળાએ ડેકોરેશન માટે એક લાખ દસ હજાર કોટ કર્યું છે, થોડું વધારે લાગે છે", "lang": "gu_gujr", "phrases": [{"phrase": "એક લાખ દસ હજાર", "value": 110000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "રિક્ષાવાળા સાથે ઝઘડો થયો, એ પચ્ચીસ માંગતો હતો મેં વીસ આપ્યા છેવટે", "lang": "gu_gujr", "phrases": [{"phrase": "પચ્ચીસ", "value": 25}, {"phrase": "વીસ", "value": 20}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "શેર ઓટોવાળો કહે છે પંદર રૂપિયા સીટ, મીટરથી તો બાર થશે", "lang": "gu_gujr", "phrases": [{"phrase": "પંદર રૂપિયા", "value": 15}, {"phrase": "બાર", "value": 12}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "વોઈસ નોટ સાંભળી મારી? એમાં કહ્યું હતું કે દુકાનનું ભાડું વધીને બાર હજાર થયું", "lang": "gu_gujr", "phrases": [{"phrase": "બાર હજાર", "value": 12000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "અરે ઉભો રહે, નેટવર્ક નથી, કહું છું કે દૂધનો ભાવ હવે સાઠ રૂપિયા લિટર થયો", "lang": "gu_gujr", "phrases": [{"phrase": "સાઠ રૂપિયા", "value": 60}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "બ્રેકિંગ ન્યૂઝ: સોનાનો ભાવ આજે તોલા દીઠ તોતેર હજારને પાર પહોંચ્યો", "lang": "gu_gujr", "phrases": [{"phrase": "તોતેર હજારને", "value": 73000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "પેટ્રોલનો દર આજે એક રૂપિયો વધીને એકસો છ રૂપિયા લિટર થયો", "lang": "gu_gujr", "phrases": [{"phrase": "એકસો છ રૂપિયા", "value": 106}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "અચ્છા, તારો પગાર લાખોમાં છે તો અમને કેમ નથી કહેતો, ચા તો પીવડાવ", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "સુનિતાબેન, તમારી દીકરીના ક્લાસની ફી કેટલી છે આ વર્ષે?", "lang": "gu_gujr", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "શાળાની વાર્ષિક ફી બાવીસ હજાર ભરવી પડે છે, પુસ્તકો અલગ", "lang": "gu_gujr", "phrases": [{"phrase": "બાવીસ હજાર", "value": 22000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "સ્વિમિંગ ક્લાસ માટે મહિને અઢારસો રૂપિયા ચૂકવવા પડે છે દીકરાના", "lang": "gu_gujr", "phrases": [{"phrase": "અઢારસો રૂપિયા", "value": 1800}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "અંગ્રેજી માધ્યમની શાળામાં એડમિશન માટે પંચાવન હજાર ડોનેશન માંગે છે", "lang": "gu_gujr", "phrases": [{"phrase": "પંચાવન હજાર", "value": 55000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "સાહેબ, આ ફ્લેટ સેકન્ડ ફ્લોર પર છે, પાર્કિંગ સાથે કિંમત બોલું?", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "મેઈન રોડ પરનો 2BHK છે, બ્રોકરેજ છોડીને કિંમત બાસઠ લાખ છે", "lang": "gu_gujr", "phrases": [{"phrase": "બાસઠ લાખ", "value": 6200000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "1RK જોઈતું હોય તો બજેટ અગિયાર હજાર રાખો દર મહિને, સારી સોસાયટી છે", "lang": "gu_gujr", "phrases": [{"phrase": "અગિયાર હજાર", "value": 11000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ટેરેસ ફ્લેટ છે સાહેબ, થોડું મોંઘુ પડશે, પંચ્યાસી લાખ માંગે છે માલિક", "lang": "gu_gujr", "phrases": [{"phrase": "પંચ્યાસી લાખ", "value": 8500000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "શેરડી કાપવાનું કામ કર્યું આ વર્ષે, મજૂરી મળી એકવીસ હજાર મહિને", "lang": "gu_gujr", "phrases": [{"phrase": "એકવીસ હજાર", "value": 21000}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "માર્કેટમાં આજે બટાકા ફક્ત સોળ રૂપિયા કિલો, સારી આવક છે આ વર્ષે", "lang": "gu_gujr", "phrases": [{"phrase": "સોળ રૂપિયા", "value": 16}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "તુવેરનો ભાવ આ વર્ષે નવસો રૂપિયા મણ પડ્યો, ખેડૂતોને નુકસાન જ થયું", "lang": "gu_gujr", "phrases": [{"phrase": "નવસો રૂપિયા", "value": 900}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "દ્રાક્ષની વાડીમાંથી આ વર્ષે સાડા ત્રણ લાખની આવક થઈ, હવામાન સારું રહ્યું", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ લાખની", "value": 350000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "કપાસને ભાવ મળતો નથી, સાત હજારથી નીચે ગયું છે બજાર", "lang": "gu_gujr", "phrases": [{"phrase": "સાત હજારથી", "value": 7000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "MBA કરતી વખતે મહિને પંદર હજાર સ્ટાઈપેન્ડ મળતું હતું ઈન્ટર્નશીપમાં", "lang": "gu_gujr", "phrases": [{"phrase": "પંદર હજાર", "value": 15000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "રિસર્ચ ફેલોશિપનું સ્ટાઈપેન્ડ એકત્રીસ હજાર છે, ટેક્સ કાપીને", "lang": "gu_gujr", "phrases": [{"phrase": "એકત્રીસ હજાર", "value": 31000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "ઈન્ટર્નશીપમાં પહેલી વાર પગાર મળ્યો, ફક્ત છ હજાર પણ બહુ આનંદ થયો", "lang": "gu_gujr", "phrases": [{"phrase": "છ હજાર", "value": 6000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "PhD નું સ્ટાઈપેન્ડ વધીને અઠ્ઠાવીસ હજાર થયું, UGC એ જાહેર કર્યું", "lang": "gu_gujr", "phrases": [{"phrase": "અઠ્ઠાવીસ હજાર", "value": 28000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "મંડપનું બુકિંગ કરવું હોય તો પહેલા વીસ હજાર એડવાન્સ ભરો", "lang": "gu_gujr", "phrases": [{"phrase": "વીસ હજાર", "value": 20000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "ફોટોગ્રાફીનું પેકેજ પિસ્તાલીસ હજારનું છે, ડ્રોન શૂટ સાથે", "lang": "gu_gujr", "phrases": [{"phrase": "પિસ્તાલીસ હજારનું", "value": 45000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "બેન્ડવાળાએ સત્તાવીસ હજાર કહ્યા છે, જાન અને સ્ટેજ બંને માટે", "lang": "gu_gujr", "phrases": [{"phrase": "સત્તાવીસ હજાર", "value": 27000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "સગાઈની મીઠાઈનો ઓર્ડર આપ્યો, પચાસ કિલોનો ખર્ચ અઢાર હજાર આવ્યો", "lang": "gu_gujr", "phrases": [{"phrase": "અઢાર હજાર", "value": 18000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "સર, અહીંથી એરપોર્ટ સુધી કેટલા લેશો? મીટર બંધ રાખ્યું છે તમે", "lang": "gu_gujr", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "આટલા દૂર જવા ત્રણસો પચાસ લઈશ, ટ્રાફિક પણ ભયંકર છે અત્યારે", "lang": "gu_gujr", "phrases": [{"phrase": "ત્રણસો પચાસ", "value": 350}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "ઓલા બુક કરું તો દોઢસો રૂપિયા બતાવે છે, રિક્ષાવાળો બસો માંગે છે ખોટા", "lang": "gu_gujr", "phrases": [{"phrase": "દોઢસો રૂપિયા", "value": 150}, {"phrase": "બસો", "value": 200}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "માલિકે કહ્યું ડિપોઝિટ બે મહિનાનું ભાડું એટલે છવ્વીસ હજાર થશે", "lang": "gu_gujr", "phrases": [{"phrase": "છવ્વીસ હજાર", "value": 26000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ઘર છોડતી વખતે પેઈન્ટિંગનો ખર્ચ કહીને ચાર હજાર ડિપોઝિટમાંથી કાપ્યા માલિકે", "lang": "gu_gujr", "phrases": [{"phrase": "ચાર હજાર", "value": 4000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "કાકા, આ મેસેજ ખરેખર બેંકમાંથી આવ્યો છે? OTP માંગે છે મારો", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "ફેક મેસેજ છે એ, એના પર ક્લિક ના કરીશ, ફ્રોડ થશે", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "લોટરી લાગ્યાનો મેસેજ આવ્યો છે, કહે છે સવા કરોડ જીત્યા છો તમે", "lang": "gu_gujr", "phrases": [{"phrase": "સવા કરોડ", "value": 12500000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "આવા મેસેજનો જવાબ ના આપીશ, બેંક ક્યારેય ફોન પર OTP નથી માંગતી", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "રાજ્યમાં આ વર્ષે દુષ્કાળ નિવારણ માટે અઢારસો કરોડની જોગવાઈ જાહેર થઈ", "lang": "gu_gujr", "phrases": [{"phrase": "અઢારસો કરોડની", "value": 18000000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "શહેરના મેટ્રો પ્રોજેક્ટનો ખર્ચ વધીને બાવીસ હજાર કરોડ પર પહોંચ્યો", "lang": "gu_gujr", "phrases": [{"phrase": "બાવીસ હજાર કરોડ", "value": 220000000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "નોકરી છોડીને બિઝનેસ શરૂ કર્યો, સારું થયું તરત કરોડપતિ ના થયો નહીં તો ટેક્સ ભરવો પડત", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "અચ્છા એટલે પગાર વધારો મળ્યો એટલે પાર્ટી નહીં આપે તો શું ફક્ત ચા પીવડાવશે", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "સ્કૂટી વેચવાની છે અર્જન્ટ, પાંત્રીસ હજાર કિમી થયા છે, ભાવ બોલો જરા", "lang": "gu_gujr", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "એક્ટિવા વેચું છું, ત્રણ વર્ષ જૂની, બાવન હજાર રૂપિયા છેલ્લો ભાવ", "lang": "gu_gujr", "phrases": [{"phrase": "બાવન હજાર રૂપિયા", "value": 52000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "પલ્સર લેવી છે, બજેટ પંચાવન હજાર છે મારું, સેકન્ડ હેન્ડ ચાલશે", "lang": "gu_gujr", "phrases": [{"phrase": "પંચાવન હજાર", "value": 55000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "બેંક તરફથી SMS આવ્યો, કાલે EMI સાડા ત્રણ હજાર કપાશે ખાતામાંથી", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "હોમ લોનનો હપ્તો ઓગણીસ હજાર જાય છે મહિને, પગારનો મોટો ભાગ નીકળે છે", "lang": "gu_gujr", "phrases": [{"phrase": "ઓગણીસ હજાર", "value": 19000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "ગોલ્ડ લોન લીધી હતી, વ્યાજ સાથે ભરપાઈ કરતાં અગિયાર હજાર વધુ ગયા", "lang": "gu_gujr", "phrases": [{"phrase": "અગિયાર હજાર", "value": 11000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "પર્સનલ લોનનો હપ્તો બાકી છે, કાલ સુધીમાં સાડા આઠ હજાર ભરો નહીં તો પેનલ્ટી લાગશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા આઠ હજાર", "value": 8500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "સેન્સેક્સ આજે સાતસો પોઈન્ટ તૂટ્યો, રોકાણકારોના લાખો રૂપિયા ડૂબ્યા", "lang": "gu_gujr", "phrases": [], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "નિફ્ટીએ આજે નવો રેકોર્ડ બનાવ્યો, પોર્ટફોલિયો હવે એક લાખ વીસ હજાર થયો", "lang": "gu_gujr", "phrases": [{"phrase": "એક લાખ વીસ હજાર", "value": 120000}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "IPOમાં પૈસા લગાવ્યા હતા સાડા સાત હજાર, હવે ડબલ થયા સાંભળીને સારું લાગ્યું", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સાત હજાર", "value": 7500}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "મ્યુચ્યુઅલ ફંડમાં મહિને બે હજારની SIP શરૂ કરી છે, ધીરે ધીરે વધારીશ", "lang": "gu_gujr", "phrases": [{"phrase": "બે હજારની", "value": 2000}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "ડિલિવરી પાર્ટનર તરીકે કામ કરું છું, ચોમાસામાં રોજ સાડા બારસો મળે છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બારસો", "value": 1250}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "ઉબર પર ગાડી ચલાવું છું, વીકએન્ડ પર કમાણી પંદરસો સુધી જાય છે સહેલાઈથી", "lang": "gu_gujr", "phrases": [{"phrase": "પંદરસો સુધી", "value": 1500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "ફ્રીલાન્સ ડિઝાઈનિંગમાંથી આ વર્ષે ત્રણ લાખ કમાયો, વેબસાઈટ ડિઝાઈન કરીને", "lang": "gu_gujr", "phrases": [{"phrase": "ત્રણ લાખ", "value": 300000}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "ટ્યુશન ક્લાસ લઉં છું સાંજે, મહિને બાર હજાર ભેગા થાય છે એમાંથી", "lang": "gu_gujr", "phrases": [{"phrase": "બાર હજાર", "value": 12000}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "કાલે સવારે ઓફિસ જવા મોડું થશે, ટ્રેન નવ વાગ્યે છે", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "OTP આવ્યો હોય તો તરત મોકલજે, સમય પૂરો થવા આવ્યો છે મારો", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "પાંસઠ વર્ષની ઉંમરે નિવૃત્ત થયા દાદા, પેન્શન શરૂ થઈ ગઈ એમની", "lang": "gu_gujr", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "ચાર કિલોમીટર ચાલીને ગયો શાળા સુધી, બસ બંધ હતી આજે", "lang": "gu_gujr", "phrases": [], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "લગ્નમાં હજારો મહેમાન બોલાવ્યા હતા, ગામનું આખું કુટુંબ આવ્યું હતું", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "IT ક્ષેત્રમાં કરોડોનું રોકાણ આવ્યું આ વર્ષે રાજ્યમાં, હજારો નોકરીઓ મળશે", "lang": "gu_gujr", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "એ પોતાને લખપતિ સમજે છે પણ ખિસ્સામાં માંડ સો પણ નથી હોતા ક્યારેય", "lang": "gu_gujr", "phrases": [{"phrase": "સો", "value": 100}], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "લાઈનમાં સાડા ત્રણ કલાક ઊભા રહેવા છતાં ટિકિટ ના મળી છેવટે", "lang": "gu_gujr", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "ઓર્ડર નંબર સુડતાલીસ હજુ આવ્યો નથી, કસ્ટમર કેરને ફોન કરી લે", "lang": "gu_gujr", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "પેંડાનો બોક્સ તૈયાર છે? કાલે સવારે લેવા આવું છું હું", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "દીકરાની ટ્યુશન ફી મહિને અઢારસો રૂપિયા છે, બે વિષયની ભેગી", "lang": "gu_gujr", "phrases": [{"phrase": "અઢારસો રૂપિયા", "value": 1800}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "ગણિતના ખાનગી ટ્યુશન માટે અલગથી બાર હજાર ચૂકવવા પડ્યા આ સેમેસ્ટરમાં", "lang": "gu_gujr", "phrases": [{"phrase": "બાર હજાર", "value": 12000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "દીકરીના ડાન્સ ક્લાસ માટે મહિને નવસો રૂપિયા ભરીએ છીએ અમે નિયમિત", "lang": "gu_gujr", "phrases": [{"phrase": "નવસો રૂપિયા", "value": 900}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "કોચિંગ ક્લાસની પૂરી ફી સવા લાખ છે, હપ્તામાં ભરવાની સગવડ છે કે નહીં પૂછ્યું", "lang": "gu_gujr", "phrases": [{"phrase": "સવા લાખ", "value": 125000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "સાહેબ, આ પ્લોટ કોર્નરનો છે, ભાવ થોડો વધારે પડશે એ પહેલેથી કહી દઉં", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "રો હાઉસ જોયું મારું? રજિસ્ટ્રી સાથે કિંમત અઠ્ઠાવન લાખ થશે", "lang": "gu_gujr", "phrases": [{"phrase": "અઠ્ઠાવન લાખ", "value": 5800000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "દુકાન માટે ગાળો ભાડે આપવો છે, મહિનાનું ભાડું સોળ હજાર નક્કી કર્યું", "lang": "gu_gujr", "phrases": [{"phrase": "સોળ હજાર", "value": 16000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "સ્ટુડિયો એપાર્ટમેન્ટ છે બેચલર્સ માટે, ભાડું નવ હજાર, લાઈટ પાણી અલગ", "lang": "gu_gujr", "phrases": [{"phrase": "નવ હજાર", "value": 9000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "આજે માર્કેટમાં જુવારનો ભાવ ફક્ત ઓગણત્રીસ રૂપિયા કિલો હતો, તેજી નથી બિલકુલ", "lang": "gu_gujr", "phrases": [{"phrase": "ઓગણત્રીસ રૂપિયા", "value": 29}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "સરગવાની સિંગ લઈને ગયો બજારમાં, ચાલીસ રૂપિયા કિલોના વેચાયા", "lang": "gu_gujr", "phrases": [{"phrase": "ચાલીસ રૂપિયા", "value": 40}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "ડુંગળી સંગ્રહી રાખેલી હતી, હવે ભાવ વધવાથી બાવીસ રૂપિયા કિલો મળે છે", "lang": "gu_gujr", "phrases": [{"phrase": "બાવીસ રૂપિયા", "value": 22}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "દ્રાક્ષને આ વર્ષે એક્સપોર્ટ માટે છોતેર રૂપિયા કિલો ભાવ મળ્યો, સંતોષ છે", "lang": "gu_gujr", "phrases": [{"phrase": "છોતેર રૂપિયા", "value": 76}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "નવી ઈન્ટર્નશીપમાં વિદ્યાવેતન સાડા સત્તર હજાર નક્કી થયું, ત્રણ મહિના માટે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સત્તર હજાર", "value": 17500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "રિસર્ચ આસિસ્ટન્ટ તરીકે કામ કરું છું, સ્ટાઈપેન્ડ તેવીસ હજાર મળે છે પ્રોજેક્ટમાંથી", "lang": "gu_gujr", "phrases": [{"phrase": "તેવીસ હજાર", "value": 23000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "સ્કોલરશીપમાંથી વર્ષે અઢી લાખ મળશે, વિદેશમાં ભણવા માટે", "lang": "gu_gujr", "phrases": [{"phrase": "અઢી લાખ", "value": 250000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "નવા જોઈનરને ટ્રેનિંગ પિરિયડમાં ફક્ત સાડા ચૌદ હજાર મળે છે કંપની તરફથી", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચૌદ હજાર", "value": 14500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "જાન માટે બસનું ભાડું વીસ હજાર લાગશે, ચાલીસ લોકોની વ્યવસ્થા કરવાની છે", "lang": "gu_gujr", "phrases": [{"phrase": "વીસ હજાર", "value": 20000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "હળદી સમારંભ માટે અલગ મંડપ લેવો પડશે, એનો ખર્ચ આઠ હજાર ધર્યો છે", "lang": "gu_gujr", "phrases": [{"phrase": "આઠ હજાર", "value": 8000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "મહેંદીવાળીએ કહ્યું ફેમિલી પેકેજ છ હજારમાં થશે, પંદર જણ માટે", "lang": "gu_gujr", "phrases": [{"phrase": "છ હજારમાં", "value": 6000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "લગ્નપત્રિકા છપાવવા બત્રીસસો રૂપિયા લાગ્યા, પાંચસો પત્રિકા માટે", "lang": "gu_gujr", "phrases": [{"phrase": "બત્રીસસો રૂપિયા", "value": 3200}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "ભાઈ, અહીંથી રેલવે સ્ટેશન સુધી ભાડું કેટલું થશે, જરા ઓછું કરોને", "lang": "gu_gujr", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "એટલા અંતર માટે એંસી રૂપિયા વધારે લાગે છે, સાઠમાં ચાલોને જરા", "lang": "gu_gujr", "phrases": [{"phrase": "એંસી રૂપિયા", "value": 80}, {"phrase": "સાઠમાં", "value": 60}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "રાત્રે ભાડું વધારે લાગે છે સાહેબ, નહીં તો હું તમને પચાસમાં લઈ જાત", "lang": "gu_gujr", "phrases": [{"phrase": "પચાસમાં", "value": 50}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "ઈ-રિક્ષાવાળાએ ત્રીસ રૂપિયા માંગ્યા, બસમાં ગયો હોત તો દસમાં જ થાત", "lang": "gu_gujr", "phrases": [{"phrase": "ત્રીસ રૂપિયા", "value": 30}, {"phrase": "દસમાં", "value": 10}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "મકાનમાલિકે કહ્યું ડિપોઝિટ પાછી ના આપતાં આવતા ભાડામાં ગણી લઈશું", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "નવા ભાડૂત પાસેથી ત્રણ મહિનાનું ભાડું એડવાન્સ તરીકે લેવામાં આવે છે અહીં હંમેશા", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "અલી જો આ ફોરવર્ડ, કહે છે મોબાઈલ કંપની તરફથી પચાસ હજારની ભેટ મળશે", "lang": "gu_gujr", "phrases": [{"phrase": "પચાસ હજારની", "value": 50000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "આવા ભેટના મેસેજ ખોલવા પણ નહીં, ફોન હેક થવાનો ડર રહે છે એમાંથી", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "ગ્રુપ પર મેસેજ આવ્યો છે કે વોટ્સએપ તરફથી અનુદાન મળે છે પંચોતેર હજારનું", "lang": "gu_gujr", "phrases": [{"phrase": "પંચોતેર હજારનું", "value": 75000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "આવી લિંક ક્યારેય ક્લિક ના કરીશ, બેંક એકાઉન્ટ ખાલી થઈ જશે એક ક્ષણમાં", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "શહેરના ફ્લાયઓવર પ્રોજેક્ટ માટે નગરપાલિકાએ સાડા ત્રણસો કરોડની ટેન્ડર કાઢી", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણસો કરોડની", "value": 3500000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "રાજ્યના ખેડૂતોને આ વર્ષે દુષ્કાળ સહાય તરીકે કુલ નવસો કરોડ વહેંચાશે", "lang": "gu_gujr", "phrases": [{"phrase": "નવસો કરોડ", "value": 9000000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "સારું થયું હું કરોડપતિ નથી, નહીં તો સગાવ્હાલાઓની લાઈન લાગત દરવાજે", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "અરે વાહ, આટલી મોટી પાર્ટી આપી, લાગ્યું તને લોટરી લાગી કે શું", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "હોન્ડા સિટી વેચવાની છે, પાંચ વર્ષ જૂની, કિંમત સાડા પાંચ લાખ ફિક્સ રાખી છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા પાંચ લાખ", "value": 550000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "આઈફોન વેચવો છે અર્જન્ટ, બે વર્ષ પહેલાનો, ભાવ અઠ્ઠાવીસ હજાર કહું છું", "lang": "gu_gujr", "phrases": [{"phrase": "અઠ્ઠાવીસ હજાર", "value": 28000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "વોશિંગ મશીન વેચવાનું છે, વર્ષભર જ વાપર્યું છે, કિંમત સાડા છ હજાર રાખી છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા છ હજાર", "value": 6500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "બેંક તરફથી મેસેજ આવ્યો, ક્રેડિટ કાર્ડનું બિલ ચૌદસો રૂપિયા ભરવાનું છે કાલ સુધીમાં", "lang": "gu_gujr", "phrases": [{"phrase": "ચૌદસો રૂપિયા", "value": 1400}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "એજ્યુકેશન લોનનો હપ્તો સાડા પાંચ હજાર જાય છે મહિને, હજુ ત્રણ વર્ષ બાકી છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા પાંચ હજાર", "value": 5500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "બાઈક લોનની છેલ્લી EMI સાડા ત્રણ હજાર ભરી અને ગાડી પૂરેપૂરી મારી થઈ ગઈ", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "ક્રેડિટ કાર્ડનું મિનિમમ ડ્યુ સાતસો રૂપિયા છે, પૂરું બિલ ભરવું શક્ય નથી આ વખતે", "lang": "gu_gujr", "phrases": [{"phrase": "સાતસો રૂપિયા", "value": 700}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "આજે બેંક નિફ્ટી દોઢ ટકા વધ્યો, પોર્ટફોલિયોમાં સારું વળતર દેખાય છે", "lang": "gu_gujr", "phrases": [], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "રિલાયન્સનો શેર આજે અઠ્ઠાવન રૂપિયાથી વધ્યો, બજારમાં તેજી છે એકંદરે", "lang": "gu_gujr", "phrases": [{"phrase": "અઠ્ઠાવન રૂપિયાથી", "value": 58}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "બિટકોઈનમાં રોકેલા સાડા ચાર હજાર હવે અડધા થઈ ગયા, બજાર ખૂબ પડ્યું છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર હજાર", "value": 4500}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "ડિમેટ ખાતામાં આ વર્ષે પહેલી વાર દસ હજાર રોક્યા, ધીરે ધીરે શીખું છું માર્કેટ", "lang": "gu_gujr", "phrases": [{"phrase": "દસ હજાર", "value": 10000}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "ઝોમેટો પર કામ કરું છું, આજનો દિવસ સારો ગયો, કમાણી સાડા નવસો થઈ", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા નવસો", "value": 950}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "કન્ટેન્ટ રાઈટિંગનું કામ મળ્યું, લેખ દીઠ સાડા ત્રણસો રૂપિયા મળે છે મને", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણસો રૂપિયા", "value": 350}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "ફોટોગ્રાફીનું ફ્રીલાન્સ કામ કરું છું, ઈવેન્ટ દીઠ પાંચ હજાર મળે છે સામાન્ય રીતે", "lang": "gu_gujr", "phrases": [{"phrase": "પાંચ હજાર", "value": 5000}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "ટ્યુટરિંગ એપ પરથી ઓનલાઈન ક્લાસ લઉં છું, કલાક દીઠ સાડા ત્રણસો રૂપિયા કમાણી થાય છે મારી", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણસો રૂપિયા", "value": 350}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "અરે યાર, કાલે સવારે વહેલો ઉઠાડીશ મને? અલાર્મ નથી વાગતો મારો", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "અલી, ગઈકાલની પાર્ટીના ફોટા મોકલ ને ગ્રુપ પર જલ્દી", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "પડદાદાની ઉંમર છન્નું વર્ષ હતી, ગામના બધા એમને ઓળખતા હતા", "lang": "gu_gujr", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "છ કિલોમીટરની સાયકલ રેસ પૂરી કરી આજે સવારે અટક્યા વગર", "lang": "gu_gujr", "phrases": [], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "જાનમાં હજારો દીવા પ્રગટાવ્યા હતા, આખું ગામ ઉજાસથી ભરાઈ ગયું હતું રાત્રે", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "વિદેશી રોકાણકારોએ આ વર્ષે રાજ્યમાં કરોડોનું રોકાણ જાહેર કર્યું ઉદ્યોગમાં", "lang": "gu_gujr", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "એ પોતાને કરોડપતિ સમજે છે, પણ હજુ ભાડાના ઘરમાં જ રહે છે બિચારો", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "ટિકિટ કાઉન્ટર પર બે કલાક લાઈનમાં ઊભા રહેવું પડ્યું આજે પણ હંમેશની જેમ", "lang": "gu_gujr", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "ઓર્ડર નંબર ત્રાણું હજુ ડિસ્પેચ થયો નથી, બે દિવસ થઈ ગયા હવે", "lang": "gu_gujr", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "લાડુનો બોક્સ તૈયાર રાખજો કાલ માટે, મહેમાન વહેલા આવવાના છે ઘરે", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "અરે રે, દીકરાના કરાટે ક્લાસની ફી પોસાતી નથી, મહિને સાડા બારસો માંગે છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બારસો", "value": 1250}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "સંગીત ક્લાસમાં એડમિશન લીધું દીકરીનું, વર્ષની ફી સાડા સાત હજાર ભરી આજે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સાત હજાર", "value": 7500}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "પાંચમા ધોરણમાં ગયા પછી બુક્સ અને યુનિફોર્મનો ખર્ચ અલગ જ વધે છે, આ વર્ષે નવસો વધુ લાગ્યા", "lang": "gu_gujr", "phrases": [{"phrase": "નવસો", "value": 900}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "દીકરાના કરિયર કાઉન્સેલિંગ માટે એક સેશનમાં અઢારસો રૂપિયા ચૂકવ્યા ગઈકાલે", "lang": "gu_gujr", "phrases": [{"phrase": "અઢારસો રૂપિયા", "value": 1800}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "બહેન, આ બંગલો કોર્નર પ્લોટ પર છે, સામે ખુલ્લી જગ્યા પણ છે", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "સ્ટિલ્ટ પાર્કિંગ સાથે ફ્લેટની કિંમત ત્રેસઠ લાખ છે, રજિસ્ટ્રી ખર્ચ અલગ", "lang": "gu_gujr", "phrases": [{"phrase": "ત્રેસઠ લાખ", "value": 6300000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "પીજી જોઈએ છે વિદ્યાર્થીઓ માટે, બે શેરિંગમાં સાડા છ હજાર મહિને પડશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા છ હજાર", "value": 6500}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ઓફિસ સ્પેસ જોઈએ છે? કોમર્શિયલ ગાળાનું ભાડું બાવીસ હજાર કહે છે માલિક", "lang": "gu_gujr", "phrases": [{"phrase": "બાવીસ હજાર", "value": 22000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "બાજરીની વાવણી કરી હતી આ વર્ષે, વેચાણમાંથી એકર દીઠ ફક્ત અઠ્ઠાવીસ હજાર મળ્યા", "lang": "gu_gujr", "phrases": [{"phrase": "અઠ્ઠાવીસ હજાર", "value": 28000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "માર્કેટમાં ભીંડા લઈને ગયો, ભાવ ફક્ત પાંત્રીસ રૂપિયા કિલો મળ્યો આજે", "lang": "gu_gujr", "phrases": [{"phrase": "પાંત્રીસ રૂપિયા", "value": 35}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "મકાઈનો ભાવ ક્વિન્ટલ દીઠ અઢારસો રૂપિયા પર સ્થિર થયો, બહુ તેજી નથી", "lang": "gu_gujr", "phrases": [{"phrase": "અઢારસો રૂપિયા", "value": 1800}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "કેરીની પેટી આ વર્ષે સાડા બારસો રૂપિયામાં વેચાઈ, હાફૂસની માંગ સારી છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બારસો રૂપિયામાં", "value": 1250}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "એપ્રેન્ટિસશીપમાં વિદ્યાવેતન સાડા નવ હજાર મળે છે, કંપનીમાં છ મહિના માટે છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા નવ હજાર", "value": 9500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "ડોક્ટરેટના છેલ્લા વર્ષમાં ફેલોશિપ વધીને સડત્રીસ હજાર થઈ છે UGC તરફથી", "lang": "gu_gujr", "phrases": [{"phrase": "સડત્રીસ હજાર", "value": 37000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "સમર ઈન્ટર્નશીપનું સ્ટાઈપેન્ડ ફક્ત સાડા ત્રણ હજાર છે, પણ અનુભવ કિંમતી છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "વિદેશની યુનિવર્સિટી તરફથી પૂરી સ્કોલરશીપ મળી, વર્ષે સાડા ચાર લાખ બચશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર લાખ", "value": 450000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "જાનના સ્વાગત માટે હોટલમાં રૂમ બુક કરી, એક રાતનું ભાડું બાવીસસો રૂપિયા છે", "lang": "gu_gujr", "phrases": [{"phrase": "બાવીસસો રૂપિયા", "value": 2200}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "ફૂલોના ડેકોરેશન માટે અલગથી સાડા છ હજાર લાગશે, ગેટ અને સ્ટેજ બંને માટે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા છ હજાર", "value": 6500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "લગ્નનો વિડિયો શૂટ કરવા સિનેમેટિક પેકેજ સત્તાવીસ હજારનું લીધું છે અમે", "lang": "gu_gujr", "phrases": [{"phrase": "સત્તાવીસ હજારનું", "value": 27000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "વરરાજાના આહેરનું બજેટ સાડા સાત હજાર રાખ્યું છે, એમાં કપડાં અને ઘડિયાળ બેસાડવાનું છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સાત હજાર", "value": 7500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "માસી, રિક્ષાવાળાને કહો જરા ઓછું લે, સ્ટેન્ડથી નજીક જ છે અહીં", "lang": "gu_gujr", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "મીટર ચાલુ કરવાનું કહેતા સાઠ રૂપિયા દેખાડે છે, નહીં તો ત્રીસમાં થઈ જાત", "lang": "gu_gujr", "phrases": [{"phrase": "સાઠ રૂપિયા", "value": 60}, {"phrase": "ત્રીસમાં", "value": 30}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "છેલ્લી ફેરી છે, નાછૂટકે સાઠ રૂપિયા આપવા જ પડશે તારે લાગે છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાઠ રૂપિયા", "value": 60}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "ઓટોવાળાએ ચાલીસ રૂપિયા માંગ્યા, હું પચ્ચીસમાં જ જઈશ કહીને અડગ રહ્યો", "lang": "gu_gujr", "phrases": [{"phrase": "ચાલીસ રૂપિયા", "value": 40}, {"phrase": "પચ્ચીસમાં", "value": 25}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "નવા ભાડૂતને ઘર આપતા પહેલા પોલીસ વેરિફિકેશન કરાવવું જરૂરી છે પહેલા", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "મકાનમાલિકે કહ્યું કે રિપેરિંગનો ખર્ચ ભાડૂતે ઉપાડવો એવું નક્કી થયું છે", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ગ્રુપ પર મેસેજ કહે છે કે સરકાર તરફથી સીધા ખાતામાં અઢાર હજાર જમા થશે", "lang": "gu_gujr", "phrases": [{"phrase": "અઢાર હજાર", "value": 18000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "આવી ફેક સ્કીમના મેસેજ પર વિશ્વાસ ના કરો, સરકાર આમ સીધા પૈસા નથી આપતી", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "કોઈએ મેસેજ કર્યો છે કે મોબાઈલ રિચાર્જ કરો તો પોણો લાખ જીતી શકો છો તમે", "lang": "gu_gujr", "phrases": [{"phrase": "પોણો લાખ", "value": 75000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "નંબર બ્લોક કરી દે એને, વારંવાર આવા ફ્રોડ મેસેજ મોકલે છે આપણને", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "શહેરના નવા એરપોર્ટ પ્રોજેક્ટ માટે કેન્દ્ર સરકારે સાડા છસ્સો કરોડનું ફંડ આપ્યું", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા છસ્સો કરોડનું", "value": 6500000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "પૂરગ્રસ્તો માટે સહાય ફંડ તરીકે રાજ્ય સરકારે બસો કરોડ જાહેર કર્યા આજે", "lang": "gu_gujr", "phrases": [{"phrase": "બસો કરોડ", "value": 2000000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "હા હા, તારી કંપની રોજ કરોડોનું ટર્નઓવર કરે છે ને, તો ચાના પૈસા તો આપ", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "અરે બાપ રે, આટલો મોટો હીરો પહેર્યો છે, લાગ્યું તને સોનાની ખાણ મળી કે શું", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "ફ્રિજ વેચવાનું છે, ડબલ ડોરવાળું, ત્રણ વર્ષ જૂનું, કિંમત નવ હજાર", "lang": "gu_gujr", "phrases": [{"phrase": "નવ હજાર", "value": 9000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "સોફા સેટ વેચું છું, પાંચ સીટરનો, વપરાયેલો પણ સારી હાલતમાં, ભાવ છ હજાર", "lang": "gu_gujr", "phrases": [{"phrase": "છ હજાર", "value": 6000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "ડાઈનિંગ ટેબલ વેચવાનું છે છ ખુરશી સાથે, કિંમત સાડા ચાર હજાર છેલ્લી નક્કી કરી", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર હજાર", "value": 4500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "બેંકનો SMS આવ્યો, આ મહિનાની EMI સાડા ચાર હજાર કાલે કપાશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર હજાર", "value": 4500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "ખેતી માટે લીધેલી લોનનો હપ્તો સાડા તેર હજાર ભરવાનો છે આ મહિને", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા તેર હજાર", "value": 13500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "હોમ લોનનો છેલ્લો હપ્તો ભર્યો આજે, વીસ વર્ષ પછી ઘર પૂરેપૂરું મારું થયું", "lang": "gu_gujr", "phrases": [], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "ક્રેડિટ કાર્ડનું બિલ બાકી છે, વ્યાજ સાથે હવે અઢારસો રૂપિયા ભરવા પડશે", "lang": "gu_gujr", "phrases": [{"phrase": "અઢારસો રૂપિયા", "value": 1800}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "આજે સોનાનો ભાવ સ્થિર રહ્યો, ચાંદીમાં જોકે સારી તેજી જોવા મળી", "lang": "gu_gujr", "phrases": [], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "HDFC બેંકનો શેર આજે છવ્વીસ રૂપિયાથી ઘટ્યો, નફાવસૂલી ચાલી રહી છે બજારમાં", "lang": "gu_gujr", "phrases": [{"phrase": "છવ્વીસ રૂપિયાથી", "value": 26}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "ક્રિપ્ટોના સાડા ત્રણ હજાર કાઢી લીધા, હવે વધારે જોખમ નથી લેવું લાગે છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "નવું ડિમેટ ખાતું ખોલીને પહેલી વાર પાંચ હજાર રોક્યા આજે મ્યુચ્યુઅલ ફંડમાં", "lang": "gu_gujr", "phrases": [{"phrase": "પાંચ હજાર", "value": 5000}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "એમેઝોન પર પેકર તરીકે કામ કરું છું, રોજની કમાણી સાડા સાતસો રૂપિયા મળે છે હાથમાં", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સાતસો રૂપિયા", "value": 750}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "પેઈન્ટિંગનું કામ કરું છું, એક રૂમને રંગકામ કરીને અઢારસો રૂપિયા મળે છે મને", "lang": "gu_gujr", "phrases": [{"phrase": "અઢારસો રૂપિયા", "value": 1800}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "વોઈસ ઓવર આર્ટિસ્ટ તરીકે કામ કરું છું, એક પ્રોજેક્ટ માટે બારસો રૂપિયા મળે છે", "lang": "gu_gujr", "phrases": [{"phrase": "બારસો રૂપિયા", "value": 1200}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "સ્વિગીથી આ દિવાળીમાં રોજ પંદરસો સુધીની કમાણી થઈ, ઓર્ડર ઘણા હતા", "lang": "gu_gujr", "phrases": [{"phrase": "પંદરસો સુધીની", "value": 1500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "અરે યાર, તું ક્યાં છે અત્યારે? હું બહાર તારી રાહ જોઉં છું", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "અવાજ તૂટે છે જરા, પછી વિડિયો કોલ કરજે સિગ્નલ સારું મળે ત્યારે", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "દાદી નેવું વર્ષની થયા તોય રોજ બગીચામાં ફેરો મારે છે નિયમિત", "lang": "gu_gujr", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "મેરેથોનમાં દસ કિલોમીટર દોડ્યો આજે, પગ દુખે છે પણ સંતોષ લાગે છે", "lang": "gu_gujr", "phrases": [], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "જાન માટે સજાવેલા ઘોડાને જોઈને બધા મહેમાન ખુશ થઈ ગયા તરત", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "ઉદ્યોગોને પ્રોત્સાહન આપવા સરકારે નવી નીતિની જાહેરાત કરી આજે સવારે", "lang": "gu_gujr", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "એ સતત કહે છે કે હું જલ્દી કરોડપતિ થવાનો છું ચોક્કસ", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "પાસપોર્ટ ઓફિસમાં ત્રણ કલાક રાહ જોઈને પણ ટોકન નંબર ના આવ્યો હજુ", "lang": "gu_gujr", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "ડિલિવરી ટ્રેક કરતો હતો, ઓર્ડર નંબર પાંસઠ હજુ પેકિંગમાં જ દેખાય છે", "lang": "gu_gujr", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "બુંદીના લાડુ બનાવવાનું કહ્યું છે, મહેમાન સાંજ સુધીમાં પહોંચી જશે ઘરે", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "અભ્યાસિકામાં જગ્યા બુક કરવા મહિને સાડા ત્રણસો રૂપિયા ચૂકવવા પડે છે વિદ્યાર્થીઓને", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણસો રૂપિયા", "value": 350}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "દીકરાના ક્રિકેટ કોચિંગ માટે વાર્ષિક ફી અઠ્ઠાવીસ હજાર ભરી આ વર્ષે", "lang": "gu_gujr", "phrases": [{"phrase": "અઠ્ઠાવીસ હજાર", "value": 28000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "એબેકસ ક્લાસ માટે મહિને સાડા આઠસો ભરું છું, દીકરી ઘણી હોશિયાર થઈ ગઈ છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા આઠસો", "value": 850}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "શાળાની પિકનિક માટે અલગથી સાડા છસ્સો રૂપિયા ભરવાના છે સોમવાર સુધીમાં", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા છસ્સો રૂપિયા", "value": 650}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "બંગલાની બાજુમાં ખુલ્લું મેદાન છે, બાળકોને રમવા ઘણી જગ્યા મળશે", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ડુપ્લેક્સ ઘર જોયું સાહેબ? કિંમત એક કરોડ સત્તર લાખ કહે છે બિલ્ડર", "lang": "gu_gujr", "phrases": [{"phrase": "એક કરોડ સત્તર લાખ", "value": 11700000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "વન બીએચકે જોઈએ છે તો ભાડું સાડા આઠ હજાર રાખો, સોસાયટી નવી જ છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા આઠ હજાર", "value": 8500}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "વેરહાઉસ માટે જગ્યા જોઈએ છે? ગોડાઉનનું ભાડું મહિને અઠ્ઠાવન હજાર છે", "lang": "gu_gujr", "phrases": [{"phrase": "અઠ્ઠાવન હજાર", "value": 58000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "મગની દાળનો ભાવ આ વર્ષે માર્કેટમાં નેવું રૂપિયા કિલો સુધી ગયો, તેજીમાં જ છે બજાર", "lang": "gu_gujr", "phrases": [{"phrase": "નેવું રૂપિયા", "value": 90}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "રીંગણ લઈને ગયો હતો બજારમાં, ફક્ત પચ્ચીસ રૂપિયા કિલોના વેચાયા", "lang": "gu_gujr", "phrases": [{"phrase": "પચ્ચીસ રૂપિયા", "value": 25}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "ઘઉંનો ભાવ એકવીસસો રૂપિયા ક્વિન્ટલ પર સ્થિર છે ગયા અઠવાડિયાથી", "lang": "gu_gujr", "phrases": [{"phrase": "એકવીસસો રૂપિયા", "value": 2100}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "કેળાનો ઘસ આ વર્ષે સાડા ત્રણસો રૂપિયામાં વેચાયો, વાહનવ્યવહારનો ખર્ચ અલગ ચૂકવવો પડ્યો", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણસો રૂપિયામાં", "value": 350}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "નર્સિંગ કોલેજમાં પ્રેક્ટિકલ માટે સ્ટાઈપેન્ડ સાડા ચાર હજાર મળે છે મહિને ત્રીજા વર્ષે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર હજાર", "value": 4500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "આર્કિટેક્ચર ઈન્ટર્નશીપમાં પહેલા મહિનાનું સ્ટાઈપેન્ડ પાંચ હજાર જમા થયું ખાતામાં", "lang": "gu_gujr", "phrases": [{"phrase": "પાંચ હજાર", "value": 5000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "સરકારી યોજનામાંથી કૌશલ્ય તાલીમ માટે મહિને બત્રીસસો ભથ્થું મળે છે વિદ્યાર્થીઓને", "lang": "gu_gujr", "phrases": [{"phrase": "બત્રીસસો", "value": 3200}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "પોસ્ટ ડોક ફેલોશિપ મળી વિદેશમાં, મહિને લગભગ એક લાખ દસ હજાર મળશે", "lang": "gu_gujr", "phrases": [{"phrase": "એક લાખ દસ હજાર", "value": 110000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "ડીજેવાળાએ સંગીત અને લાઈટ માટે અઠ્ઠાવીસ હજાર કહ્યા છે, જાનની રાત માટે", "lang": "gu_gujr", "phrases": [{"phrase": "અઠ્ઠાવીસ હજાર", "value": 28000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "ચેવડાના લાડુનો હલવાઈ ખર્ચ સવા સાત હજાર કહે છે, પચાસ કિલો માટે", "lang": "gu_gujr", "phrases": [{"phrase": "સવા સાત હજાર", "value": 8750}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "મંડપ પર લાઈટિંગ માટે અલગથી સાડા ચાર હજાર લાગશે, કોન્ટ્રાક્ટરે કહ્યું", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર હજાર", "value": 4500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "દુલ્હનની સાડી માટે બજેટ સાડા બાર હજાર રાખ્યું છે, બનારસી જોઈએ છે એને", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બાર હજાર", "value": 12500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "કાકા, અહીંથી માર્કેટ સુધી ભાડું કેટલું લેશો, જરા કહોને પહેલા", "lang": "gu_gujr", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "સામાન વધારે છે એટલે પચાસ રૂપિયા વધુ લાગશે, નહીં તો ત્રીસમાં જ થાત", "lang": "gu_gujr", "phrases": [{"phrase": "પચાસ રૂપિયા", "value": 50}, {"phrase": "ત્રીસમાં", "value": 30}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "બજારમાં તહેવારના દિવસે ભાડું વધે છે, આજે સો લેવું પડશે તમારી પાસેથી", "lang": "gu_gujr", "phrases": [{"phrase": "સો", "value": 100}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "વરસાદને લીધે રિક્ષા મળતી નહોતી, છેવટે દોઢ ગણું ભાડું આપીને ઘરે પહોંચ્યો માંડ", "lang": "gu_gujr", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "નવો કરાર કરતી વખતે બે મહિનાનું ભાડું ડિપોઝિટ તરીકે લેવામાં આવશે એવું નક્કી થયું", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "મકાનમાલિકે કહ્યું કે પાણીનું બિલ ભાડૂતે જ ભરવાનું હોય છે દર મહિને", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ફોરવર્ડ આવ્યો છે કે આ લિંક પર ક્લિક કરવાથી તરત વીસ હજાર જમા થશે ખાતામાં", "lang": "gu_gujr", "phrases": [{"phrase": "વીસ હજાર", "value": 20000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "આવી લિંક પર ક્યારેય ક્લિક ના કરીશ, બધી માહિતી ચોરાઈ શકે છે એમાંથી", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "મેસેજમાં લખ્યું છે કે ગેસ સિલિન્ડર પર સબસિડી તરીકે સાડા ત્રણસો રૂપિયા મળશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણસો રૂપિયા", "value": 350}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "સાચી સબસિડી સીધી બેંકમાં જ જમા થાય છે, આવા મેસેજ મોટે ભાગે ફ્રોડ હોય છે", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "જિલ્લામાં રસ્તા સમારકામ માટે વહીવટીતંત્રે સાડા ચાર કરોડનું ફંડ મંજૂર કર્યું આજે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર કરોડનું", "value": 45000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "આરોગ્ય વિભાગને નવા સાધનો માટે અઠ્ઠાણું લાખનું ફંડ ફાળવવામાં આવ્યું", "lang": "gu_gujr", "phrases": [{"phrase": "અઠ્ઠાણું લાખનું", "value": 9800000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "તારો ભાઈ કંપનીનો માલિક થઈ ગયો કહે છે, અમને બોલાવવાનું ભૂલી ગયો લાગે છે એ", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "અરે બાપરે, નવી ગાડી લીધી, બેંકે લોન મંજૂર કરી કે ઘર વેચી નાખ્યું", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "માઈક્રોવેવ ઓવન વેચું છું, છ મહિના પહેલા લીધેલું, કિંમત બત્રીસસો રૂપિયા", "lang": "gu_gujr", "phrases": [{"phrase": "બત્રીસસો રૂપિયા", "value": 3200}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "ડબલ બેડ વેચવાનો છે અર્જન્ટ, ગાદલા સાથે, કિંમત સાડા ત્રણ હજાર નક્કી કરી છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "સાયકલ વેચવાની છે દીકરાની, નવી જ લીધેલી, કિંમત સાડા બારસો રૂપિયા કહી છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બારસો રૂપિયા", "value": 1250}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "બજાજ ફાઇનાન્સનો મેસેજ આવ્યો, બારસો રૂપિયાની EMI કાલે ખાતામાંથી કપાશે", "lang": "gu_gujr", "phrases": [{"phrase": "બારસો રૂપિયાની", "value": 1200}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "ટ્રેક્ટર લોનનો હપ્તો મહિને સાડા છ હજાર ભરવો પડે છે ખેડૂતને", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા છ હજાર", "value": 6500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "બાઈકની લોન ભરપાઈ થઈ ગઈ છેવટે, હવે કોઈ હપ્તો ભરવાનો નથી હવે પછી", "lang": "gu_gujr", "phrases": [], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "પર્સનલ લોન પર વ્યાજ વધારે લાગે છે, કુલ ભરપાઈ સાડા સાત લાખ થશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સાત લાખ", "value": 750000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "આજે માર્કેટ રેડ ઝોનમાં હતું, લગભગ બધા શેર્સે નુકસાન દેખાડ્યું", "lang": "gu_gujr", "phrases": [], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "ઈન્ફોસિસનો શેર આજે ઓગણચાલીસ રૂપિયાથી વધ્યો, રોકાણકારો ખુશ છે", "lang": "gu_gujr", "phrases": [{"phrase": "ઓગણચાલીસ રૂપિયાથી", "value": 39}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "વાયદા બજારમાં પૈસા લગાવ્યા હતા સાડા આઠ હજાર, આજે બધા ડૂબ્યા એક જ દિવસમાં", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા આઠ હજાર", "value": 8500}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "ગોલ્ડ ETFમાં મહિને ત્રણ હજાર રોકું છું, સુરક્ષિત વિકલ્પ લાગે છે મને એ", "lang": "gu_gujr", "phrases": [{"phrase": "ત્રણ હજાર", "value": 3000}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "ઈ-કોમર્સ કંપનીમાં પાર્ટટાઈમ પેકિંગનું કામ કરું છું, કલાકના સાડા સો રૂપિયા મળે છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સો રૂપિયા", "value": 150}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "વેડિંગ ફોટોગ્રાફી કરું છું પાર્ટટાઈમ, વીકએન્ડ પર એક ઈવેન્ટમાં છ હજાર મળે છે", "lang": "gu_gujr", "phrases": [{"phrase": "છ હજાર", "value": 6000}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "ડેટા એન્ટ્રીનું ફ્રીલાન્સ કામ કરું છું ઘરેથી, મહિને સાડા છ હજાર મળે છે અત્યારે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા છ હજાર", "value": 6500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "કાર વોશિંગનું કામ કરું છું સોસાયટીમાં, ગાડી દીઠ સાઠ રૂપિયા મળે છે રોજ", "lang": "gu_gujr", "phrases": [{"phrase": "સાઠ રૂપિયા", "value": 60}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "અલી મમ્મી, જમવાનું તૈયાર છે? બહુ ભૂખ લાગી છે મને હવે", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "રેકોર્ડિંગ બરાબર થયું મારું? અવાજ સ્પષ્ટ આવે છે કે નહીં સાંભળીને કહેજે", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "વૃદ્ધાશ્રમમાં દાદી અઠ્યાસી વર્ષના હોવા છતાં રોજ સવારે યોગા કરે છે", "lang": "gu_gujr", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "પંદર કિલોમીટર સાયકલ ચલાવી આજે કોલેજ સુધી, પેટ્રોલ બચ્યું આનાથી", "lang": "gu_gujr", "phrases": [], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "જાનની જુલૂસમાં બગી પર બેઠેલા વરરાજાને જોવા રસ્તા બંને બાજુ ભીડ થઈ ગઈ હતી", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "નવી ઔદ્યોગિક નીતિથી રાજ્યમાં વિદેશી કંપનીઓનો પ્રવાહ વધશે એવો નિષ્ણાતોનો મત", "lang": "gu_gujr", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "એ હંમેશા કહે છે કે કાલે હું લખપતિ થવાનો, છેલ્લા દસ વર્ષથી એ જ સાંભળું છું", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "આધાર કાર્ડ સેન્ટર પર ચાર કલાક લાઈનમાં ઊભા રહેવા છતાં નંબર ના આવ્યો આજે", "lang": "gu_gujr", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "પાર્સલ ટ્રેકિંગમાં ઓર્ડર નંબર અઠ્યોતેર હજુ વેરહાઉસમાં જ દેખાય છે", "lang": "gu_gujr", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "ગુલાબજામુનનો ડબ્બો તૈયાર છે કે નહીં પૂછવા ફોન કર્યો હતો મેં સવારે", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "સ્કેટિંગ ક્લાસમાં એડમિશન લીધું, નોંધણી ફી સાડા છસ્સો રૂપિયા ભરી આજે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા છસ્સો રૂપિયા", "value": 650}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "બોર્ડની પરીક્ષા માટે ખાનગી ક્લાસ લગાવ્યો છે, આખા વર્ષની ફી પોણો લાખ છે", "lang": "gu_gujr", "phrases": [{"phrase": "પોણો લાખ", "value": 75000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "નૃત્ય સ્પર્ધા માટે ડ્રેસ સિવડાવ્યો, દરજીએ સાડા બારસો રૂપિયા લીધા મજૂરી તરીકે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બારસો રૂપિયા", "value": 1250}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "શાળામાં નવી કમ્પ્યુટર લેબ બનાવવા વાલીઓ પાસેથી પાંચસો રૂપિયા દાન માંગ્યું ગયું", "lang": "gu_gujr", "phrases": [{"phrase": "પાંચસો રૂપિયા", "value": 500}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "બંગલાને અલગ ગેટ અને કંપાઉન્ડ વોલ છે, સુરક્ષાની દ્રષ્ટિએ સારી જગ્યા છે", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "પેન્ટહાઉસ જુઓ સાહેબ, ટેરેસ ગાર્ડન સાથે, કિંમત એક કરોડ બત્રીસ લાખ છે", "lang": "gu_gujr", "phrases": [{"phrase": "એક કરોડ બત્રીસ લાખ", "value": 13200000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "વન બીએચકે ફ્લેટ ખાલી છે, ભાડું સાડા સાત હજાર નક્કી કર્યું છે માલિકે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સાત હજાર", "value": 7500}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "શોરૂમ માટે જગ્યા જોઈએ છે? મેઈન રોડ પરની દુકાન મહિને બોંતેર હજારમાં ભાડે મળશે", "lang": "gu_gujr", "phrases": [{"phrase": "બોંતેર હજારમાં", "value": 72000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ચોખાનો ભાવ આ વર્ષે સાડા ચોવીસસો રૂપિયા ક્વિન્ટલ સુધી વધ્યો, ચોમાસું સારું રહ્યું એટલે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચોવીસસો રૂપિયા", "value": 2450}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "મરચાનો ભાવ માર્કેટમાં સાઠ રૂપિયા કિલો પર ગયો, તીખા માલની માંગ વધી છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાઠ રૂપિયા", "value": 60}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "ગોળનો ભાવ આ વર્ષે પંચોતેર રૂપિયા કિલો નક્કી થયો, શેરડીનું ઉત્પાદન ઓછું થયું એટલે", "lang": "gu_gujr", "phrases": [{"phrase": "પંચોતેર રૂપિયા", "value": 75}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "વાલોળની સિંગ લઈને ગયો બજારમાં, ફક્ત અડતાલીસ રૂપિયા કિલોના લીધા વેપારીએ", "lang": "gu_gujr", "phrases": [{"phrase": "અડતાલીસ રૂપિયા", "value": 48}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "BEd કરતી વખતે પ્રેક્ટિસ ટીચિંગ માટે શાળા તરફથી મહિને સાડા સત્તરસો માનધન મળતું હતું", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સત્તરસો", "value": 1750}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "ITIમાંથી એપ્રેન્ટિસ છું અત્યારે, સ્ટાઈપેન્ડ સવા નવ હજાર મળે છે મને", "lang": "gu_gujr", "phrases": [{"phrase": "સવા નવ હજાર", "value": 11250}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "શિષ્યવૃત્તિમાંથી આ વર્ષે પહેલી વાર સાડા ત્રણ હજાર મળ્યા, પુસ્તકો ખરીદવા કામ લાગશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "નર્સિંગ હોમમાં નાઈટ શિફ્ટ માટે મહિને અલગ સાડા ચાર હજાર ભથ્થું મળે છે અત્યારે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર હજાર", "value": 4500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "જાનના સ્વાગત માટે શરબત અને નાસ્તાનો ખર્ચ સાડા ત્રણ હજાર ધર્યો છે બજેટમાં", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "દુલ્હનની મહેંદી માટે આર્ટિસ્ટે અઢારસો રૂપિયા કહ્યા છે, પૂરા હાથ માટે ડિઝાઈન કરીને", "lang": "gu_gujr", "phrases": [{"phrase": "અઢારસો રૂપિયા", "value": 1800}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "રિટર્ન ગિફ્ટ માટે નાના બોક્સ દીઠ સાઠ રૂપિયા ખર્ચ થાય છે, બસો મહેમાનો માટે જોઈએ", "lang": "gu_gujr", "phrases": [{"phrase": "સાઠ રૂપિયા", "value": 60}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "સ્ટેજ પરના ફૂલોની સજાવટનું ક્વોટેશન સાડા નવ હજાર આવ્યું, ફક્ત તાજા ફૂલોનું", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા નવ હજાર", "value": 9500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "ભાઈ, ટેમ્પોવાળો વધારે ભાડું માંગે છે, જરા રકઝક કરો એની સાથે", "lang": "gu_gujr", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "બેગ ભારે છે એટલે વીસ રૂપિયા વધુ માંગે છે હમાલ, નહીં તો દસમાં જ પૂરતું હતું", "lang": "gu_gujr", "phrases": [{"phrase": "વીસ રૂપિયા", "value": 20}, {"phrase": "દસમાં", "value": 10}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "તહેવારના દિવસે ટેક્સીવાળા હંમેશા વધારે ભાડું લે છે, આજે પચાસ ટકા વધુ જ લીધું", "lang": "gu_gujr", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "સ્ટેન્ડથી ઘર સુધી હંમેશા પચ્ચીસ લે છે એ, આજે ખોટા ચાલીસ માંગે છે", "lang": "gu_gujr", "phrases": [{"phrase": "પચ્ચીસ", "value": 25}, {"phrase": "ચાલીસ", "value": 40}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "નવા ભાડૂત પાસેથી કરારપત્ર અને આધાર કાર્ડની નકલ લેવી જરૂરી હોય છે હંમેશા", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "સોસાયટીનું મેન્ટેનન્સ ભાડૂતે ભરવાનું કે માલિકે એ પહેલેથી નક્કી કરી લો", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "કોઈએ મોકલ્યું છે કે સ્ક્રેચ કાર્ડ ઘસવાથી સીધા સાડા બાર હજાર જીતશો તમે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બાર હજાર", "value": 12500}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "આવી સ્ક્રેચ કાર્ડ સ્કીમ નકલી હોય છે, એના પર બિલકુલ વિશ્વાસ ના કરીશ", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "મેસેજમાં લખ્યું છે કે નવું સિમ લેવાથી કંપની સીધો પોણા દસ હજારનો બોનસ આપશે", "lang": "gu_gujr", "phrases": [{"phrase": "પોણા દસ હજારનો", "value": 9750}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "નંબર રિપોર્ટ કરી દે એને, આવી ફ્રોડ સ્કીમથી ઘણા લોકોને છેતરાઈ ચૂક્યા છે પહેલા", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "જિલ્લા હોસ્પિટલ માટે નવી ઈમારત બનાવવા આરોગ્ય ખાતાએ સાડા અગિયાર કરોડ મંજૂર કર્યા", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા અગિયાર કરોડ", "value": 115000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "પાણી પુરવઠા યોજના માટે ગ્રામ પંચાયતને સરકાર તરફથી બાસઠ લાખનું અનુદાન મળ્યું આજે", "lang": "gu_gujr", "phrases": [{"phrase": "બાસઠ લાખનું", "value": 6200000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "તું હંમેશા કહે છે મારી કંપની મોટી છે, તો પગાર વધારો કેમ નથી આપતો મને", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "અરે વાહ, ફોરેન ટ્રિપ કરીને આવ્યો, પ્રમોશન મળ્યું કે લોટરી લાગી તને", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "ગિટાર વેચવાનું છે, અડધા વર્ષ પહેલા લીધેલું, કિંમત સાડા ત્રણ હજાર છેલ્લી કહું છું", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "ટીવી વેચવાનું છે બત્રીસ ઈંચનું, ચાર વર્ષ જૂનું, ભાવ સાડા છ હજાર બોલું છું છેલ્લો", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા છ હજાર", "value": 6500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "કિચન ટ્રોલી વેચવાની છે, નવી જ બેસાડેલી, કિંમત સાડા ચાર હજાર કહું છું", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર હજાર", "value": 4500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "મારુતિ સુઝુકી તરફથી SMS આવ્યો, ગાડીની લોનની EMI સાડા સાત હજાર કાલે કપાશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સાત હજાર", "value": 7500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "દુકાન શરૂ કરવા લીધેલી લોનનો હપ્તો મહિને નવ હજાર ભરવો પડે છે અત્યારે", "lang": "gu_gujr", "phrases": [{"phrase": "નવ હજાર", "value": 9000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "ટ્રેક્ટરની લોન સંપૂર્ણ ચૂકતે થઈ ગઈ છેવટે, હવે ખેતીમાં ફક્ત નફો જ રહેશે હાથમાં", "lang": "gu_gujr", "phrases": [], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "ગૃહલોનનો વ્યાજદર વધવાથી હપ્તો હવે સાડા બાવીસ હજાર થયો છે મહિને", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બાવીસ હજાર", "value": 22500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "આજે ઓટો સેક્ટરના શેર્સે સારો દેખાવ કર્યો, રોકાણકારો સંતુષ્ટ દેખાય છે", "lang": "gu_gujr", "phrases": [], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "વિપ્રોનો શેર આજે ઓગણપચાસ રૂપિયાથી ઘટ્યો, IT સેક્ટરમાં સુસ્તી છે અત્યારે", "lang": "gu_gujr", "phrases": [{"phrase": "ઓગણપચાસ રૂપિયાથી", "value": 49}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "મિત્રની સલાહથી પેની સ્ટોકમાં સાડા છ હજાર લગાવ્યા, જોખમ છે એ ખબર હોવા છતાં", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા છ હજાર", "value": 6500}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "PPF ખાતામાં આ વર્ષે વાર્ષિક સાડા બાર હજાર ભર્યા, લાંબા ગાળાની બચત માટે સારું છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બાર હજાર", "value": 12500}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "બેકરીમાં પાર્ટટાઈમ કામ કરું છું, કેક પર ડેકોરેશન કરીને કેક દીઠ સાડા ત્રણસો મળે છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણસો", "value": 350}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "મહેંદી લગાવવાનું કામ કરું છું ઘરે ઘરે જઈને, હાથ દીઠ દોઢસો રૂપિયા લઉં છું હું", "lang": "gu_gujr", "phrases": [{"phrase": "દોઢસો રૂપિયા", "value": 150}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "ટ્યુશન ક્લાસમાં શિક્ષકોને મદદ કરું છું, મહિને અલગ સાડા ત્રણ હજાર મળે છે એમાંથી", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "કારપૂલિંગ સર્વિસમાંથી રોજ અવરજવર કરીને વીકમાં સાડા બારસો કમાઉં છું સહેલાઈથી", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બારસો", "value": 1250}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "અરે મિસ્ડ કોલ આપ્યો હતો મને? નેટવર્ક નહોતું અહીં ઘણી વાર", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "અલી જરા મારું લોકેશન મોકલ ને, તારું ઘર નથી મળતું મને", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "સિત્યોતેર વર્ષની ઉંમરે પણ દાદા રોજ સવારે છાપું વાંચે છે નિયમિત", "lang": "gu_gujr", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "બાર કિલોમીટરનું અંતર ચાલીને પાર કર્યું યાત્રાળુઓએ ઉઘાડા પગે ડુંગર પર", "lang": "gu_gujr", "phrases": [], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "જાનમાં ફટાકડા ફોડીને બધાએ ખુશી મનાવી રાત્રે મોડે સુધી", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "જળસંચય પ્રોજેક્ટને લીધે આ વર્ષે વિસ્તારના કૂવાનું પાણી નોંધપાત્ર રીતે વધ્યું હોવાનું જણાયું", "lang": "gu_gujr", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "એ વારંવાર બોલે છે કે બિઝનેસમાંથી કરોડો કમાવાનો, હજુ મૂડી જ ભેગી કરે છે બિચારો", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "RTO ઓફિસમાં લાયસન્સ માટે સવારથી પાંચ કલાક તડપીને બેસવું પડ્યું આજે", "lang": "gu_gujr", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "કુરિયર ટ્રેકિંગમાં પાર્સલ નંબર ચોપન હજુ હબ પર જ પડ્યું છે બે દિવસથી", "lang": "gu_gujr", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "બાસુંદીનું તપેલું તૈયાર કરવાનું કહ્યું છે સવારથી, સાંજે જાન આવવાની છે", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "કરાટે બેલ્ટ ટેસ્ટ માટે અલગથી સાડા ચારસો રૂપિયા ભરવા પડ્યા દીકરાને પરમ દિવસે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચારસો રૂપિયા", "value": 450}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "સ્કેચબુક અને રંગો ખરીદવા આર્ટ ક્લાસ માટે સાડા સાતસો લાગ્યા દીકરીને", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સાતસો", "value": 750}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "દસમા ધોરણના ક્લાસની આખી ફી અઢી લાખ છે, ત્રણ વિષયનું પેકેજ લીધું અમે", "lang": "gu_gujr", "phrases": [{"phrase": "અઢી લાખ", "value": 250000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "ઉનાળુ શિબિરમાં નોંધણી કરવા સાડા આઠસો રૂપિયા ભર્યા ઓનલાઈન ગઈકાલ રાત્રે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા આઠસો રૂપિયા", "value": 850}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "ગ્રાઉન્ડ ફ્લોર પરનો ફ્લેટ છે આ, વૃદ્ધ લોકોને દાદરા ચડવાની તકલીફ નહીં પડે", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "જૂની હવેલી વેચવાની છે શહેરના મધ્યમાં, વારસાગત દરજ્જા સાથે કિંમત એક કરોડ અડતાલીસ લાખ", "lang": "gu_gujr", "phrases": [{"phrase": "એક કરોડ અડતાલીસ લાખ", "value": 14800000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ચાર જણ માટે ફ્લેટ શેરિંગમાં ઉપલબ્ધ છે, દરેક દીઠ ભાડું સાડા ચાર હજાર પડશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર હજાર", "value": 4500}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "સ્પા સેન્ટર શરૂ કરવા જગ્યા જોઈએ છે? મોલ પાસેનો ગાળો ત્રેસઠ હજારમાં મળશે ભાડે", "lang": "gu_gujr", "phrases": [{"phrase": "ત્રેસઠ હજારમાં", "value": 63000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "સીતાફળનો ભાવ આ વર્ષે ઊંચો રહ્યો, સારા માલને પચાસ રૂપિયા નંગ મળ્યા", "lang": "gu_gujr", "phrases": [{"phrase": "પચાસ રૂપિયા", "value": 50}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "દાડમ લઈને ગયો વેપારી પાસે, નિકાસલાયક માલને એકસો દસ રૂપિયા કિલો ભાવ મળ્યો", "lang": "gu_gujr", "phrases": [{"phrase": "એકસો દસ રૂપિયા", "value": 110}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "જીરાનો ભાવ ક્વિન્ટલ દીઠ સાડા અઢાર હજાર રૂપિયા પર પહોંચ્યો, નિકાસની માંગ વધી છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા અઢાર હજાર રૂપિયા", "value": 18500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "વટાણાનો ભાવ માર્કેટમાં આજે સાઠ રૂપિયા કિલો થયો, સીઝન પૂરી થવા આવી એટલે", "lang": "gu_gujr", "phrases": [{"phrase": "સાઠ રૂપિયા", "value": 60}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "પત્રકારત્વ કોલેજમાં ટ્રેઈની તરીકે ચેનલમાં જોડાયો છું, દર મહિને સાડા ચાર હજારનું સ્ટાઈપેન્ડ જમા થાય છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર હજાર", "value": 4500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "ફિઝિયોથેરાપી કોલેજમાં ક્લિનિકલ ઈન્ટર્નશીપનું ભથ્થું વિદ્યાર્થીઓને દર મહિને સાડા ત્રણ હજાર ચૂકવવામાં આવે છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "તલાટી ઓફિસમાં હંગામી મદદનીશને મહિને નવ હજાર માનધન અપાય છે", "lang": "gu_gujr", "phrases": [{"phrase": "નવ હજાર", "value": 9000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "આંગણવાડી મદદનીશનું માનધન વધીને સાડા ચાર હજાર થયું, આદેશ નીકળ્યો ગઈકાલ સાંજે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર હજાર", "value": 4500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "જાનની જુલૂસમાં પાલખી પર બેઠેલા વરરાજાને જોવા આખું ગામ રસ્તા પર ભેગું થયું હતું", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "દુલ્હનની ચંપલ ચોરીની રમતમાં દિયરે સાડા ત્રણ હજાર માંગ્યા, ઘણી રકઝક થઈ છેલ્લે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "પાણીપુરીના સ્ટોલ માટે અલગ ખર્ચ સાડા બારસો ધર્યો છે, નાના બાળકોનો પ્રિય સ્ટોલ છે આ", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બારસો", "value": 1250}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "દુલ્હનની બહેનના ડ્રેસ માટે બુટિકમાં સાડા બાવીસસો ચૂકવ્યા, ડિઝાઈનર પીસ હતો એ", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બાવીસસો", "value": 2250}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "મામા, અહીંથી બસસ્ટેન્ડ સુધી ભાડું શું થશે જરા કહો તો ખરા", "lang": "gu_gujr", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "સામાન વધારે હોવાથી ટેમ્પોવાળો ઊંચો દર બોલે છે, નાછૂટકે એ આપવો પડશે હવે", "lang": "gu_gujr", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "કોલેજથી હોસ્ટેલ સુધી હંમેશા દસ લે છે રિક્ષાવાળો, આજે વરસાદને લીધે પંદર માંગે છે", "lang": "gu_gujr", "phrases": [{"phrase": "દસ", "value": 10}, {"phrase": "પંદર", "value": 15}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "ઉત્સવના દિવસોમાં રિક્ષાવાળા મનફાવે એ ભાડું લે છે, વહીવટીતંત્રે કંઈક નિયંત્રણ રાખવું જોઈએ આના પર", "lang": "gu_gujr", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "ઘર ભાડે આપતી વખતે પાવર ઓફ એટર્ની ધરાવતી વ્યક્તિ પાસેથી કરાર કરાવવો હંમેશા સારો", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "નવો ભાડૂત આવે ત્યારે જૂનું મીટર રીડિંગ નોંધી લેવું ખૂબ મહત્વનું હોય છે", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "મેસેજ ફરે છે કે નવી એપ ડાઉનલોડ કરવાથી કંપની તમને સાડા ત્રણ હજાર વોલેટમાં આપશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "અજાણી એપ ડાઉનલોડ કરવાથી ફોન હેક થવાનો ખતરો વધારે હોય છે, જરા સાચવજે", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "ગ્રુપ પર મેસેજ ફરે છે કે PAN કાર્ડ અપડેટ કરવાથી સરકાર ખાતામાં સાડા ચાર હજાર નાખશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર હજાર", "value": 4500}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "PAN કાર્ડ અપડેટ ફક્ત અધિકૃત વેબસાઈટ પરથી જ કરો, આવી લિંક પર વિશ્વાસ ના કરીશ", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "તાલુકાના પુલ સમારકામ માટે જાહેર બાંધકામ ખાતાએ અઠ્યોતેર લાખ મંજૂર કર્યા ગઈકાલે", "lang": "gu_gujr", "phrases": [{"phrase": "અઠ્યોતેર લાખ", "value": 7800000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "શહેરના ગટર વ્યવસ્થાપન પ્રોજેક્ટ માટે નગરપાલિકાને સાડા પાંચ કરોડનું ફંડ મંજૂર થયું", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા પાંચ કરોડનું", "value": 55000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "તું કહે છે હાથમાં પૈસા નથી, તો પરમ દિવસે સોનાની વીંટી કેવી રીતે લીધી ભાઈ", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "અરે વાહ, દીકરાની શાળાને મોટું ડોનેશન આપ્યું, આ વર્ષે ઈન્ક્રિમેન્ટ સારું મળ્યું લાગે છે", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "AC વેચવાનું છે સ્પ્લિટ, દોઢ ટનનું, બે વર્ષ જૂનું, કિંમત સાડા સાત હજાર", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સાત હજાર", "value": 7500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "વોર્ડરોબ વેચવાનો છે છ દરવાજાનો, ભાવ સાડા ચાર હજાર છેલ્લો બોલું છું", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર હજાર", "value": 4500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "ગેસ સ્ટવ વેચવાનો છે ચાર બર્નરનો, કિંમત સાડા બારસો રૂપિયા કહું છું છેલ્લી", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બારસો રૂપિયા", "value": 1250}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "બેંક ઓફ ઈન્ડિયાનો મેસેજ આવ્યો, ટ્રેક્ટર લોનનો હપ્તો સાડા સાત હજાર કાલે ખાતામાંથી ઓટોમેટિક કપાશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સાત હજાર", "value": 7500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "પોલિહાઉસ માટે લીધેલી લોનનો બીજો હપ્તો સાડા પાંચ હજાર ભરવાનો છે આ અઠવાડિયે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા પાંચ હજાર", "value": 5500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "ફર્નિચરની લોન ચાર હપ્તામાં ચૂકવવાનું નક્કી કર્યું છે, દરેક દીઠ સત્તરસો રૂપિયા", "lang": "gu_gujr", "phrases": [{"phrase": "સત્તરસો રૂપિયા", "value": 1700}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "દુકાન વિસ્તરણની લોનની કુલ ભરપાઈ સાડા આઠ લાખ થશે પાંચ વર્ષમાં", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા આઠ લાખ", "value": 850000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "આજે એનર્જી સેક્ટરના શેર્સે બજારમાં નોંધપાત્ર વધારો દર્શાવ્યો બપોરના સેશનમાં", "lang": "gu_gujr", "phrases": [], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "L&Tનો શેર આજે ત્રેતાલીસ રૂપિયાથી વધ્યો, ઈન્ફ્રા સેક્ટરમાં તેજી દેખાય છે", "lang": "gu_gujr", "phrases": [{"phrase": "ત્રેતાલીસ રૂપિયાથી", "value": 43}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "કોમોડિટી માર્કેટમાં રોકેલા સાડા સાત હજાર આજે ડબલ થઈને પાછા મળ્યા છેવટે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સાત હજાર", "value": 7500}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "NPS ખાતામાં મહિને સાડા ઓગણીસસો ભરું છું, નિવૃત્તિના આયોજન માટે શરૂ કર્યું છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ઓગણીસસો", "value": 1950}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "નાઈટ શિફ્ટમાં હોસ્પિટલમાં વોર્ડ બોય તરીકે કામ કરું છું, મહિને સાડા દસ હજાર મળે છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા દસ હજાર", "value": 10500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "ઈવેન્ટ માટે ડેકોરેશનનું પાર્ટટાઈમ કામ કરું છું, દરેક ઓર્ડરમાંથી સાડા ત્રણ હજારની આવક થાય છે મને", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "વોઈસ ડબિંગનું ફ્રીલાન્સ કામ કરું છું, દરેક એપિસોડમાંથી સાડા સાતસો રૂપિયાની કમાણી થાય છે મને", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સાતસો રૂપિયા", "value": 750}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "ફૂડ ડિલિવરીનું કામ કરું છું રજાના દિવસે, રોજ સાડા બારસો સુધીની કમાણી થાય છે સહેલાઈથી", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બારસો સુધીની", "value": 1250}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "અરે બાબુ, નેટ પેક ખલાસ થયો મારો, થોડી વારમાં રિચાર્જ કરીને કોલ કરું છું", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "અલી આજે ઘરે આવવામાં મોડું થશે, ઓફિસમાં મીટિંગ લંબાઈ ગઈ અચાનક", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "ચોર્યાસી વર્ષના દાદા હજુ પોતાની સાયકલ પર બજારે જાય છે રોજ સવારે", "lang": "gu_gujr", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "અઢાર કિલોમીટરની દોડવાની સ્પર્ધા પૂરી કરી આજે અટક્યા વગર આખા રસ્તા પર", "lang": "gu_gujr", "phrases": [], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "જાનમાં હજારો ફુગ્ગા આકાશમાં છોડવામાં આવ્યા, નાના બાળકોએ ખૂબ ધમાલ કરી", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "શહેરની જાહેર પરિવહન વ્યવસ્થામાં નવી ઈલેક્ટ્રિક બસોનો ઉમેરો થશે એવી જાહેરાત થઈ", "lang": "gu_gujr", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "એ કહેતો ફરે છે કે રિયલ એસ્ટેટમાંથી કરોડો કમાવાનો, હજુ એક પ્લોટ પણ લીધો નથી", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "જન્મના દાખલા માટે નગરપાલિકામાં આંટા મારીને પણ કામ પૂરું નથી થયું હજુ મારું", "lang": "gu_gujr", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "એક્સચેન્જ ઓર્ડરનો ટ્રેકિંગ નંબર એકતાલીસ હજુ ડિલિવરી હબ પર જ પડ્યો છે", "lang": "gu_gujr", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "ખવાના પેંડાનો બોક્સ સાંજ સુધીમાં તૈયાર રાખજો, મહેમાન રાત્રે મોડા પહોંચવાના છે", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "જિમખાનામાં બેડમિન્ટન કોર્ટનું માસિક ફી સાડા છસ્સો રૂપિયા છે, રેકેટ અલગ લેવી પડે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા છસ્સો રૂપિયા", "value": 650}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "સ્પર્ધાત્મક પરીક્ષાના ક્લાસ માટે પૂરો કોર્સ ફી અઢી લાખ ભરી ભાઈએ આ વર્ષે", "lang": "gu_gujr", "phrases": [{"phrase": "અઢી લાખ", "value": 250000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "દીકરીની સ્વિમિંગ સ્પર્ધા માટે કોસ્ટ્યુમ અને ગોગલ્સનો ખર્ચ સાડા ત્રણસો થયો ગઈકાલે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણસો", "value": 350}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "શાળાની પુસ્તકોની દુકાનમાં વાર્ષિક સેટ માટે બાવીસસો રૂપિયા ચૂકવવા પડ્યા આ વર્ષે", "lang": "gu_gujr", "phrases": [{"phrase": "બાવીસસો રૂપિયા", "value": 2200}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "ટાવર નજીક હોવાથી નેટવર્ક સારું મળે છે અહીં, કોલ ડ્રોપ ક્યારેય નથી થતો", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ફાર્મહાઉસ વેચવાનું છે નદી કિનારે, બે એકર જમીન સાથે કિંમત એક કરોડ છવ્વીસ લાખ", "lang": "gu_gujr", "phrases": [{"phrase": "એક કરોડ છવ્વીસ લાખ", "value": 12600000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "બે રૂમનું ઘર જોઈએ છે વિદ્યાર્થીઓ માટે, ભાડું સાડા નવ હજાર રાખ્યું છે માલિકે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા નવ હજાર", "value": 9500}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ક્લિનિક ખોલવા માટે તમને જગ્યાની જરૂર છે? મેઈન રોડ પરનો ગાળો અઠ્ઠાવન હજારમાં ભાડે આપું છું", "lang": "gu_gujr", "phrases": [{"phrase": "અઠ્ઠાવન હજારમાં", "value": 58000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "સરગવાના પાનનો ભાવ આ વર્ષે વધ્યો, વીસ રૂપિયા ઝૂડી માંગ વધવાથી", "lang": "gu_gujr", "phrases": [{"phrase": "વીસ રૂપિયા", "value": 20}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "પપૈયું લઈને ગયો બજારમાં, સારા માલને બાવીસ રૂપિયા કિલો ભાવ મળ્યો", "lang": "gu_gujr", "phrases": [{"phrase": "બાવીસ રૂપિયા", "value": 22}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "આદુનો ભાવ માર્કેટમાં ક્વિન્ટલ દીઠ સાડા સાત હજાર રૂપિયા પર પહોંચ્યો, તેજી ચાલુ છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સાત હજાર રૂપિયા", "value": 7500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "ભાજીપાલાનો ભાવ વરસાદને લીધે વધ્યો, ધાણા આજે ત્રીસ રૂપિયા ઝૂડીના વેચાયા", "lang": "gu_gujr", "phrases": [{"phrase": "ત્રીસ રૂપિયા", "value": 30}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "ડેન્ટલ કોલેજમાં હાઉસ સર્જનશીપનું સ્ટાઈપેન્ડ સાડા સાત હજાર છે, વર્ષભર માટે નક્કી છે એ", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સાત હજાર", "value": 7500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "વનવિભાગના હંગામી કર્મચારીને મહિને નવ હજારનું માનધન અપાય છે અત્યારે", "lang": "gu_gujr", "phrases": [{"phrase": "નવ હજારનું", "value": 9000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "આશા વર્કરનું માનધન વધીને સાડા પાંચ હજાર થયું, સરકારે જાહેરાત કરી આજે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા પાંચ હજાર", "value": 5500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "મધ્યાહન ભોજન યોજનાના રસોઈયાને શાળા તરફથી મહિને સાડા ચાર હજાર ચૂકવવામાં આવે છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર હજાર", "value": 4500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "જાનના સ્વાગત માટે ગુલાબજળ છાંટવા દસ હજાર લિટર મંગાવ્યું હતું હલવાઈ પાસેથી", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "વરરાજાના શેરવાની માટે બુટિકમાં સાડા ત્રણ હજાર ચૂકવ્યા, ભરતકામ કરેલું હતું એમાં", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "આઈસ્ક્રીમ સ્ટોલનું બજેટ સાડા ત્રણ હજાર નક્કી કર્યું છે, બાળકો ખૂબ ખુશ થશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "પાન સોપારીના સ્ટોલ માટે હલવાઈને અલગ સાડા બારસો ચૂકવવા પડ્યા છેવટે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બારસો", "value": 1250}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "બનેવી, હોસ્પિટલ સુધી જવાનું છે અર્જન્ટ, જરા ઓછા ભાડામાં લઈ જાવ ને પ્લીઝ", "lang": "gu_gujr", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "મધરાત્રે રિક્ષા શોધવી અઘરી થઈ ગઈ, જે મળી એ ડબલ ભાડું માંગતી હતી", "lang": "gu_gujr", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "કોલેજથી ઘર સુધી રોજ પંદર લે છે રિક્ષાવાળો, રજાના દિવસે વીસ માંગે છે ખોટા", "lang": "gu_gujr", "phrases": [{"phrase": "પંદર", "value": 15}, {"phrase": "વીસ", "value": 20}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "ભીડના સમયે ઈ-રિક્ષાવાળા શેરિંગમાં વધારે પૈસા વસૂલે છે હંમેશા બધે", "lang": "gu_gujr", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "ભાડૂતે ઘર છોડતા પહેલા એક મહિનો પહેલા લેખિતમાં જણાવવું પડે છે માલિકને હંમેશા", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "સોસાયટીનું પાર્કિંગ ચાર્જ ભાડામાં સમાવિષ્ટ છે કે અલગ એ પહેલા પૂછી લેજો", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ફોરવર્ડ આવ્યો છે કે ટોલ ફ્રી નંબર પર મિસ્ડ કોલ આપવાથી સાડા ત્રણ હજારનું રિચાર્જ મળશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજારનું", "value": 3500}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "મિસ્ડ કોલથી ક્યારેય પૈસા નથી મળતા, આવા મેસેજ પર સમય ના બગાડીશ", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "ગ્રુપ પર ફરે છે કે નોકરી માટે અરજી કરતાં પહેલા પ્રોસેસિંગ ફી પોણા બે હજાર ભરવી પડશે", "lang": "gu_gujr", "phrases": [{"phrase": "પોણા બે હજાર", "value": 1750}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "સાચી કંપનીઓ નોકરી માટે ક્યારેય પહેલા પૈસા નથી માંગતી, આ સ્કેમ જ હશે ચોક્કસ", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "તાલુકાના પ્રાથમિક આરોગ્ય કેન્દ્ર માટે સરકારે નવા સાધનો માટે બાવન લાખ મંજૂર કર્યા", "lang": "gu_gujr", "phrases": [{"phrase": "બાવન લાખ", "value": 5200000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "શહેરના બગીચા સુશોભન માટે મહાનગરપાલિકાએ સાડા ત્રણ કરોડનો પ્રસ્તાવ મંજૂર કર્યો આજે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ કરોડનો", "value": 35000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "તું કહે છે પૈસા નથી, પણ નવી બાઈક લઈને ફરે છે તું આ કેવી રીતે", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "અરે વાહ, બીજી વાર હનીમૂન પર જાય છે વિદેશમાં, આ વખતે બોનસ મોટો મળ્યો લાગે છે", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "ગીઝર વેચવાનું છે પચ્ચીસ લિટરનું, બે વરસ વપરાયેલું, ભાવ સાડા ત્રણ હજાર", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "બુક શેલ્ફ વેચવાનું છે લાકડાનું બનેલું, કિંમત બારસો રૂપિયા છેલ્લી કહું છું", "lang": "gu_gujr", "phrases": [{"phrase": "બારસો રૂપિયા", "value": 1200}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "મિક્સર ગ્રાઈન્ડર વેચવાનું છે ત્રણ જાર સાથે, ભાવ સાડા બારસો રૂપિયા બોલું છું", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બારસો રૂપિયા", "value": 1250}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "PNB બેંકનો મેસેજ આવ્યો, બિઝનેસ લોનની EMI સાડા આઠ હજાર કાલે કપાશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા આઠ હજાર", "value": 8500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "પોલિહાઉસ માટે લીધેલી લોનનો હપ્તો ખેડૂતે દર મહિને સાડા છ હજારનો ચૂકવવાનો રહે છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા છ હજાર", "value": 6500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "લેપટોપની લોન ત્રણ ભાગમાં ભરવાનું ગોઠવ્યું છે, પ્રત્યેક ભાગ અઢારસો રૂપિયાનો", "lang": "gu_gujr", "phrases": [{"phrase": "અઢારસો રૂપિયા", "value": 1800}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "દુકાનના રિનોવેશનની લોનની કુલ ભરપાઈ સાડા છ લાખ થશે એવું બેંકે કહ્યું", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા છ લાખ", "value": 650000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "આજે FMCG સેક્ટરના શેર્સે બજારમાં સારો દેખાવ નોંધાવ્યો સવારથી જ", "lang": "gu_gujr", "phrases": [], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "એશિયન પેઈન્ટ્સનો શેર આજે સડત્રીસ રૂપિયાથી વધ્યો, બાંધકામ ક્ષેત્રમાં તેજી છે", "lang": "gu_gujr", "phrases": [{"phrase": "સડત્રીસ રૂપિયાથી", "value": 37}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "ફ્યુચર્સ માર્કેટમાં સાડા છ હજારનું જોખમ લીધું હતું, આજે નુકસાન સહન કરવું પડ્યું", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા છ હજારનું", "value": 6500}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "રિકરિંગ ડિપોઝિટમાં મહિને અઢારસો ભરું છું, પાંચ વર્ષે સારી રકમ ભેગી થશે", "lang": "gu_gujr", "phrases": [{"phrase": "અઢારસો", "value": 1800}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "પાર્સલ ડિલિવરી કરું છું બાઈક પર, રોજ પચ્ચીસ ઓર્ડરમાંથી સાડા સાતસો કમાવું છું સહેલાઈથી", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સાતસો", "value": 750}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "વેબ ડેવલપમેન્ટનું ફ્રીલાન્સ પ્રોજેક્ટ મળ્યું, એક વેબસાઈટ માટે સાડા બાર હજાર નક્કી થયા", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બાર હજાર", "value": 12500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "હોમ ટ્યુટરનું કામ કરું છું ઘરે જઈને, એક વિદ્યાર્થી દીઠ મહિને અઢારસો લઉં છું હું", "lang": "gu_gujr", "phrases": [{"phrase": "અઢારસો", "value": 1800}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "પાળેલા પ્રાણીઓને ફેરવવાનું કામ કરું છું સોસાયટીમાં, કૂતરા દીઠ રોજ દોઢસો મળે છે", "lang": "gu_gujr", "phrases": [{"phrase": "દોઢસો", "value": 150}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "અરે ક્યાં ગુમ થઈ ગયો તું, ગઈકાલથી ફોન જ નથી ઉપાડતો મારો", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "અલી થોડું રોકાય, હું ગાડી ચલાવું છું અત્યારે, પછી વિગતવાર વાત કરીશ તારી સાથે", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "પંચોતેર વર્ષના દાદાએ આજે પણ ગામનું ખેતર જાતે ખેડ્યું સવારે વહેલા", "lang": "gu_gujr", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "વીસ કિલોમીટર પગપાળા ચાલીને ગ્રામજનોએ યાત્રા કાઢી મંદિર સુધી સવારથી", "lang": "gu_gujr", "phrases": [], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "સગાઈ માટે સગાવ્હાલા ગામોગામથી ભેગા થયા હતા, હોલ મહેમાનોથી ભરાઈ ગયો હતો ચિક્કાર", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "ડિજિટલ પેમેન્ટ સિસ્ટમને લીધે ગ્રામીણ વિસ્તારના વ્યવહાર હવે પહેલા કરતાં વધુ ઝડપી થયા હોવાનું નિરીક્ષણ", "lang": "gu_gujr", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "એનું કહેવું છે કે આ વર્ષે ચોક્કસ કરોડપતિ થવાનો, પાંચ વર્ષથી આ જ વાત રિપીટ કરે છે", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "પાસપોર્ટ રિન્યુઅલ માટે ઓનલાઈન સ્લોટ ના મળ્યો, ત્રણ અઠવાડિયા રાહ જોવી પડી છેવટે", "lang": "gu_gujr", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "રિટર્ન પાર્સલ માટે ઓર્ડર નંબર એકોતેર હજુ ઘરેથી પિકઅપ થયો નથી", "lang": "gu_gujr", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "શીરખુરમા તૈયાર છે કે નહીં પૂછ્યું પડોશીએ, ઈદના દિવસે વહેંચવો છે બધાને", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "તબલા શીખવવા ગુરુજીને મહિને સાડા આઠસો રૂપિયા ગુરુદક્ષિણા આપું છું મારો દીકરો", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા આઠસો રૂપિયા", "value": 850}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "બારમા પછી એન્જિનિયરિંગ એન્ટ્રન્સના ક્લાસ માટે સંપૂર્ણ ફી સાડા ત્રણ લાખ ભરી આ વર્ષે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ લાખ", "value": 350000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "નાટકના રિહર્સલ માટે મેકઅપ અને કોસ્ટ્યુમનો ખર્ચ સાડા પાંચસો થયો દીકરીનો", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા પાંચસો", "value": 550}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "વક્તૃત્વ સ્પર્ધાની તૈયારી માટે ખાનગી શિક્ષક રાખ્યો, કલાકના સાડા ત્રણસો લે છે એ", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણસો", "value": 350}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "શાળા નજીક હોવાથી બાળકો ચાલીને જઈ શકશે, રિક્ષાનો અલગ ખર્ચ બચી જશે", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "જૂનું વાડા જેવું ઘર વેચવાનું છે ગામમાં, જૂના બાંધકામ સાથે કિંમત બાવીસ લાખ", "lang": "gu_gujr", "phrases": [{"phrase": "બાવીસ લાખ", "value": 2200000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "હોસ્ટેલના રૂમમાં ત્રણ જણ માટે જગ્યા છે, દરેકનું ભાડું સાડા ત્રણ હજાર પડશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "જીમનું સેટઅપ કરવું હોય તો જગ્યા ભાડે આપવા તૈયાર છું, અડતાલીસ હજાર મહિને", "lang": "gu_gujr", "phrases": [{"phrase": "અડતાલીસ હજાર", "value": 48000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ચીકુનો ભાવ આ વર્ષે ઘટ્યો, ફક્ત અઢાર રૂપિયા કિલો મળે છે ખેડૂતોને બજારમાં", "lang": "gu_gujr", "phrases": [{"phrase": "અઢાર રૂપિયા", "value": 18}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "સંતરાની પેટી વેચાણમાં કાઢી, નાગપુરી માલને સાડા આઠસો રૂપિયા ભાવ મળ્યો", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા આઠસો રૂપિયા", "value": 850}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "તલનો ભાવ ક્વિન્ટલ દીઠ સાડા દસ હજાર રૂપિયા પર પહોંચ્યો, તેલની મિલોની માંગ વધી", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા દસ હજાર રૂપિયા", "value": 10500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "ફ્લાવરનો ભાવ માર્કેટમાં આજે પાંત્રીસ રૂપિયા કિલો થયો, ઠંડીને લીધે ઉત્પાદન વધ્યું", "lang": "gu_gujr", "phrases": [{"phrase": "પાંત્રીસ રૂપિયા", "value": 35}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "પશુવૈદ્યકીય કોલેજમાં ઈન્ટર્નશીપનું સ્ટાઈપેન્ડ સાડા ચાર હજાર છે, છ મહિના માટે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર હજાર", "value": 4500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "હોમિયોપેથી કોલેજમાંથી ક્લિનિકલ પ્રેક્ટિસ કરતા વિદ્યાર્થીઓને મહિનાનું સાડા ત્રણ હજારનું ભથ્થું ચૂકવાય છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજારનું", "value": 3500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "ગ્રામસેવકનું કામચલાઉ માનધન સાડા આઠ હજાર છે, પાકું ના થાય ત્યાં સુધી એટલું જ", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા આઠ હજાર", "value": 8500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "જાનના સ્વાગત માટે ગુલાબજળ છાંટવાની વ્યવસ્થા કરી, ખર્ચ પણ ધ્યાનમાં લેવો પડ્યો", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "પાનસોપારીના સ્ટોલ સિવાય પણ હલવાઈને વધારાના સાડા બારસો રૂપિયા આપવા પડ્યા છેલ્લે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બારસો", "value": 1250}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "મંડપની LED લાઈટિંગ માટે ડિઝાઈનરે સાડા ચાર હજાર કોટ કર્યા છે, પૂરી સજાવટ સાથે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર હજાર", "value": 4500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "પત્રિકા પર સોનાનો મુલામો જોઈએ તો પ્રત્યેક દીઠ વીસ રૂપિયા વધુ લાગશે", "lang": "gu_gujr", "phrases": [{"phrase": "વીસ રૂપિયા", "value": 20}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "બહેન, અહીંથી બજાર સુધી નકરું રિક્ષાનું ભાડું શું છે એ કહો બરાબર મને", "lang": "gu_gujr", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "રાત્રે છેલ્લી બસ ચૂકી ગઈ એટલે શેર ટેક્સીવાળો ડબલ ભાડું માંગે છે હવે", "lang": "gu_gujr", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "બજારથી ઘર સુધી રિક્ષા હંમેશા ત્રીસમાં જાય છે, આજે પચાસ માંગે છે ખોટા", "lang": "gu_gujr", "phrases": [{"phrase": "ત્રીસમાં", "value": 30}, {"phrase": "પચાસ", "value": 50}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "લગ્નની સિઝનમાં ટેમ્પોવાળા હંમેશા કરતાં વધારે ભાડું વસૂલે છે હાલ બધે જ", "lang": "gu_gujr", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "કરાર કરતી વખતે ઘરની મરામતની જવાબદારી કોની એ સ્પષ્ટ લખાવી લેજો", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "સોસાયટીના નિયમો પ્રમાણે ભાડૂતે પાળેલા પ્રાણી રાખતા પહેલા મંજૂરી લેવી પડે છે", "lang": "gu_gujr", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ફોરવર્ડ ફરે છે કે આધાર લિંક કરવાથી સરકાર સીધા સાડા છ હજાર ખાતામાં નાખશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા છ હજાર", "value": 6500}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "આધાર લિંકિંગ મફત હોય છે, એના માટે ક્યારેય પૈસા નથી મળતા, ના ફસાવ પોતાને", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "મેસેજ આવ્યો છે કે એપ પર સર્વે ભરવાથી કંપની તમને સવા હજારનું ઈનામ આપશે", "lang": "gu_gujr", "phrases": [{"phrase": "સવા હજારનું", "value": 1250}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "આવા સર્વે લિંકમાં તારો ડેટા ચોરાય છે, આવા ફોર્મ ક્યારેય ના ભરીશ", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "તાલુકાની આંગણવાડીઓના રિનોવેશન માટે જિલ્લા પરિષદે સાડા ચાર કરોડ મંજૂર કર્યા ગઈકાલે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર કરોડ", "value": 45000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "સ્વચ્છતા અભિયાન માટે નગરપાલિકાને કેન્દ્ર તરફથી એક્યાસી લાખનું ફંડ મળ્યું છે", "lang": "gu_gujr", "phrases": [{"phrase": "એક્યાસી લાખનું", "value": 8100000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "તું હંમેશા કહે છે બિઝનેસમાં નુકસાન થાય છે, તો ગઈકાલે નવો ફ્લેટ કેવી રીતે લીધો", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "અરે વાહ, ગોવા જઈને આવ્યો પાંચ દિવસ, ઓફિસમાંથી પગાર વધારો મળ્યો લાગે છે", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "સ્પીકર સિસ્ટમ વેચવાની છે હોમ થિયેટરની, કિંમત સાડા છ હજાર નક્કી કરી છે છેલ્લી", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા છ હજાર", "value": 6500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "પ્રિન્ટર વેચવાનું છે કલર સ્કેનર સાથે, વર્ષભર વાપરેલું, કિંમત અઢારસો રૂપિયા", "lang": "gu_gujr", "phrases": [{"phrase": "અઢારસો રૂપિયા", "value": 1800}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "વોટર પ્યુરિફાયર વેચું છું RO સિસ્ટમ સાથે, ભાવ સાડા ત્રણ હજાર બોલું છું છેલ્લો", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "SBI બેંકનો SMS આવ્યો, ગૃહલોનની EMI સાડા ઓગણીસ હજાર કાલે કપાશે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ઓગણીસ હજાર", "value": 19500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "પાકની સિઝન માટે લીધેલી લોનનો હપ્તો ખેડૂતને દર મહિને સાડા ચાર હજારનો ચૂકવવો પડે છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર હજારનો", "value": 4500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "મોબાઈલ ફોનની લોન છ ભાગમાં ચૂકવવાનું ગોઠવ્યું છે, પ્રત્યેક ભાગ બારસો રૂપિયાનો", "lang": "gu_gujr", "phrases": [{"phrase": "બારસો રૂપિયાનો", "value": 1200}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "બિઝનેસ લોન પર વ્યાજ પોસાતું નથી, કુલ ભરપાઈ સાડા નવ લાખ થશે એવું બેંકે જણાવ્યું", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા નવ લાખ", "value": 950000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "આજે ફાર્મા સેક્ટરના શેર્સે બજારમાં સારો ઉછાળો બતાવ્યો એવું નિષ્ણાતોએ કહ્યું", "lang": "gu_gujr", "phrases": [], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "મારુતિનો શેર આજે ઓગણ્યાસી રૂપિયાથી વધ્યો, ઓટો સેક્ટરમાં તેજી પરત આવી છે", "lang": "gu_gujr", "phrases": [{"phrase": "ઓગણ્યાસી રૂપિયાથી", "value": 79}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "ઓપ્શન ટ્રેડિંગમાં સાડા સાત હજાર ગુમાવ્યા હતા, આજે માર્જિન કોલ આવ્યો અચાનક", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા સાત હજાર", "value": 7500}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "નેશનલ પેન્શન સ્કીમમાં મહિને સાડા બારસો ભરું છું, નિવૃત્તિ માટે લાંબા ગાળાનું આયોજન છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બારસો", "value": 1250}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "નાઈટ શિફ્ટમાં સિક્યુરિટી ગાર્ડ તરીકે કામ કરું છું સોસાયટીમાં, પગાર સાડા બાર હજાર છે મહિનાનો", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા બાર હજાર", "value": 12500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "મોલમાં પાર્કિંગ મેનેજમેન્ટનું કામ કરું છું પાર્ટટાઈમ, કલાકના સાઠ રૂપિયા મળે છે હાથમાં", "lang": "gu_gujr", "phrases": [{"phrase": "સાઠ રૂપિયા", "value": 60}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "સોશિયલ મીડિયા મેનેજમેન્ટનું કામ કરું છું નાની દુકાનો માટે, દરેક દુકાનમાંથી સાડા ચાર હજારની આવક થાય છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ચાર હજાર", "value": 4500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "બંગલાઓમાં બાગકામનું કામ કરું છું, ત્રણ ઘરમાંથી ભેગા મળીને સાડા ત્રણ હજાર જમા થાય છે", "lang": "gu_gujr", "phrases": [{"phrase": "સાડા ત્રણ હજાર", "value": 3500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "અલી સાંભળ, આજે સાંજે ઘરે આવી શકીશ જરા સમય કાઢીને", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "અરે રે, ફોનની બેટરી ખલાસ થઈ, ચાર્જર લગાવીને પાછો કોલ કરું છું તને", "lang": "gu_gujr", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "ત્યાસી વર્ષના દાદા આજે પણ રોજ પરોઢિયે મંદિરે જઈને ઘંટ વગાડે છે", "lang": "gu_gujr", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "આઠ કિલોમીટર તરીને દરિયો પાર કરનાર સ્વિમરની ચર્ચા બધે થઈ રહી છે અત્યારે", "lang": "gu_gujr", "phrases": [], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "લગ્ન પછી વરવધૂને આશીર્વાદ આપવા હજારો સગાવ્હાલા લાઈનમાં ઊભા હતા હોલમાં", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "ગ્રામીણ વિસ્તારોમાં ઈન્ટરનેટ કનેક્ટિવિટી સુધારવા નવા ટાવર ઉભા કરવાનું કામ શરૂ થયું છે", "lang": "gu_gujr", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "એનું કહેવું છે કે શેર માર્કેટમાંથી કરોડો કમાવાનો છે, હજુ ખાતું જ ખોલ્યું નથી", "lang": "gu_gujr", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "નવા રેશન કાર્ડ માટે અરજી કરીને ત્રણ મહિના થયા છતાં હજુ મંજૂર થયું નથી", "lang": "gu_gujr", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "રિટર્ન પાર્સલનો ટ્રેકિંગ નંબર ઓગણ્યાસી હજુ કુરિયર ઓફિસમાં જ પડ્યો છે", "lang": "gu_gujr", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "બરફીનો ડબ્બો તૈયાર રાખવાનું કહ્યું છે હલવાઈને, સાંજે મહેમાન ઘરે આવવાના છે", "lang": "gu_gujr", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}

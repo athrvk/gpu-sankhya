@@ -31,6 +31,7 @@ _EXTRA_VARIANTS = {
     1: ["ek", "1"],
     2: ["do"],
     3: ["teen", "tin"],
+    4: ["char"],
     5: ["paanch", "panch", "paach"],
     6: ["chhe", "che", "chhah", "chah", "cheh"],
     10: ["dus"],

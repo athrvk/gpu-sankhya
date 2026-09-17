@@ -30,3 +30,12 @@ what matters here is AUTHENTIC surface text, not the label.
 - Numbers must be plausible for the scenario (a phone costs 15k-1.5L, not 5 crore).
 - For Devanagari packs, write Devanagari the way people type it on phones (some Latin words mixed in is fine and realistic).
 - Do not invent number words that do not exist; unusual spellings of real words are welcome.
+
+## Process rule (learned the hard way)
+
+Write every line yourself, directly. Do NOT write a generator script, slot-filling
+template, or loop that assembles sentences from lists — that is what
+`python/sankhya/generator.py` already does, and the point of this corpus is
+LLM-authored phrasing the grammar lacks. Code is allowed only to append lines and
+to self-check (JSON validity, phrase-in-text, uniqueness, and a sliding 5-gram
+overlap check: no two lines may share more than 4 consecutive words).

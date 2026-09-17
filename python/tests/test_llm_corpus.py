@@ -142,6 +142,95 @@ def test_range_phrase_accepted():
     assert sp["range"] == [200000, 300000]
 
 
+def test_currency_marker_trimmed_from_span():
+    """Rs.4,500 -> span excludes "Rs.", value is 4500 not 0.45; currency
+    is still detected from the (now-adjacent) marker."""
+    obj = {
+        "text": "usne Rs.4,500 diye mujhe",
+        "lang": "hi_latn",
+        "phrases": [{"phrase": "Rs.4,500", "value": 4500}],
+    }
+    ex = _verify(obj)
+    sp = ex["spans"][0]
+    assert sp["value"] == 4500, sp
+    assert ex["text"][sp["start"]:sp["end"]] == "4,500"
+    assert sp["currency"] == "INR"
+
+
+def test_currency_marker_trimmed_grouped_digits():
+    obj = {
+        "text": "flat Rs.1,20,000 mein diya",
+        "lang": "hi_latn",
+        "phrases": [{"phrase": "Rs.1,20,000", "value": 120000}],
+    }
+    ex = _verify(obj)
+    sp = ex["spans"][0]
+    assert sp["value"] == 120000, sp
+    assert ex["text"][sp["start"]:sp["end"]] == "1,20,000"
+
+
+def test_hyphen_between_digit_and_unit_word_is_not_range():
+    """"35-lakh" is a compound number (digit glued to unit by hyphen), not
+    a range -- the hyphen must stay SEP, not RANGE."""
+    obj = {
+        "text": "gaadi 35-lakh mein bik gayi",
+        "lang": "hi_latn",
+        "phrases": [{"phrase": "35-lakh", "value": 3500000}],
+    }
+    ex = _verify(obj)
+    sp = ex["spans"][0]
+    assert sp["value"] == 3500000, sp
+    assert sp["range"] is None
+
+
+def test_hyphen_between_two_digit_runs_is_range():
+    obj = {
+        "text": "flat 2-3 lakh mein aa jayega",
+        "lang": "hi_latn",
+        "phrases": [{"phrase": "2-3 lakh", "value": 200000, "range": [200000, 300000]}],
+    }
+    ex = _verify(obj)
+    sp = ex["spans"][0]
+    assert sp["range"] == [200000, 300000]
+
+
+def test_ambiguous_phrase_respects_token_boundary():
+    """"5000" is a substring of "45000" but not a boundary match, so the
+    claimed "5000" phrase resolves unambiguously to its own occurrence."""
+    obj = {
+        "text": "sirf 5000 ka tha, ab 45000",
+        "lang": "hi_latn",
+        "phrases": [{"phrase": "5000", "value": 5000}],
+    }
+    ex = _verify(obj)
+    sp = ex["spans"][0]
+    assert ex["text"][sp["start"]:sp["end"]] == "5000"
+    assert sp["value"] == 5000
+
+
+def test_negative_duration_prefix_words_accepted():
+    for text in ["saadhe teen baje", "dhai mahine ka advance", "chaar dost"]:
+        obj = {"text": text, "lang": "hi_latn", "phrases": []}
+        ex = _verify(obj)
+        assert ex["spans"] == [], text
+
+
+def test_negative_unit_word_still_rejected():
+    """"unnees so pachasi" contains "so" (UNIT_SAU) -- still ambiguous
+    enough to reject as a negative."""
+    obj = {"text": "unnees so pachasi mein hua tha", "lang": "hi_latn", "phrases": []}
+    try:
+        _verify(obj)
+        assert False, "expected RejectError"
+    except LC.RejectError as e:
+        assert e.args[0] == "negative_contains_quantity", e.args[0]
+
+
+def test_char_maps_to_card_4():
+    forms = pack.all_forms()
+    assert forms.get("char") == "CARD_4"
+
+
 def test_lang_mismatch_rejected():
     obj = {
         "text": "some devanagari lang line",

@@ -1,0 +1,40 @@
+{
+  "langs": {
+    "hi_latn": {
+      "timestamp": "2026-09-17T06:48:39Z",
+      "total": 1200,
+      "accepted": 1187,
+      "rejected": 13,
+      "malformed": 0,
+      "prompt_file": "/home/user/gpu-sankhya/python/data_llm/prompts/GENERATOR_BRIEF.md",
+      "prompt_sha256": "0bf0dc814bfa59f79f7aa1f1bbb4c2099065e9453b59bf42c9308c53773c3ee6",
+      "input_files": [
+        "data_llm/raw/hi_latn.sonnet.jsonl"
+      ],
+      "reject_histogram": {
+        "value_mismatch": 2,
+        "negative_contains_quantity": 9,
+        "ambiguous_phrase": 1,
+        "unknown_token": 1
+      }
+    },
+    "hi_deva": {
+      "timestamp": "2026-09-17T06:50:06Z",
+      "total": 1111,
+      "accepted": 1049,
+      "rejected": 62,
+      "malformed": 0,
+      "prompt_file": "/home/user/gpu-sankhya/python/data_llm/prompts/GENERATOR_BRIEF.md",
+      "prompt_sha256": "0bf0dc814bfa59f79f7aa1f1bbb4c2099065e9453b59bf42c9308c53773c3ee6",
+      "input_files": [
+        "data_llm/raw/hi_deva.sonnet.jsonl"
+      ],
+      "reject_histogram": {
+        "value_mismatch": 41,
+        "unknown_token": 6,
+        "negative_contains_quantity": 8,
+        "ambiguous_phrase": 7
+      }
+    }
+  }
+}

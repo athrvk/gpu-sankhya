@@ -116,26 +116,45 @@ def _word_class(pack, word_lower):
     return None
 
 
+_RANGE_CONNECTOR_CHARS = ("-", "–", "—", "/")
+
+
+def _is_numeric_cls(cls):
+    return cls == "DIGITS" or (bool(cls) and (cls.startswith("CARD_") or cls.startswith("PFX_")))
+
+
 def tokenize_span_text(pack, text):
     """Tokenize a normalized phrase/text segment into (cls, text) tokens,
     the same shape generator.py's `build_term_tokens` produces. Raises
     TokenizeError('unknown_token:<token>') for a letters-run this pack's
     lexicon does not recognise (a lone possessive suffix like "'s" is
-    tolerated as O, mirroring generator._maybe_possessive)."""
-    tokens = []
+    tolerated as O, mirroring generator._maybe_possessive).
+
+    A "-"/"–"/"—"/"/" run only becomes RANGE when BOTH its
+    non-space neighbours are numeric (DIGITS/CARD_/PFX_) -- mirroring
+    decode.py's `_connector_is_range` -- so "35-lakh" (a compound number,
+    left DIGITS / right UNIT_LAKH) stays SEP while "2-3 lakh" (DIGITS both
+    sides) becomes RANGE."""
+    runs = list(_iter_runs(text))
+
+    # pass 1: resolve every run except the connector-candidate 'other' runs,
+    # which need lookahead/lookbehind to classify.
+    resolved = []  # list of (kind, run_text, tokens_or_None)
     prev_other = None
-    for kind, run in _iter_runs(text):
+    for kind, run in runs:
         if kind == "space":
-            tokens.append(("SEP", run))
+            resolved.append((kind, run, [("SEP", run)]))
             prev_other = None
         elif kind == "numeric":
+            toks = []
             for ch in run:
                 if ch == ".":
-                    tokens.append(("DOT", ch))
+                    toks.append(("DOT", ch))
                 elif ch == ",":
-                    tokens.append(("COMMA", ch))
+                    toks.append(("COMMA", ch))
                 else:
-                    tokens.append(("DIGITS", ch))
+                    toks.append(("DIGITS", ch))
+            resolved.append((kind, run, toks))
             prev_other = None
         elif kind == "letter":
             cls = _word_class(pack, run.lower())
@@ -145,28 +164,87 @@ def tokenize_span_text(pack, text):
                     cls = "O"
                 else:
                     raise TokenizeError(f"unknown_token:{run}")
-            tokens.append((cls, run))
+            resolved.append((kind, run, [(cls, run)]))
             prev_other = None
-        else:  # 'other': single punctuation/symbol char
-            if run in ("-", "–", "—", "/"):
-                tokens.append(("RANGE", run))
-            else:
-                tokens.append(("O", run))
+        else:  # 'other': single punctuation/symbol char, resolved in pass 2
+            resolved.append((kind, run, None))
             prev_other = run
+
+    def _neighbor_cls(idx, direction):
+        j = idx + direction
+        while 0 <= j < len(resolved) and resolved[j][0] == "space":
+            j += direction
+        if j < 0 or j >= len(resolved):
+            return None
+        _, _, toks = resolved[j]
+        if not toks:
+            return None
+        return toks[-1][0] if direction < 0 else toks[0][0]
+
+    for idx, (kind, run, toks) in enumerate(resolved):
+        if kind != "other":
+            continue
+        if run in _RANGE_CONNECTOR_CHARS:
+            left = _neighbor_cls(idx, -1)
+            right = _neighbor_cls(idx, 1)
+            if _is_numeric_cls(left) and _is_numeric_cls(right):
+                resolved[idx] = (kind, run, [("RANGE", run)])
+            else:
+                resolved[idx] = (kind, run, [("SEP", run)])
+        else:
+            resolved[idx] = (kind, run, [("O", run)])
+
+    tokens = []
+    for _, _, toks in resolved:
+        tokens.extend(toks)
     return tokens
 
 
 def _negative_has_quantity(pack, normalized_text):
-    """True if a UNIT_*/PFX_* lexicon form (word or symbol, e.g. bare "k"
-    glued to digits) appears anywhere in the text -- disqualifies it as a
-    negative."""
+    """True if the text would leak a real quantity if left unlabelled:
+
+    - a spelled-out UNIT_* lexicon word (e.g. "lakh", "crore") anywhere, or
+    - a bare UNIT_* symbol form (e.g. the "k" in "50k") immediately glued
+      (no space) to a preceding digit run of >= 3 digits, or
+    - a currency marker (before-marker word/symbol, or after-word like
+      "rupaye"/"/-") anywhere.
+
+    PFX_* words ("saadhe", "dhai", ...) alone do NOT disqualify a negative:
+    they are legitimate time/duration/count words ("saadhe teen baje",
+    "dhai mahine ka advance") when not paired with a unit."""
     forms = pack.all_forms()
-    for kind, run in _iter_runs(normalized_text):
-        if kind != "letter":
-            continue
-        cls = forms.get(run.lower())
-        if cls and (cls.startswith("UNIT_") or cls.startswith("PFX_")):
+    symbol_forms = set()
+    for cls, surfaces in pack.symbol_units.items():
+        symbol_forms.update(s.lower() for s in surfaces)
+
+    marker_words = {m.strip(".").lower() for m in pack.currency_markers_before if m.strip(".").isalpha()}
+    marker_symbols = {m for m in pack.currency_markers_before if not m.strip(".").isalpha()}
+    after_words = {w.lower() for w in getattr(pack, "currency_words_after", []) if w.isalpha()}
+    after_symbols = {w for w in getattr(pack, "currency_words_after", []) if not w.isalpha()}
+
+    for sym in marker_symbols | after_symbols:
+        if sym and sym in normalized_text:
             return True
+
+    prev_numeric_digits = 0
+    prev_run_kind = None
+    for kind, run in _iter_runs(normalized_text):
+        if kind == "letter":
+            wl = run.lower()
+            if wl in marker_words or wl in after_words:
+                return True
+            cls = forms.get(wl)
+            if cls and cls.startswith("UNIT_"):
+                if wl not in symbol_forms:
+                    return True  # spelled-out unit word: always disqualifies
+                if prev_run_kind == "numeric" and prev_numeric_digits >= 3:
+                    return True
+            prev_run_kind = "letter"
+        elif kind == "numeric":
+            prev_numeric_digits = sum(1 for ch in run if ch.isdigit())
+            prev_run_kind = "numeric"
+        else:
+            prev_run_kind = kind
     return False
 
 
@@ -197,6 +275,67 @@ class RejectError(Exception):
     def __init__(self, reason):
         super().__init__(reason)
         self.reason = reason
+
+
+def _is_word_char(ch):
+    return ch.isalnum()
+
+
+def _find_boundary_occurrences(text, phrase):
+    """Every start index where `phrase` occurs in `text` on a token
+    boundary: if `phrase` starts/ends with an alnum char, the char just
+    outside that end (if any) must not itself be alnum -- so "5000" inside
+    "45000" is not a match, but "5000" in "sirf 5000 ka" is."""
+    if not phrase:
+        return []
+    positions = []
+    start = 0
+    starts_word = _is_word_char(phrase[0])
+    ends_word = _is_word_char(phrase[-1])
+    while True:
+        idx = text.find(phrase, start)
+        if idx == -1:
+            break
+        left_ok = not (starts_word and idx > 0 and _is_word_char(text[idx - 1]))
+        end = idx + len(phrase)
+        right_ok = not (ends_word and end < len(text) and _is_word_char(text[end]))
+        if left_ok and right_ok:
+            positions.append(idx)
+        start = idx + 1
+    return positions
+
+
+def _trim_currency(pack, normalized, start, end):
+    """Trim a leading currency_markers_before marker (+ following spaces)
+    and/or a trailing currency_words_after word (+ preceding spaces) off
+    [start, end) -- the gold convention is the span EXCLUDES the currency
+    marker/word ("Rs.4,500" -> span "4,500"; "500 rupaye" -> span "500"),
+    with the marker still visible to core.detect_currency via its
+    before/after lookback/lookahead window on the (now-adjacent) text."""
+    before_markers = sorted({m.lower() for m in pack.currency_markers_before}, key=len, reverse=True)
+    seg_lower = normalized[start:end].lower()
+    for m in before_markers:
+        if m and seg_lower.startswith(m):
+            j = start + len(m)
+            while j < end and normalized[j] == " ":
+                j += 1
+            start = j
+            seg_lower = normalized[start:end].lower()
+            break
+
+    after_words = sorted(
+        {w.lower() for w in getattr(pack, "currency_words_after", [])}, key=len, reverse=True
+    )
+    seg_lower = normalized[start:end].lower()
+    for w in after_words:
+        if w and seg_lower.endswith(w):
+            k = end - len(w)
+            while k > start and normalized[k - 1] == " ":
+                k -= 1
+            end = k
+            break
+
+    return start, end
 
 
 def verify_line(pack, obj, gold_texts, seen_texts):
@@ -256,15 +395,16 @@ def verify_line(pack, obj, gold_texts, seen_texts):
         phrase_norm = CS.normalize_text(phrase)
         if len(phrase_norm) != len(phrase):
             raise RejectError("nfc_length_mismatch")
-        occurrences = normalized.count(phrase_norm)
-        if occurrences == 0:
+        occurrence_positions = _find_boundary_occurrences(normalized, phrase_norm)
+        if not occurrence_positions:
             raise RejectError("phrase_not_found")
-        if occurrences != claimed_counts[phrase_norm]:
+        if len(occurrence_positions) != claimed_counts[phrase_norm]:
             raise RejectError("ambiguous_phrase")
 
-        start = normalized.find(phrase_norm, search_cursor[phrase_norm])
-        if start == -1:
+        candidates = [p for p in occurrence_positions if p >= search_cursor[phrase_norm]]
+        if not candidates:
             raise RejectError("phrase_not_found")
+        start = candidates[0]
         end = start + len(phrase_norm)
         search_cursor[phrase_norm] = end
 
@@ -272,6 +412,10 @@ def verify_line(pack, obj, gold_texts, seen_texts):
             if start < ue and us < end:
                 raise RejectError("overlapping_phrase")
         used_spans.append((start, end))
+
+        start, end = _trim_currency(pack, normalized, start, end)
+        if start >= end:
+            raise RejectError("phrase_not_found")
 
         span_text = normalized[start:end]
         try:
