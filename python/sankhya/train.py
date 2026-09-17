@@ -117,15 +117,26 @@ def evaluate_model(model, chars, bio, cls, mask, examples, batch=256, device="cp
     all_bio_probs = []
     bio_correct = bio_total = 0
     cls_correct = cls_total = 0
+    use_crf = model.crf is not None
     for i in range(0, n, batch):
         cb = chars[i:i + batch].to(device)
         mb = mask[i:i + batch].to(device)
         bb = bio[i:i + batch].to(device)
         clb = cls[i:i + batch].to(device)
         bio_logits, cls_logits = model(cb)
-        bio_pred = bio_logits.argmax(-1)
         cls_pred = cls_logits.argmax(-1)
         bio_probs = torch.softmax(bio_logits, dim=-1)
+        if use_crf:
+            lengths = mb.sum(dim=1).long()
+            bio_pred = torch.zeros_like(bb)
+            for j in range(cb.shape[0]):
+                Lj = int(lengths[j].item())
+                if Lj == 0:
+                    continue
+                path = model.crf.viterbi(bio_logits[j, :Lj])
+                bio_pred[j, :Lj] = torch.tensor(path, dtype=bio_pred.dtype, device=bio_pred.device)
+        else:
+            bio_pred = bio_logits.argmax(-1)
         m = mb.bool()
         bio_correct += ((bio_pred == bb) & m).sum().item()
         bio_total += m.sum().item()
@@ -179,6 +190,9 @@ def main(argv=None):
     ap.add_argument("--num-train", type=int, default=None, help="subsample training set to this many examples")
     ap.add_argument("--device", default="cpu", choices=["cpu", "auto"],
                      help="'cpu' (default, unchanged behaviour) or 'auto' to use CUDA when available")
+    ap.add_argument("--crf", action="store_true",
+                     help="add a linear-chain CRF head over BIO emissions (see crf.py); "
+                          "loss becomes crf_nll + masked cls CE, and BIO decoding uses Viterbi")
     ap.add_argument("--extra", nargs="+", default=None,
                      help="extra jsonl file(s) (e.g. verified LLM corpus) mixed into training at --extra-ratio")
     ap.add_argument("--extra-ratio", type=float, default=0.2,
@@ -250,7 +264,7 @@ def main(argv=None):
     arch = ARCHS[args.arch] if args.arch else None
     model = SankhyaCNN(
         vocab_size=len(vocab), n_cls=len(C.CLASSES), arch=arch, dilation=args.dilation,
-        channels=args.channels, layers=args.layers, embed_dim=args.embed_dim,
+        channels=args.channels, layers=args.layers, embed_dim=args.embed_dim, crf=args.crf,
     ).to(device)
     n_params = count_params(model)
     print(f"param count: {n_params} (arch={args.arch or 'legacy'} channels={args.channels} layers={len(model.arch)})")
@@ -282,6 +296,7 @@ def main(argv=None):
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=args.lr, total_steps=total_steps)
 
     # B (class 1) is rare relative to O/I; upweight it 2x in the bio loss.
+    # (Not used when --crf is on: the CRF's NLL replaces the weighted CE.)
     bio_class_weight = torch.tensor([1.0, 2.0, 1.0], dtype=torch.float32, device=device)
     ce_bio = nn.CrossEntropyLoss(reduction="none", weight=bio_class_weight, label_smoothing=args.label_smoothing)
     ce_cls = nn.CrossEntropyLoss(reduction="none", label_smoothing=args.label_smoothing)
@@ -314,10 +329,13 @@ def main(argv=None):
 
             bio_logits, cls_logits = model(cb)
             B, L, _ = bio_logits.shape
-            loss_bio = ce_bio(bio_logits.reshape(B * L, -1), bb.reshape(B * L))
             loss_cls = ce_cls(cls_logits.reshape(B * L, -1), clb.reshape(B * L))
             m = mb.reshape(B * L)
-            loss = ((loss_bio + loss_cls) * m).sum() / m.sum().clamp_min(1)
+            if args.crf:
+                loss = model.crf.nll(bio_logits, bb, mb) + (loss_cls * m).sum() / m.sum().clamp_min(1)
+            else:
+                loss_bio = ce_bio(bio_logits.reshape(B * L, -1), bb.reshape(B * L))
+                loss = ((loss_bio + loss_cls) * m).sum() / m.sum().clamp_min(1)
 
             opt.zero_grad()
             loss.backward()
@@ -345,8 +363,7 @@ def main(argv=None):
     print(f"best val value_acc={best_vacc:.4f} span_f1={best_metrics['span_f1']:.4f}")
 
     model.load_state_dict(best_state)
-    ckpt_path = os.path.join(args.out, "sankhya.pt")
-    torch.save({
+    ckpt = {
         "state_dict": model.state_dict(),
         "vocab": vocab,
         "classes": C.CLASSES,
@@ -357,7 +374,16 @@ def main(argv=None):
         "embed_dim": args.embed_dim,
         "seed": args.seed,
         "val_metrics": {k: v for k, v in best_metrics.items() if k != "misses"},
-    }, ckpt_path)
+        "use_crf": args.crf,
+    }
+    if model.crf is not None:
+        ckpt["crf"] = {
+            "trans": model.crf.trans.detach().cpu().tolist(),
+            "start": model.crf.start.detach().cpu().tolist(),
+            "end": model.crf.end.detach().cpu().tolist(),
+        }
+    ckpt_path = os.path.join(args.out, "sankhya.pt")
+    torch.save(ckpt, ckpt_path)
     print(f"saved checkpoint to {ckpt_path}")
 
     with open(os.path.join(args.out, "charset.json"), "w", encoding="utf-8") as f:

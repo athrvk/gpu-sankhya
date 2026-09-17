@@ -165,6 +165,33 @@ not from export flags) and writes to `models/`:
 `export.py` also runs a val-set sanity check (numpy reference forward pass
 vs. the torch model) before writing, so a broken export fails loudly.
 
+## CRF head for BIO decoding (optional)
+
+Pass `--crf` to `sankhya.train` to add a linear-chain CRF over the BIO
+emissions (`O`/`B`/`I`), in addition to the per-character class head:
+
+```bash
+python -m sankhya.train --train data/train.jsonl --val data/val.jsonl --crf --out models/
+```
+
+- Training loss becomes `crf_nll + masked cls CE` (the CRF replaces the
+  weighted BIO cross-entropy; the class head is unchanged).
+- The checkpoint gets `ckpt["use_crf"] = True` and `ckpt["crf"] =
+  {"trans", "start", "end"}` (3x3 / 3 / 3 lists); `export.py` writes the
+  same tensors, in float (never quantized — it's only 15 numbers), as a
+  top-level `"crf"` block into *both* `sankhya.weights.json` and
+  `sankhya.weights.int8.json`. The ONNX graph is unaffected — `forward()`
+  always returns raw emissions; the CRF only changes how those emissions
+  get decoded into a BIO path (Viterbi, `sankhya/crf.py`).
+- Weights files without a `crf` block (every file exported before this,
+  or trained without `--crf`) keep decoding BIO via plain per-position
+  argmax — this is fully backward compatible. `np_infer.bio_path(...)`
+  is the single choke point that picks Viterbi vs. argmax based on
+  whether `weights["crf"]` is present, and is used by `eval_gold.py`,
+  `make_fixtures.py`, and `export.py`'s int8 value-accuracy check.
+- The Kaggle `MATRIX` env var accepts an optional 4th `arch:channels:seed:crf`
+  field (`crf` ∈ {0,1}, default 0) — see `python/kaggle_train/train_kernel.py`.
+
 ## Evaluate on gold
 
 The hand-written gold sets (`tests/gold.jsonl`, 220 sentences / 194 spans,

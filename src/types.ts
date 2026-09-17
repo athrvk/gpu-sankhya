@@ -86,6 +86,14 @@ export interface WeightsJsonV2Float {
   conv: ConvLayerJsonFloat[];
   bio: { w: { shape: number[]; data: number[] }; b: { shape: number[]; data: number[] } };
   cls: { w: { shape: number[]; data: number[] }; b: { shape: number[]; data: number[] } };
+  /** Optional CRF params over the BIO head (3 labels: O/B/I). Stored as
+   * float tensors even in the int8 weights file -- 15 numbers, not worth
+   * quantizing. Absent -> legacy argmax BIO decoding. */
+  crf?: {
+    trans: { shape: number[]; data: number[] }; // (3,3)
+    start: { shape: number[]; data: number[] }; // (3,)
+    end: { shape: number[]; data: number[] }; // (3,)
+  };
 }
 
 /** Weights JSON version 2, int8 form. */
@@ -100,6 +108,13 @@ export interface WeightsJsonV2Int8 {
   conv: ConvLayerJsonInt8[];
   bio: { w: { shape: number[]; scale: number; data_b64: string }; b: number[] };
   cls: { w: { shape: number[]; scale: number; data_b64: string }; b: number[] };
+  /** Optional CRF params -- stored in FLOAT even in the int8 file (see
+   * WeightsJsonV2Float.crf). */
+  crf?: {
+    trans: { shape: number[]; data: number[] };
+    start: { shape: number[]; data: number[] };
+    end: { shape: number[]; data: number[] };
+  };
 }
 
 export type WeightsJson = WeightsJsonFloat | WeightsJsonInt8 | WeightsJsonV2Float | WeightsJsonV2Int8;
@@ -128,4 +143,7 @@ export interface ModelInfo {
   vocab: number;
   classes: number;
   layers: Array<{ k: number; dilation: number; residual: boolean }>;
+  /** Whether the loaded weights include a CRF head (Viterbi decoding used
+   * for BIO instead of legacy per-position argmax). */
+  crf: boolean;
 }

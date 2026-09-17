@@ -35,6 +35,11 @@ def round_arr(a, n=5):
 
 
 def export_onnx(model, vocab_size, out_path):
+    # NOTE: ONNX export is unchanged even when the model has a CRF head --
+    # model.forward() only ever returns raw (bio, cls) emissions (see
+    # model.py), so the CRF's trans/start/end params never enter the graph.
+    # The CRF is applied afterwards, only in numpy/JS Viterbi decoding via
+    # the "crf" block written into the weights JSON below.
     model.eval()
     dummy = torch.randint(0, vocab_size, (1, 10), dtype=torch.int64)
     torch.onnx.export(
@@ -98,6 +103,15 @@ def build_weights_json(model, vocab, classes):
             "w": {"shape": list(w.shape), "data": round_arr(w)},
             "b": {"shape": list(b.shape), "data": round_arr(b)},
         }
+    if model.crf is not None:
+        trans = t(sd["crf.trans"])
+        start = t(sd["crf.start"])
+        end = t(sd["crf.end"])
+        out["crf"] = {
+            "trans": {"shape": list(trans.shape), "data": round_arr(trans)},
+            "start": {"shape": list(start.shape), "data": round_arr(start)},
+            "end": {"shape": list(end.shape), "data": round_arr(end)},
+        }
     return out
 
 
@@ -141,6 +155,16 @@ def build_weights_int8_json(model, vocab, classes):
         w = t(sd[f"{key}.weight"])
         b = t(sd[f"{key}.bias"])
         out[name] = {"w": qtensor(w), "b": [sig(v) for v in b.tolist()]}
+    if model.crf is not None:
+        # CRF stays float (not quantized) -- it's only 15 numbers, per contract.
+        trans = t(sd["crf.trans"])
+        start = t(sd["crf.start"])
+        end = t(sd["crf.end"])
+        out["crf"] = {
+            "trans": {"shape": list(trans.shape), "data": round_arr(trans)},
+            "start": {"shape": list(start.shape), "data": round_arr(start)},
+            "end": {"shape": list(end.shape), "data": round_arr(end)},
+        }
     return out
 
 
@@ -157,13 +181,16 @@ def main(argv=None):
     channels = ckpt.get("channels", 32)
     embed_dim = ckpt.get("embed_dim", 16)
     arch = ckpt.get("arch")
+    use_crf = ckpt.get("use_crf", False)
     if arch is not None:
-        model = SankhyaCNN(vocab_size=len(vocab), n_cls=len(classes), arch=arch, channels=channels, embed_dim=embed_dim)
+        model = SankhyaCNN(vocab_size=len(vocab), n_cls=len(classes), arch=arch, channels=channels,
+                            embed_dim=embed_dim, crf=use_crf)
     else:
         # old checkpoint: rebuild from legacy dilation/layers keys
         dilation = ckpt.get("dilation", 1)
         layers = ckpt.get("layers", 3)
-        model = SankhyaCNN(vocab_size=len(vocab), n_cls=len(classes), dilation=dilation, channels=channels, layers=layers)
+        model = SankhyaCNN(vocab_size=len(vocab), n_cls=len(classes), dilation=dilation, channels=channels,
+                            layers=layers, crf=use_crf)
     model.load_state_dict(ckpt["state_dict"])
     model.eval()
 
@@ -198,7 +225,7 @@ def main(argv=None):
             row = np_infer.pad_ids(chars_np[i, :L])
             bio_logits, cls_logits = np_infer.forward(weights_np, row)
             bio_logits, cls_logits = bio_logits[:L], cls_logits[:L]
-            bio_pred = bio_logits.argmax(-1).tolist()
+            bio_pred = np_infer.bio_path(bio_logits, weights_np)
             cls_pred = cls_logits.argmax(-1).tolist()
             bio_probs = np_infer.softmax(bio_logits, axis=-1).tolist()
             decoded = decode_spans(text, bio_pred, cls_pred, bio_probs=bio_probs)
