@@ -341,6 +341,15 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   genuine ranges (only one side has a unit, or both do but ascending) are
   unaffected.
 
+An optional linear-chain CRF (`--crf`, see `python/README.md`) can replace
+the plain per-character argmax with Viterbi decoding, but experiments on
+this dataset found it doesn't beat the plain model — 0.957 vs. 0.965
+combined gold value accuracy at best — while training ~7x slower and
+occasionally showing unexplained late-training loss blowups; the
+structural rules above already give the decoded label sequence most of
+the coherence a CRF would add. It ships as a tested, opt-in flag; the
+bundled weights do not use it.
+
 One more detail that matters more than it looks like it should: the
 runtime right-pads the character-id array with 24 pad tokens before
 running the forward pass (mirroring `python/sankhya/np_infer.py`'s
