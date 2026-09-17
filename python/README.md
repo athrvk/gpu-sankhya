@@ -113,6 +113,38 @@ cuDNN, a given seed reproduces the same result).
 Other flags: `--label-smoothing`, `--grad-clip`, `--num-train` (subsample
 the training set).
 
+### Mixing in an extra corpus (`--extra`)
+
+```bash
+python -m sankhya.train \
+  --train data/train.jsonl --val data/val.jsonl \
+  --extra data_llm/hi_latn.jsonl --extra-ratio 0.2 \
+  --lang hi_latn --out models/
+```
+
+`--extra` takes one or more jsonl files in the same schema as `--train`
+(text/lang/bio/cls/spans — e.g. the output of `sankhya.llm_corpus verify`,
+see "LLM-written corpus" below) and mixes them into training alongside the
+synthetic `--train` set. Mixing works per-epoch, not as a one-time
+concatenation: let `n_main` be the size of `--train` and `n_extra_pool` the
+size of the `--extra` pool. Each epoch, `n_extra_per_epoch =
+round(n_main * ratio / (1 - ratio))` extra examples are freshly drawn from
+the pool (`ratio` = `--extra-ratio`, so `n_extra_per_epoch / (n_main +
+n_extra_per_epoch) ~= ratio`) — **without** replacement if the pool is at
+least that big that epoch (a subsample), **with** replacement otherwise (an
+oversample) — then shuffled together with the full `--train` set for that
+epoch's batches. Because the sample is redrawn every epoch, even a small
+extra pool gets seen in different combinations rather than being replayed
+identically. `--extra-ratio 0` (or omitting `--extra`) disables mixing
+entirely — unchanged behaviour.
+
+The extra corpus is tensorized against the **same charset** built from
+`--lang` (never rebuilt to include extra-only characters), so any character
+in it that isn't in a pack's charset maps to `<unk>` exactly like unknown
+production input would — `train.py` prints a warning listing the 20 most
+frequent such characters (and how many extra examples they came from) so
+you can see whether an unexpected script slipped in.
+
 ## Export
 
 ```bash
@@ -332,12 +364,93 @@ fixtures that pin the JS forward pass and decoder to this exact model.
    `make_fixtures.py` against the same weights + gold set is deterministic
    (no RNG involved), so this reproduces the existing fixtures exactly.
 
+## LLM-written corpus
+
+`python -m sankhya.llm_corpus` verifies free-text lines written by an LLM
+(following `data_llm/prompts/GENERATOR_BRIEF.md`) against this repo's own
+lexicon + `core.evaluate`, and turns accepted lines into the same
+text/lang/bio/cls/spans schema `sankhya.generator` produces, so they load
+through `train.py`'s `load_jsonl`/`tensorize` unchanged.
+
+**Format.** Other agents write one JSON object per line to
+`data_llm/raw/<lang>.<agent>.jsonl`:
+
+```json
+{"text": "bhai sava lakh mein ho jayega kya", "lang": "hi_latn", "phrases": [{"phrase": "sava lakh", "value": 125000}], "scenario": "casual", "gen": "sonnet"}
+```
+
+`phrases` is `[]` for negatives (no quantity in the line); `phrase` must be
+an exact substring of `text`; `range` is included alongside `value` for
+range phrases (`"phrase": "2-3 lakh", "value": 200000, "range": [200000, 300000]`).
+See the prompt file for the full spec (registers, forms, coverage targets).
+
+**Verify:**
+
+```bash
+python -m sankhya.llm_corpus verify --lang hi_latn \
+  --in data_llm/raw/*.jsonl --out data_llm/hi_latn.jsonl \
+  --rejects data_llm/rejects/hi_latn.jsonl --manifest data_llm/manifest.json
+```
+
+For each raw line: text is located via `charset.normalize_text` substring
+matching, the phrase is tokenized with the SAME greedy lexicon lookup
+`sankhya.generator` uses to assign per-char classes, and the resulting
+token stream is run through `core.evaluate` and compared against the
+claimed `value`/`range`. Rejected reasons include `phrase_not_found`,
+`ambiguous_phrase`, `overlapping_phrase`, `unknown_token:<token>` (a
+letters-run not in the pack's lexicon), `value_mismatch: ours=X theirs=Y`,
+`negative_contains_quantity` (a claimed negative actually contains a
+`UNIT_`/`PFX_` lexicon form — including bare symbol units like the `k` in
+`50k`), `dup` (duplicate normalized text within this run), and `dup_gold`
+(duplicate of a line already in `tests/gold*.jsonl`). A line whose `lang`
+field doesn't match `--lang` is skipped as `lang_mismatch`, so `--in
+data_llm/raw/*.jsonl` can safely glob every agent's raw files across
+languages in one call. `verify` prints a summary table (totals, reject
+histogram, top 15 unknown tokens, negatives share, mean length) and writes/
+merges a per-lang entry into `--manifest` (counts, timestamp, the prompt
+file's sha256, input files, reject histogram).
+
+**Inspect coverage:**
+
+```bash
+python -m sankhya.llm_corpus stats --in data_llm/hi_latn.jsonl
+python -m sankhya.llm_corpus sample --in data_llm/hi_latn.jsonl --n 20 --seed 1
+```
+
+`stats` prints the class histogram (which `CARD_`/`UNIT_`/`PFX_` classes
+appear and how often), the share of lines with 2+ spans, the negatives
+share, and unique surface forms per class — compare this against
+`sankhya.generator`'s own coverage to see what the LLM corpus adds.
+`sample` prints a random sample of lines with their phrase/value pairs for
+eyeballing.
+
+**Rejects workflow.** `--rejects` writes every rejected line (its
+`text`/`phrases`, the reject reason, and its source file/line number) to a
+separate jsonl file — hand this back to whichever agent generated it so
+bad lines can be fixed or dropped, without re-deriving why each one
+failed. `data_llm/raw/` and `data_llm/rejects/` are both tracked in git
+(review artefacts, not build output) — see `.gitignore`.
+
+**Mixing into training.** The verified output is a normal `--extra` file
+for `sankhya.train` (see "Mixing in an extra corpus" above):
+
+```bash
+python -m sankhya.train --train data/train.jsonl --val data/val.jsonl \
+  --extra data_llm/hi_latn.jsonl --extra-ratio 0.2 --lang hi_latn --out models/
+```
+
+On Kaggle, set `EXTRA` (comma-separated repo-relative paths under
+`python/`) and `EXTRA_RATIO` via `run.py push --set
+EXTRA=data_llm/hi_latn.jsonl --set EXTRA_RATIO=0.2` — see "Training on
+Kaggle" below.
+
 ## Tests
 
 ```bash
 python tests/test_core.py
 python tests/test_decode.py
 python tests/test_generator.py
+python tests/test_llm_corpus.py
 # or, if you installed pytest:
 python -m pytest tests/
 ```
@@ -347,8 +460,12 @@ additive/multiplicative unit combination, ranges) directly on class-token
 sequences, independent of the model. `test_decode.py` covers `decode_spans`
 (BIO decode, gap bridging, digit-run extension, class repair, confidence
 filtering). `test_generator.py` round-trips the synthetic generator's own
-labels through the core evaluator. `tests/gold.jsonl` is the hand-written
-gold set used by `eval_gold.py`, not a generator round-trip test.
+labels through the core evaluator. `test_llm_corpus.py` covers
+`sankhya.llm_corpus.verify_line`'s accept/reject decisions (value
+mismatches, unknown tokens, bad phrase substrings, hidden-quantity
+negatives, duplicates) against inline fixtures. `tests/gold.jsonl` is the
+hand-written gold set used by `eval_gold.py`, not a generator round-trip
+test.
 
 ## Colab
 
@@ -398,7 +515,17 @@ Override a training default with `--set KEY=VALUE` (repeatable) before
 `push`/`all`, e.g. `--set EPOCHS=30 --set GIT_REF=my-branch`. Valid keys:
 `REPO_URL`, `GIT_REF`, `N_TRAIN`, `N_VAL`, `LANGS`, `MIX`, `CROSS`,
 `EPOCHS`, `CHANNELS`, `LAYERS`, `DILATION`, `TRAIN_SEED`, `VAL_SEED`,
-`MATRIX`.
+`MATRIX`, `EXTRA`, `EXTRA_RATIO`.
+
+`EXTRA` (default `""`, disabled) is a comma-separated list of
+repo-relative paths under `python/` — e.g. a verified LLM corpus from
+`sankhya.llm_corpus verify` — mixed into every matrix entry's training run
+via `sankhya.train --extra ... --extra-ratio EXTRA_RATIO` (see "Mixing in
+an extra corpus" above); `EXTRA_RATIO` defaults to `0.2`:
+
+```bash
+python -m kaggle_train.run push --set EXTRA=data_llm/hi_latn.jsonl,data_llm/hi_deva.jsonl --set EXTRA_RATIO=0.2
+```
 
 ### Training a matrix of configs
 

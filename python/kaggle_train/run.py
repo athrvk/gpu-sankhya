@@ -19,7 +19,12 @@ any other env var name.
 
 Overrides: pass `--set KEY=VALUE` (repeatable) to change a training config
 default (REPO_URL, GIT_REF, N_TRAIN, N_VAL, LANGS, MIX, CROSS, EPOCHS,
-CHANNELS, LAYERS, DILATION, TRAIN_SEED, VAL_SEED, MATRIX) before push.
+CHANNELS, LAYERS, DILATION, TRAIN_SEED, VAL_SEED, MATRIX, EXTRA,
+EXTRA_RATIO) before push. EXTRA is a comma-separated list of repo-relative
+paths under `python/` (e.g. a verified LLM corpus from `sankhya.llm_corpus
+verify`) mixed into every matrix entry's training run at EXTRA_RATIO
+(default 0.2) via `sankhya.train --extra ... --extra-ratio ...`; leaving
+EXTRA empty (the default) disables mixing entirely.
 MATRIX is a comma-separated `arch:channels:seed` list (default "v1:32:0")
 that runs a whole matrix of training configs in one kernel invocation --
 e.g. `--set MATRIX=v1:32:0,v2:32:0,v2:32:1` -- and stages the winning
@@ -56,6 +61,7 @@ CONFIG_KEYS = {
     "LANGS": str, "MIX": str, "CROSS": float, "EPOCHS": int,
     "CHANNELS": int, "LAYERS": int, "DILATION": int,
     "TRAIN_SEED": int, "VAL_SEED": int, "MATRIX": str,
+    "EXTRA": str, "EXTRA_RATIO": float,
 }
 
 AUTH_ENV_HINT = (

@@ -6,6 +6,7 @@ import json
 import math
 import os
 import time
+from collections import Counter
 
 import numpy as np
 import torch
@@ -178,6 +179,11 @@ def main(argv=None):
     ap.add_argument("--num-train", type=int, default=None, help="subsample training set to this many examples")
     ap.add_argument("--device", default="cpu", choices=["cpu", "auto"],
                      help="'cpu' (default, unchanged behaviour) or 'auto' to use CUDA when available")
+    ap.add_argument("--extra", nargs="+", default=None,
+                     help="extra jsonl file(s) (e.g. verified LLM corpus) mixed into training at --extra-ratio")
+    ap.add_argument("--extra-ratio", type=float, default=0.2,
+                     help="target share of each epoch's examples drawn from --extra (0 disables mixing); "
+                          "--extra is oversampled (with replacement) or subsampled each epoch to hit it")
     args = ap.parse_args(argv)
 
     import random
@@ -205,9 +211,33 @@ def main(argv=None):
         train_ex = [train_ex[i] for i in idx]
     print(f"loaded {len(train_ex)} train, {len(val_ex)} val examples in {time.time()-t0:.1f}s")
 
+    extra_ex = []
+    if args.extra:
+        for p in args.extra:
+            extra_ex.extend(load_jsonl(p))
+        print(f"loaded {len(extra_ex)} extra examples from {len(args.extra)} file(s)")
+        if extra_ex:
+            unk_chars = Counter()
+            for ex in extra_ex:
+                text = normalize_text(ex["text"])
+                for ch in text:
+                    if ch not in char_to_id:
+                        unk_chars[ch] += 1
+            if unk_chars:
+                total_unk = sum(unk_chars.values())
+                top = unk_chars.most_common(20)
+                print(
+                    f"WARNING: --extra corpus has {total_unk} chars outside the "
+                    f"{len(vocab)}-char pack charset ({len(unk_chars)} distinct); "
+                    f"they map to <unk>. Top 20: " + " ".join(f"{c!r}={n}" for c, n in top)
+                )
+
     t0 = time.time()
     tr_chars, tr_bio, tr_cls, tr_mask = tensorize(train_ex, char_to_id)
     va_chars, va_bio, va_cls, va_mask = tensorize(val_ex, char_to_id)
+    ex_chars = ex_bio = ex_cls = ex_mask = None
+    if extra_ex:
+        ex_chars, ex_bio, ex_cls, ex_mask = tensorize(extra_ex, char_to_id)
     print(f"tensorized in {time.time()-t0:.1f}s")
 
     if args.device == "auto" and torch.cuda.is_available():
@@ -225,8 +255,29 @@ def main(argv=None):
     n_params = count_params(model)
     print(f"param count: {n_params} (arch={args.arch or 'legacy'} channels={args.channels} layers={len(model.arch)})")
 
+    # --extra mixing: each epoch, n_main train examples are combined with a
+    # freshly-drawn sample of n_extra_per_epoch extra examples such that the
+    # extra share of the COMBINED epoch is approximately --extra-ratio
+    # (n_extra/(n_main+n_extra) ~= extra_ratio). The extra pool is sampled
+    # WITHOUT replacement when it is at least as large as what's needed that
+    # epoch, and WITH replacement (oversampled) otherwise; either way the
+    # sample is re-drawn every epoch so a small extra pool isn't just
+    # replayed identically each time.
+    n_main = tr_chars.shape[0]
+    n_extra_pool = ex_chars.shape[0] if ex_chars is not None else 0
+    n_extra_per_epoch = 0
+    if n_extra_pool and args.extra_ratio > 0:
+        ratio = min(max(args.extra_ratio, 0.0), 0.95)
+        n_extra_per_epoch = int(round(n_main * ratio / (1 - ratio)))
+        print(
+            f"mixing in {n_extra_per_epoch} extra examples/epoch from a pool of "
+            f"{n_extra_pool} (target ratio={ratio:.2f}, "
+            f"{'oversampled' if n_extra_per_epoch > n_extra_pool else 'subsampled'})"
+        )
+    n = n_main + n_extra_per_epoch
+
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
-    n_batches_per_epoch = math.ceil(len(train_ex) / args.batch)
+    n_batches_per_epoch = math.ceil(n / args.batch)
     total_steps = n_batches_per_epoch * args.epochs
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=args.lr, total_steps=total_steps)
 
@@ -235,22 +286,31 @@ def main(argv=None):
     ce_bio = nn.CrossEntropyLoss(reduction="none", weight=bio_class_weight, label_smoothing=args.label_smoothing)
     ce_cls = nn.CrossEntropyLoss(reduction="none", label_smoothing=args.label_smoothing)
 
-    n = tr_chars.shape[0]
     best_vacc = -1.0
     best_state = None
 
     train_t0 = time.time()
     for epoch in range(args.epochs):
         model.train()
+        if n_extra_per_epoch:
+            replace = n_extra_per_epoch > n_extra_pool
+            extra_idx = np.random.choice(n_extra_pool, size=n_extra_per_epoch, replace=replace)
+            extra_idx = torch.from_numpy(extra_idx)
+            ep_chars = torch.cat([tr_chars, ex_chars[extra_idx]], dim=0)
+            ep_bio = torch.cat([tr_bio, ex_bio[extra_idx]], dim=0)
+            ep_cls = torch.cat([tr_cls, ex_cls[extra_idx]], dim=0)
+            ep_mask = torch.cat([tr_mask, ex_mask[extra_idx]], dim=0)
+        else:
+            ep_chars, ep_bio, ep_cls, ep_mask = tr_chars, tr_bio, tr_cls, tr_mask
         perm = torch.randperm(n)
         epoch_loss = 0.0
         nb = 0
         for i in range(0, n, args.batch):
             idx = perm[i:i + args.batch]
-            cb = tr_chars[idx].to(device)
-            bb = tr_bio[idx].to(device)
-            clb = tr_cls[idx].to(device)
-            mb = tr_mask[idx].to(device)
+            cb = ep_chars[idx].to(device)
+            bb = ep_bio[idx].to(device)
+            clb = ep_cls[idx].to(device)
+            mb = ep_mask[idx].to(device)
 
             bio_logits, cls_logits = model(cb)
             B, L, _ = bio_logits.shape
