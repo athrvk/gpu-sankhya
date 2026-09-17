@@ -452,6 +452,98 @@ def _repair_possessive(text: str, s: int, e: int, cls_ids: List[int]) -> List[in
     return out
 
 
+def _majority_class_any(raw_ids: List[int]) -> int:
+    """Like `_majority_vote_run`, but counts votes over ALL classes (not just
+    the word-class subset `_is_vote_worthy` cares about) -- used for a
+    connector WORD run (e.g. "se"/"से"), whose relevant target class is
+    RANGE itself, not a UNIT_/CARD_/PFX_ word class."""
+    votes = {}
+    for cid in raw_ids:
+        votes.setdefault(cid, []).append(0)
+    max_count = max(len(v) for v in votes.values())
+    candidates = [cid for cid, v in votes.items() if len(v) == max_count]
+    if len(candidates) == 1:
+        return candidates[0]
+    # tie-break by longest contiguous sub-run of that class, left-most wins
+    best_cid, best_len = candidates[0], -1
+    for cid in candidates:
+        idxs = [i for i, c in enumerate(raw_ids) if c == cid]
+        run_len = _longest_run(idxs)
+        if run_len > best_len:
+            best_len = run_len
+            best_cid = cid
+    return best_cid
+
+
+def _merge_range_connector_spans(text: str, cls_ids: List[int], spans_out: List[dict]) -> List[dict]:
+    """R4b: like `_connector_is_range` (punctuation connectors), but for a
+    whole WORD connector (e.g. "se"/"से") that sits between two already-
+    decoded spans. The class head can correctly tag such a connector word
+    RANGE while the BIO head incorrectly emits its own B mid-word, splitting
+    what should be one span into two (e.g. "do lakh se teen lakh" decoding
+    as two separate amounts instead of one RANGE span). If the gap between
+    two adjacent spans is exactly [optional whitespace] + one letters run
+    (Latin or Devanagari, including combining marks) + [optional
+    whitespace], and that letters run's repaired/majority class is RANGE,
+    merge the two spans into one: the connector's letters become RANGE and
+    its flanking whitespace becomes SEP, same as the punctuation-connector
+    repair. Both spans are already guaranteed to carry a meaningful token
+    (spans without one are dropped before this runs).
+    """
+    if len(spans_out) < 2:
+        return spans_out
+    sep_id = C.CLASS_TO_ID["SEP"]
+    range_id = C.CLASS_TO_ID["RANGE"]
+
+    merged: List[dict] = [spans_out[0]]
+    for nxt in spans_out[1:]:
+        prev = merged[-1]
+        gap_start, gap_end = prev["end"], nxt["start"]
+        gap = text[gap_start:gap_end]
+        n = len(gap)
+        i = 0
+        while i < n and _char_type(gap[i]) == "space":
+            i += 1
+        lstart = i
+        while i < n and _char_type(gap[i]) == "letter":
+            i += 1
+        lend = i
+        while i < n and _char_type(gap[i]) == "space":
+            i += 1
+
+        if lstart == lend or i != n:
+            merged.append(nxt)
+            continue
+
+        rs, re_ = gap_start + lstart, gap_start + lend
+        conn_id = _majority_class_any([cls_ids[k] for k in range(rs, re_)])
+        conn_cls = C.CLASSES[conn_id]
+        if conn_cls != "RANGE":
+            merged.append(nxt)
+            continue
+
+        conn_tokens = []
+        if lstart > 0:
+            conn_tokens.append((sep_id, gap[0:lstart]))
+        conn_tokens.append((range_id, gap[lstart:lend]))
+        if lend < n:
+            conn_tokens.append((sep_id, gap[lend:n]))
+
+        if prev["confidence"] is None or nxt["confidence"] is None:
+            confidence = None
+        else:
+            confidence = (prev["confidence"] + nxt["confidence"]) / 2
+
+        merged[-1] = {
+            "start": prev["start"],
+            "end": nxt["end"],
+            "text": text[prev["start"]:nxt["end"]],
+            "tokens": prev["tokens"] + conn_tokens + nxt["tokens"],
+            "confidence": confidence,
+        }
+    return merged
+
+
 def decode_spans(
     text: str,
     bio_ids: List[int],
@@ -562,4 +654,4 @@ def decode_spans(
             "tokens": [(cid, text[a:b]) for cid, a, b in kept],
             "confidence": confidence,
         })
-    return out
+    return _merge_range_connector_spans(text, cls_ids, out)

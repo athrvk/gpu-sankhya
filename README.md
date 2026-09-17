@@ -338,6 +338,13 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   (`"2 lakh/3 lakh"`, `"दो-तीन लाख"`) — but not when it's really one
   compound number, e.g. a prefix glued straight to a unit (`"dedh-lakh"`
   stays one span, not a range).
+- **Word-connector span merge**: when a whole connector WORD (e.g.
+  `"se"`/`"से"`) between two separately BIO-decoded spans is itself tagged
+  `RANGE` by the class head, the two spans are merged into one `RANGE`
+  span (connector letters → `RANGE`, its flanking spaces → `SEP`) — fixes
+  the BIO head splitting a range like `"दो लाख से तीन लाख"` or `"5 hazaar
+  se 8 hazaar"` into two separate amounts even though the class head
+  correctly tagged the connector word.
 - **Possessive trim**: a trailing `'s`/`’s` (1-2 letters) is stripped from
   the end of a word and excluded from the span (`"2 lakh's"` → `"2 lakh"`).
 - **Confidence filter**: a span's confidence is the mean of the max BIO

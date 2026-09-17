@@ -512,6 +512,105 @@ function repairPossessive(text: string, s: number, e: number, ids: number[] | In
   return out;
 }
 
+/** Like `runMajority`, but counts votes over ALL classes (not just the
+ * numeric-class subset `runMajority` cares about) -- used for a connector
+ * WORD run (e.g. "se"/"से"), whose relevant target class is RANGE itself,
+ * not a UNIT_/CARD_/PFX_ word class. Ties break by the longest contiguous
+ * sub-run, left-most wins. */
+function majorityClassAny(ids: number[]): number {
+  const counts = new Map<number, number>();
+  for (const cid of ids) counts.set(cid, (counts.get(cid) ?? 0) + 1);
+  let maxCount = -1;
+  for (const c of counts.values()) if (c > maxCount) maxCount = c;
+  const tied = [...counts.entries()].filter(([, c]) => c === maxCount).map(([cid]) => cid);
+  if (tied.length === 1) return tied[0];
+  let bestLen = -1;
+  let bestId = tied[0];
+  for (const cid of tied) {
+    let curLen = 0;
+    let maxLen = 0;
+    for (const c of ids) {
+      if (c === cid) {
+        curLen++;
+        if (curLen > maxLen) maxLen = curLen;
+      } else {
+        curLen = 0;
+      }
+    }
+    if (maxLen > bestLen) {
+      bestLen = maxLen;
+      bestId = cid;
+    }
+  }
+  return bestId;
+}
+
+/** R4b: like `connectorIsRange` (punctuation connectors), but for a whole
+ * WORD connector (e.g. "se"/"से") that sits between two already-decoded
+ * spans. The class head can correctly tag such a connector word RANGE
+ * while the BIO head incorrectly emits its own B mid-word, splitting what
+ * should be one span into two (e.g. "do lakh se teen lakh" decoding as two
+ * separate amounts instead of one RANGE span). If the gap between two
+ * adjacent spans is exactly [optional whitespace] + one letters run (Latin
+ * or Devanagari, including combining marks) + [optional whitespace], and
+ * that letters run's repaired/majority class is RANGE, merge the two spans
+ * into one: the connector's letters become RANGE and its flanking
+ * whitespace becomes SEP, same as the punctuation-connector repair. Both
+ * spans are already guaranteed to carry a meaningful token (spans without
+ * one are dropped before this runs). */
+function mergeRangeConnectorSpans(text: string, clsIds: number[] | Int32Array, spansOut: DecodedSpan[]): DecodedSpan[] {
+  if (spansOut.length < 2) return spansOut;
+
+  const merged: DecodedSpan[] = [spansOut[0]];
+  for (const nxt of spansOut.slice(1)) {
+    const prev = merged[merged.length - 1];
+    const gapStart = prev.end;
+    const gapEnd = nxt.start;
+    const gap = text.slice(gapStart, gapEnd);
+    const n = gap.length;
+    let i = 0;
+    while (i < n && charType(gap[i]) === "space") i++;
+    const lstart = i;
+    while (i < n && charType(gap[i]) === "letter") i++;
+    const lend = i;
+    while (i < n && charType(gap[i]) === "space") i++;
+
+    if (lstart === lend || i !== n) {
+      merged.push(nxt);
+      continue;
+    }
+
+    const rs = gapStart + lstart;
+    const re = gapStart + lend;
+    const gapIds: number[] = [];
+    for (let k = rs; k < re; k++) gapIds.push(clsIds[k] as number);
+    const connCls = CLASSES[majorityClassAny(gapIds)];
+    if (connCls !== "RANGE") {
+      merged.push(nxt);
+      continue;
+    }
+
+    const connTokens: Array<[number, string]> = [];
+    if (lstart > 0) connTokens.push([ID_SEP, gap.slice(0, lstart)]);
+    connTokens.push([ID_RANGE, gap.slice(lstart, lend)]);
+    if (lend < n) connTokens.push([ID_SEP, gap.slice(lend, n)]);
+
+    const confidence =
+      prev.confidence === null || nxt.confidence === null
+        ? null
+        : (prev.confidence + nxt.confidence) / 2;
+
+    merged[merged.length - 1] = {
+      start: prev.start,
+      end: nxt.end,
+      text: text.slice(prev.start, nxt.end),
+      tokens: [...prev.tokens, ...connTokens, ...nxt.tokens],
+      confidence: confidence as number,
+    };
+  }
+  return merged;
+}
+
 export function decodeSpans(
   text: string,
   bioIds: number[] | Int32Array,
@@ -596,5 +695,5 @@ export function decodeSpans(
       confidence: confidence as number,
     });
   }
-  return out;
+  return mergeRangeConnectorSpans(text, clsIds, out);
 }

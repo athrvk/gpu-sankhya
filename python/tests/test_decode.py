@@ -442,6 +442,82 @@ def test_possessive_trim_no_space():
     assert spans[0]["text"] == "2lakh"
 
 
+def test_word_connector_range_deva_merges_spans():
+    # "दो लाख से तीन लाख" -- the class head tags "से" RANGE, but the BIO
+    # head splits it into two spans (its own B mid-word). The two spans
+    # must be merged into one RANGE span, value 200000, range
+    # (200000, 300000), instead of staying two separate amounts.
+    from sankhya import core
+
+    CARD_2 = C.CLASS_TO_ID["CARD_2"]
+    CARD_3 = C.CLASS_TO_ID["CARD_3"]
+    text = "दो लाख से तीन लाख"
+    bio = [1, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2]
+    cls = [
+        CARD_2, CARD_2, O, UNIT_LAKH, UNIT_LAKH, UNIT_LAKH,
+        O, RANGE, RANGE, O,
+        CARD_3, CARD_3, CARD_3, O, UNIT_LAKH, UNIT_LAKH, UNIT_LAKH,
+    ]
+    spans = decode_spans(text, bio, cls)
+    assert len(spans) == 1
+    assert spans[0]["text"] == text
+    tok_classes = [C.CLASSES[cid] for cid, _ in spans[0]["tokens"]]
+    assert tok_classes == [
+        "CARD_2", "SEP", "UNIT_LAKH", "SEP", "RANGE", "SEP", "CARD_3", "SEP", "UNIT_LAKH",
+    ]
+    result = core.evaluate([(C.CLASSES[cid], sub) for cid, sub in spans[0]["tokens"]])
+    assert result.value == 200000
+    assert result.range == (200000, 300000)
+
+
+def test_word_connector_range_latin_merges_spans():
+    # "5 hazaar se 8 hazaar tak" -- Latin analogue of the Devanagari case
+    # above; trailing "tak" is not part of either span or the connector run.
+    from sankhya import core
+
+    UNIT_HAZAAR = C.CLASS_TO_ID["UNIT_HAZAAR"]
+    text = "5 hazaar se 8 hazaar tak"
+    bio = (
+        [1, 2, 2, 2, 2, 2, 2, 2]
+        + [0, 0, 0, 0]
+        + [1, 2, 2, 2, 2, 2, 2, 2]
+        + [0, 0, 0, 0]
+    )
+    cls = (
+        [DIGITS, SEP, UNIT_HAZAAR, UNIT_HAZAAR, UNIT_HAZAAR, UNIT_HAZAAR, UNIT_HAZAAR, UNIT_HAZAAR]
+        + [O, RANGE, RANGE, O]
+        + [DIGITS, SEP, UNIT_HAZAAR, UNIT_HAZAAR, UNIT_HAZAAR, UNIT_HAZAAR, UNIT_HAZAAR, UNIT_HAZAAR]
+        + [O, O, O, O]
+    )
+    spans = decode_spans(text, bio, cls)
+    assert len(spans) == 1
+    assert spans[0]["text"] == "5 hazaar se 8 hazaar"
+    result = core.evaluate([(C.CLASSES[cid], sub) for cid, sub in spans[0]["tokens"]])
+    assert result.value == 5000
+    assert result.range == (5000, 8000)
+
+
+def test_word_connector_class_o_stays_two_spans():
+    # "5 hazaar aur 8 hazaar" -- "aur" ("and") is class O, not RANGE, so the
+    # two amounts must NOT be merged into one span.
+    UNIT_HAZAAR = C.CLASS_TO_ID["UNIT_HAZAAR"]
+    text = "5 hazaar aur 8 hazaar"
+    bio = (
+        [1, 2, 2, 2, 2, 2, 2, 2]
+        + [0, 0, 0, 0, 0]
+        + [1, 2, 2, 2, 2, 2, 2, 2]
+    )
+    cls = (
+        [DIGITS, SEP, UNIT_HAZAAR, UNIT_HAZAAR, UNIT_HAZAAR, UNIT_HAZAAR, UNIT_HAZAAR, UNIT_HAZAAR]
+        + [O, O, O, O, O]
+        + [DIGITS, SEP, UNIT_HAZAAR, UNIT_HAZAAR, UNIT_HAZAAR, UNIT_HAZAAR, UNIT_HAZAAR, UNIT_HAZAAR]
+    )
+    spans = decode_spans(text, bio, cls)
+    assert len(spans) == 2
+    assert spans[0]["text"] == "5 hazaar"
+    assert spans[1]["text"] == "8 hazaar"
+
+
 if __name__ == "__main__":
     import types
     mod = types.ModuleType("m")
