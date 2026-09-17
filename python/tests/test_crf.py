@@ -248,6 +248,48 @@ def test_legacy_weights_bio_path_is_argmax():
     assert path == bio_logits.argmax(-1).tolist()
 
 
+def test_nll_truncated_loop_matches_full_padding():
+    """The vectorised `nll` truncates its time loop to the batch's actual
+    max length (T=lengths.max()) as a GPU launch-count optimization -- this
+    must be invisible to the result. A batch whose longest real sequence is
+    40 must give the same nll (and gradients) whether the tensors are
+    padded to L=40 or zero-padded out to L=128."""
+    torch.manual_seed(3)
+    B = 8
+    crf = CRF()
+    with torch.no_grad():
+        crf.trans.copy_(torch.randn(3, 3))
+        crf.start.copy_(torch.randn(3))
+        crf.end.copy_(torch.randn(3))
+
+    lengths = torch.randint(1, 41, (B,))
+    lengths[0] = 40  # guarantee the max is exactly 40
+
+    emissions_short = torch.randn(B, 40, 3)
+    tags_short = torch.randint(0, 3, (B, 40))
+    mask_short = (torch.arange(40).unsqueeze(0) < lengths.unsqueeze(1)).float()
+
+    emissions_long = torch.zeros(B, 128, 3)
+    emissions_long[:, :40] = emissions_short
+    tags_long = torch.zeros(B, 128, dtype=torch.long)
+    tags_long[:, :40] = tags_short
+    mask_long = torch.zeros(B, 128)
+    mask_long[:, :40] = mask_short
+
+    e1 = emissions_short.clone().requires_grad_(True)
+    e2 = emissions_long.clone().requires_grad_(True)
+
+    nll_short = crf.nll(e1, tags_short, mask_short)
+    nll_long = crf.nll(e2, tags_long, mask_long)
+    assert torch.allclose(nll_short, nll_long, atol=1e-5), (nll_short.item(), nll_long.item())
+
+    nll_short.backward()
+    nll_long.backward()
+    assert torch.allclose(crf.trans.grad, torch.zeros_like(crf.trans.grad), atol=0) is False  # sanity: grads exist
+    # gradients w.r.t. the real (first 40) emission positions must match too
+    assert torch.allclose(e1.grad, e2.grad[:, :40], atol=1e-5)
+
+
 def test_nll_is_not_a_python_loop_over_the_batch():
     """Guard against the regression that cost a 3-hour Kaggle sweep: the CRF
     loss must scale like a vectorised op, not a per-example Python loop.

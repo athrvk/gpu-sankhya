@@ -200,6 +200,9 @@ def main(argv=None):
                           "--extra is oversampled (with replacement) or subsampled each epoch to hit it")
     args = ap.parse_args(argv)
 
+    if os.environ.get("SANKHYA_ANOMALY"):
+        torch.autograd.set_detect_anomaly(True)
+
     import random
     torch.manual_seed(args.seed)
     # Reproducible GPU runs: cuDNN's default autotuned conv kernels are
@@ -296,10 +299,23 @@ def main(argv=None):
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=args.lr, total_steps=total_steps)
 
     # B (class 1) is rare relative to O/I; upweight it 2x in the bio loss.
-    # (Not used when --crf is on: the CRF's NLL replaces the weighted CE.)
+    # With --crf, this SAME masked/label-smoothed/class-weighted CE is added
+    # on top of the CRF NLL rather than replaced by it (see the loss branch
+    # below) -- the CRF NLL alone is scale-free (it only compares path
+    # scores relatively) and gives the emission head no pressure to keep its
+    # logits bounded, so during a long/aggressive run (high OneCycle lr,
+    # many epochs) emissions grow without bound and eventually blow up the
+    # forward algorithm's logsumexp in float32, producing NaN losses/grads.
+    # Label-smoothed CE has a finite optimum (matching the smoothed target
+    # distribution, not a one-hot), so adding it back bounds the emissions
+    # while the CRF's transition/start/end params still learn the sequence
+    # structure on top. CRF_FIX: see also the L2 penalty on trans/start/end
+    # below, which keeps those (unbounded, unregularized-by-anything-else)
+    # params from drifting either.
     bio_class_weight = torch.tensor([1.0, 2.0, 1.0], dtype=torch.float32, device=device)
     ce_bio = nn.CrossEntropyLoss(reduction="none", weight=bio_class_weight, label_smoothing=args.label_smoothing)
     ce_cls = nn.CrossEntropyLoss(reduction="none", label_smoothing=args.label_smoothing)
+    CRF_TRANS_L2 = 1e-3
 
     best_vacc = -1.0
     best_state = None
@@ -320,6 +336,8 @@ def main(argv=None):
         perm = torch.randperm(n)
         epoch_loss = 0.0
         nb = 0
+        debug_crf = args.crf and os.environ.get("SANKHYA_CRF_DEBUG")
+        max_emis = max_trans = max_logz = 0.0
         for i in range(0, n, args.batch):
             idx = perm[i:i + args.batch]
             cb = ep_chars[idx].to(device)
@@ -332,7 +350,24 @@ def main(argv=None):
             loss_cls = ce_cls(cls_logits.reshape(B * L, -1), clb.reshape(B * L))
             m = mb.reshape(B * L)
             if args.crf:
-                loss = model.crf.nll(bio_logits, bb, mb) + (loss_cls * m).sum() / m.sum().clamp_min(1)
+                crf_nll, batch_logz = model.crf.nll(bio_logits, bb, mb, return_logz=True)
+                loss_bio = ce_bio(bio_logits.reshape(B * L, -1), bb.reshape(B * L))
+                bio_ce_term = (loss_bio * m).sum() / m.sum().clamp_min(1)
+                trans_l2 = (model.crf.trans ** 2).sum() + (model.crf.start ** 2).sum() + (model.crf.end ** 2).sum()
+                loss = (
+                    crf_nll
+                    + bio_ce_term
+                    + (loss_cls * m).sum() / m.sum().clamp_min(1)
+                    + CRF_TRANS_L2 * trans_l2
+                )
+                if debug_crf:
+                    max_emis = max(max_emis, bio_logits.detach().abs().max().item())
+                    max_trans = max(max_trans, model.crf.trans.detach().abs().max().item(),
+                                     model.crf.start.detach().abs().max().item(),
+                                     model.crf.end.detach().abs().max().item())
+                    finite_logz = batch_logz.detach()[batch_logz.detach().isfinite()]
+                    if finite_logz.numel():
+                        max_logz = max(max_logz, finite_logz.abs().max().item())
             else:
                 loss_bio = ce_bio(bio_logits.reshape(B * L, -1), bb.reshape(B * L))
                 loss = ((loss_bio + loss_cls) * m).sum() / m.sum().clamp_min(1)
@@ -344,6 +379,8 @@ def main(argv=None):
             sched.step()
             epoch_loss += loss.item()
             nb += 1
+        if debug_crf:
+            print(f"  [crf debug] epoch {epoch+1}: max|emis|={max_emis:.2f} max|trans/start/end|={max_trans:.2f} max|logZ|={max_logz:.2f}")
 
         metrics = evaluate_model(model, va_chars, va_bio, va_cls, va_mask, val_ex, device=device)
         print(
