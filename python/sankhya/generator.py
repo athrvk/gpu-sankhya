@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 import re
 import sys
@@ -363,9 +364,10 @@ def _maybe_possessive(rng, toks, p=0.02):
     return toks + [("O", suffix)]
 
 
-def _maybe_join_words(pack, rng, toks, p=0.04):
+def _maybe_join_words(pack, rng, toks, p=None):
     """No-space word-form noise: "sawalakh" (PFX_SAVA+UNIT_LAKH), "paanchlakh"
     (CARD_5+UNIT_LAKH), "dashazaar" (CARD_10+CARD_1000 in an additive chain).
+    `p` defaults to env SANKHYA_JOIN_WORDS_P (0.04); set it to 0 for ablations.
 
     Removes a single SEP (" ") token that sits between two adjacent WORD
     tokens (PFX_*/CARD_*, or CARD_*/UNIT_*), gluing the two surface forms
@@ -375,6 +377,8 @@ def _maybe_join_words(pack, rng, toks, p=0.04):
     already exists elsewhere, is untouched), and joins at most one pair per
     phrase.
     """
+    if p is None:
+        p = float(os.environ.get("SANKHYA_JOIN_WORDS_P", "0.04"))
     if not toks or rng.random() >= p:
         return toks
     candidates = []
