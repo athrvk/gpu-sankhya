@@ -26,7 +26,7 @@
 {"text": "flat available rent sadhe saat hazaar mahina", "spans": [{"start": 20, "end": 37, "value": 7500, "range": null, "unit": "hazaar", "currency": null, "classes": "PFX_SAADHE SEP CARD_7 SEP UNIT_HAZAAR"}]}
 {"text": "used laptop 22000 rs urgent sale", "spans": [{"start": 12, "end": 17, "value": 22000, "range": null, "unit": null, "currency": null, "classes": "DIGITS"}]}
 {"text": "plot for sale sava do crore final rate", "spans": [{"start": 14, "end": 27, "value": 22500000, "range": null, "unit": "crore", "currency": null, "classes": "PFX_SAVA SEP CARD_2 SEP UNIT_CRORE"}]}
-{"text": "sofa set paanch hazaar only genuine buyer", "spans": [{"start": 5, "end": 22, "value": 5000, "range": [5000, 7000], "unit": "hazaar", "currency": null, "classes": "CARD_7 RANGE CARD_5 SEP UNIT_HAZAAR"}]}
+{"text": "sofa set paanch hazaar only genuine buyer", "spans": [{"start": 9, "end": 22, "value": 5000, "range": null, "unit": "hazaar", "currency": null, "classes": "CARD_5 SEP UNIT_HAZAAR"}]}
 {"text": "scooty selling 18k slightly negotiable", "spans": [{"start": 15, "end": 18, "value": 18000, "range": null, "unit": "hazaar", "currency": null, "classes": "DIGITS UNIT_HAZAAR"}]}
 {"text": "startup ne dedh crore ka funding raise kiya", "spans": [{"start": 11, "end": 21, "value": 15000000, "range": null, "unit": "crore", "currency": null, "classes": "PFX_DEDH SEP UNIT_CRORE"}]}
 {"text": "do lakh logon ne attend kiya event", "spans": [{"start": 0, "end": 7, "value": 200000, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_2 SEP UNIT_LAKH"}]}
@@ -55,9 +55,9 @@
 {"text": "pehle ek lakh tha ab dedh lakh ho gaya", "spans": [{"start": 6, "end": 13, "value": 100000, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_1 SEP UNIT_LAKH"}, {"start": 21, "end": 30, "value": 150000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_DEDH SEP UNIT_LAKH"}]}
 {"text": "budget das lakh tha lekin final teen lakh mein hua", "spans": [{"start": 7, "end": 15, "value": 1000000, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_10 SEP UNIT_LAKH"}, {"start": 32, "end": 41, "value": 300000, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_3 SEP UNIT_LAKH"}]}
 {"text": "pichle mahine bees hazaar is mahine tees hazaar aaya", "spans": [{"start": 14, "end": 25, "value": 20000, "range": null, "unit": "hazaar", "currency": null, "classes": "CARD_20 SEP UNIT_HAZAAR"}, {"start": 36, "end": 47, "value": 30000, "range": null, "unit": "hazaar", "currency": null, "classes": "CARD_30 SEP UNIT_HAZAAR"}]}
-{"text": "sava lakh chahiye tha par sawa lakh mil gaya", "spans": [{"start": 0, "end": 9, "value": 125000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_SAVA SEP UNIT_LAKH"}, {"start": 26, "end": 39, "value": 125000000000, "range": null, "unit": "million", "currency": null, "classes": "PFX_SAVA SEP UNIT_LAKH SEP UNIT_MILLION"}]}
+{"text": "sava lakh chahiye tha par sawa lakh mil gaya", "spans": [{"start": 0, "end": 9, "value": 125000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_SAVA SEP UNIT_LAKH"}, {"start": 26, "end": 35, "value": 125000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_SAVA SEP UNIT_LAKH"}]}
 {"text": "derh lakh de diya usne mujhe", "spans": [{"start": 0, "end": 9, "value": 150000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_DEDH SEP UNIT_LAKH"}]}
-{"text": "dhaai lakh ka saman kharida", "spans": [{"start": 0, "end": 10, "value": 250000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_DHAI SEP UNIT_LAKH"}, {"start": 20, "end": 27, "value": 10000000, "range": null, "unit": "crore", "currency": null, "classes": "UNIT_CRORE"}]}
+{"text": "dhaai lakh ka saman kharida", "spans": [{"start": 0, "end": 10, "value": 250000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_DHAI SEP UNIT_LAKH"}]}
 {"text": "adhaai crore ka ghar hai unka", "spans": [{"start": 0, "end": 12, "value": 25000000, "range": null, "unit": "crore", "currency": null, "classes": "PFX_DHAI SEP UNIT_CRORE"}]}
 {"text": "saadhe teen hazaar bache hain wallet mein", "spans": [{"start": 0, "end": 18, "value": 3500, "range": null, "unit": "hazaar", "currency": null, "classes": "PFX_SAADHE SEP CARD_3 SEP UNIT_HAZAAR"}]}
 {"text": "sadhe char lakh mein deal final hui", "spans": [{"start": 0, "end": 15, "value": 450000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_SAADHE SEP CARD_4 SEP UNIT_LAKH"}]}
@@ -79,7 +79,7 @@
 {"text": "2,50,00,000 ka bangla hai unka", "spans": [{"start": 0, "end": 11, "value": 25000000, "range": null, "unit": null, "currency": null, "classes": "DIGITS COMMA DIGITS COMMA DIGITS COMMA DIGITS"}]}
 {"text": "125,000 rupaye ka bill aaya", "spans": [{"start": 0, "end": 7, "value": 125000, "range": null, "unit": null, "currency": "INR", "classes": "DIGITS COMMA DIGITS"}]}
 {"text": ".5 lakh de diya usne turant", "spans": [{"start": 1, "end": 7, "value": 500000, "range": null, "unit": "lakh", "currency": null, "classes": "DIGITS SEP UNIT_LAKH"}]}
-{"text": "Rs.2.5L ka discount mil raha hai", "spans": [{"start": 3, "end": 7, "value": 250000, "range": null, "unit": "lakh", "currency": "INR", "classes": "DIGITS DOT DIGITS UNIT_LAKH"}, {"start": 20, "end": 23, "value": 1000000, "range": null, "unit": "million", "currency": null, "classes": "UNIT_MILLION"}]}
+{"text": "Rs.2.5L ka discount mil raha hai", "spans": [{"start": 3, "end": 7, "value": 250000, "range": null, "unit": "lakh", "currency": "INR", "classes": "DIGITS DOT DIGITS UNIT_LAKH"}]}
 {"text": "Rs 2,50,000/- final price hai", "spans": [{"start": 3, "end": 11, "value": 250000, "range": null, "unit": null, "currency": "INR", "classes": "DIGITS COMMA DIGITS COMMA DIGITS"}]}
 {"text": "total 12.5 crore ka investment hai", "spans": [{"start": 6, "end": 16, "value": 125000000, "range": null, "unit": "crore", "currency": null, "classes": "DIGITS DOT DIGITS SEP UNIT_CRORE"}]}
 {"text": "sirf 1.25 lakh mein mil jayega", "spans": [{"start": 5, "end": 14, "value": 125000, "range": null, "unit": "lakh", "currency": null, "classes": "DIGITS DOT DIGITS SEP UNIT_LAKH"}]}
@@ -94,19 +94,19 @@
 {"text": "swa lakh mein deal pakki ho gayi", "spans": [{"start": 0, "end": 8, "value": 125000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_SAVA SEP UNIT_LAKH"}]}
 {"text": "croer ka investment hai unka", "spans": [{"start": 0, "end": 5, "value": 10000000, "range": null, "unit": "crore", "currency": null, "classes": "UNIT_CRORE"}]}
 {"text": "hajjar rupaye diye maine usko", "spans": [{"start": 0, "end": 6, "value": 1000, "range": null, "unit": "hazaar", "currency": "INR", "classes": "UNIT_HAZAAR"}]}
-{"text": "lAkh ka kaam hai yeh poora", "spans": [{"start": 0, "end": 4, "value": 100000, "range": null, "unit": "lakh", "currency": null, "classes": "UNIT_LAKH"}, {"start": 21, "end": 26, "value": 10000000, "range": null, "unit": "crore", "currency": null, "classes": "UNIT_CRORE"}]}
-{"text": "dedhlakh mein flat mil gaya", "spans": [{"start": 0, "end": 8, "value": 150000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_DEDH UNIT_LAKH"}]}
+{"text": "lAkh ka kaam hai yeh poora", "spans": []}
+{"text": "dedhlakh mein flat mil gaya", "spans": []}
 {"text": "2.5-lakh ka phone liya maine", "spans": [{"start": 0, "end": 8, "value": 250000, "range": null, "unit": "lakh", "currency": null, "classes": "DIGITS DOT DIGITS SEP UNIT_LAKH"}]}
 {"text": "LAKHHH ka scene hai yeh toh", "spans": [{"start": 0, "end": 6, "value": 100000, "range": null, "unit": "lakh", "currency": null, "classes": "UNIT_LAKH"}]}
 {"text": "paun lkh mein ho jayega ye kaam", "spans": [{"start": 0, "end": 8, "value": 75000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_PAUNE SEP UNIT_LAKH"}]}
 {"text": "half a lakh mila mujhe bonus mein", "spans": [{"start": 0, "end": 11, "value": 50000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_AADHA SEP PFX_AADHA SEP UNIT_LAKH"}]}
 {"text": "one crore ka target hai humara", "spans": [{"start": 0, "end": 9, "value": 10000000, "range": null, "unit": "crore", "currency": null, "classes": "CARD_1 SEP UNIT_CRORE"}]}
-{"text": "two and a half lakh chahiye mujhe", "spans": [{"start": 0, "end": 19, "value": 250000, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_2 SEP PFX_SAADHE SEP PFX_SAADHE SEP PFX_SAADHE SEP UNIT_LAKH"}]}
-{"text": "five and a half crore ka deal hua", "spans": [{"start": 0, "end": 21, "value": 55000000, "range": null, "unit": "crore", "currency": null, "classes": "CARD_5 SEP PFX_SAADHE SEP PFX_SAADHE SEP PFX_SAADHE SEP UNIT_CRORE"}]}
+{"text": "two and a half lakh chahiye mujhe", "spans": [{"start": 0, "end": 7, "value": 0.5, "range": [0.5, 2], "unit": null, "currency": null, "classes": "CARD_2 RANGE PFX_SAADHE"}, {"start": 8, "end": 19, "value": 50000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_SAADHE SEP PFX_SAADHE SEP UNIT_LAKH"}]}
+{"text": "five and a half crore ka deal hua", "spans": []}
 {"text": "three n half lakh mein final hua", "spans": [{"start": 0, "end": 17, "value": 350000, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_3 SEP PFX_SAADHE SEP PFX_SAADHE SEP UNIT_LAKH"}]}
 {"text": "uska phone sava do lakh ka hai", "spans": [{"start": 11, "end": 23, "value": 225000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_SAVA SEP CARD_2 SEP UNIT_LAKH"}]}
 {"text": "maine paune teen lakh mein becha apni bike", "spans": [{"start": 6, "end": 21, "value": 275000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_PAUNE SEP CARD_3 SEP UNIT_LAKH"}]}
-{"text": "humne saadhe paanch crore mein zameen kharidi", "spans": [{"start": 6, "end": 25, "value": 55000000, "range": null, "unit": "crore", "currency": null, "classes": "PFX_SAADHE SEP CARD_5 SEP UNIT_CRORE"}, {"start": 38, "end": 45, "value": 10000000, "range": null, "unit": "crore", "currency": null, "classes": "UNIT_CRORE"}]}
+{"text": "humne saadhe paanch crore mein zameen kharidi", "spans": [{"start": 6, "end": 25, "value": 55000000, "range": null, "unit": "crore", "currency": null, "classes": "PFX_SAADHE SEP CARD_5 SEP UNIT_CRORE"}]}
 {"text": "uska salary dedh lakh se badhkar do lakh ho gaya", "spans": [{"start": 12, "end": 21, "value": 150000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_DEDH SEP UNIT_LAKH"}, {"start": 33, "end": 40, "value": 200000, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_2 SEP UNIT_LAKH"}]}
 {"text": "mujhe bas pachas hazaar aur chahiye", "spans": [{"start": 10, "end": 23, "value": 50000, "range": null, "unit": "hazaar", "currency": null, "classes": "CARD_50 SEP UNIT_HAZAAR"}]}
 {"text": "iski keemat teen sau rupaye hai", "spans": [{"start": 12, "end": 20, "value": 300, "range": null, "unit": "sau", "currency": "INR", "classes": "CARD_3 SEP UNIT_SAU"}]}
@@ -155,10 +155,10 @@
 {"text": "is scheme mein paanch hazaar crore lagenge", "spans": [{"start": 15, "end": 34, "value": 50000000000, "range": null, "unit": "crore", "currency": null, "classes": "CARD_5 SEP UNIT_HAZAAR SEP UNIT_CRORE"}]}
 {"text": "market cap teen lakh crore paar kar gaya", "spans": [{"start": 11, "end": 26, "value": 3000000000000, "range": null, "unit": "crore", "currency": null, "classes": "CARD_3 SEP UNIT_LAKH SEP UNIT_CRORE"}]}
 {"text": "saadhe teen sau crore ka tender nikla", "spans": [{"start": 0, "end": 21, "value": 3500000000, "range": null, "unit": "crore", "currency": null, "classes": "PFX_SAADHE SEP CARD_3 SEP UNIT_SAU SEP UNIT_CRORE"}]}
-{"text": "ek lakh bees hazaar crore ka package announce hua", "spans": [{"start": 0, "end": 25, "value": 100000, "range": [100000, 200000000000], "unit": "lakh", "currency": null, "classes": "CARD_1 SEP UNIT_LAKH RANGE CARD_20 SEP UNIT_HAZAAR SEP UNIT_CRORE"}]}
+{"text": "ek lakh bees hazaar crore ka package announce hua", "spans": [{"start": 0, "end": 25, "value": 1200000000000, "range": null, "unit": "crore", "currency": null, "classes": "CARD_1 SEP UNIT_LAKH SEP CARD_20 SEP UNIT_HAZAAR SEP UNIT_CRORE"}]}
 {"text": "20 se 25 lakh ke beech mein milega", "spans": [{"start": 0, "end": 13, "value": 2000000, "range": [2000000, 2500000], "unit": "lakh", "currency": null, "classes": "DIGITS RANGE O RANGE DIGITS SEP UNIT_LAKH"}]}
 {"text": "3-5 crore ka budget hai unka", "spans": [{"start": 0, "end": 9, "value": 30000000, "range": [30000000, 50000000], "unit": "crore", "currency": null, "classes": "DIGITS RANGE DIGITS SEP UNIT_CRORE"}]}
-{"text": "das ya pandrah hazaar lagenge shayad", "spans": [{"start": 0, "end": 21, "value": 10000, "range": [10000, 15000], "unit": "hazaar", "currency": null, "classes": "CARD_10 RANGE O RANGE CARD_15 SEP UNIT_HAZAAR"}]}
+{"text": "das ya pandrah hazaar lagenge shayad", "spans": [{"start": 0, "end": 21, "value": 10000, "range": [10000, 15000], "unit": "hazaar", "currency": null, "classes": "CARD_10 SEP O RANGE CARD_15 SEP UNIT_HAZAAR"}]}
 {"text": "2 to 3 lakh ka phone dekh raha hoon", "spans": [{"start": 0, "end": 11, "value": 200000, "range": [200000, 300000], "unit": "lakh", "currency": null, "classes": "DIGITS RANGE O RANGE DIGITS SEP UNIT_LAKH"}]}
 {"text": "50-60 hazaar ki salary milti hai fresher ko", "spans": [{"start": 0, "end": 12, "value": 50000, "range": [50000, 60000], "unit": "hazaar", "currency": null, "classes": "DIGITS RANGE DIGITS SEP UNIT_HAZAAR"}]}
 {"text": "dedh se do crore ka flat chahiye", "spans": [{"start": 0, "end": 16, "value": 15000000, "range": [15000000, 20000000], "unit": "crore", "currency": null, "classes": "PFX_DEDH RANGE O RANGE CARD_2 SEP UNIT_CRORE"}]}
@@ -178,17 +178,17 @@
 {"text": "waise bhai woh purana scooter bilkul genuine condition mein hai sirf pandrah hazaar mein de dunga", "spans": [{"start": 69, "end": 83, "value": 15000, "range": null, "unit": "hazaar", "currency": null, "classes": "CARD_15 SEP UNIT_HAZAAR"}]}
 {"text": "matlab seriously bro yeh deal ekdum sahi hai bas sava lakh mein pakki ho jayegi", "spans": [{"start": 49, "end": 58, "value": 125000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_SAVA SEP UNIT_LAKH"}]}
 {"text": "chalo theek hai bhai itna sun lo total budget sirf tees hazaar hai mera abhi", "spans": [{"start": 51, "end": 62, "value": 30000, "range": null, "unit": "hazaar", "currency": null, "classes": "CARD_30 SEP UNIT_HAZAAR"}]}
-{"text": "🙏 sava lakh de do bhai", "spans": [{"start": 2, "end": 17, "value": 125003, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_SAVA SEP UNIT_LAKH SEP CARD_1 SEP CARD_2"}]}
+{"text": "🙏 sava lakh de do bhai", "spans": [{"start": 2, "end": 11, "value": 125000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_SAVA SEP UNIT_LAKH"}]}
 {"text": "budget 2 lakh 🔥", "spans": [{"start": 7, "end": 13, "value": 200000, "range": null, "unit": "lakh", "currency": null, "classes": "DIGITS SEP UNIT_LAKH"}]}
 {"text": "ok 👍 dhai lakh mein ho jayega", "spans": [{"start": 5, "end": 14, "value": 250000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_DHAI SEP UNIT_LAKH"}]}
 {"text": "€ nahi ₹ 5 lakh chahiye", "spans": [{"start": 9, "end": 15, "value": 500000, "range": null, "unit": "lakh", "currency": "INR", "classes": "DIGITS SEP UNIT_LAKH"}]}
 {"text": "usne ek hazaar ek diye", "spans": [{"start": 5, "end": 17, "value": 1001, "range": null, "unit": "hazaar", "currency": null, "classes": "CARD_1 SEP UNIT_HAZAAR SEP CARD_1"}]}
-{"text": "budget do lakh paanch hai", "spans": [{"start": 7, "end": 21, "value": 5, "range": [5, 200000], "unit": "lakh", "currency": null, "classes": "CARD_2 SEP UNIT_LAKH RANGE CARD_5"}]}
-{"text": "usko ek lakh dus hazaar mila", "spans": [{"start": 5, "end": 23, "value": 110000, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_1 SEP UNIT_LAKH RANGE CARD_10 SEP UNIT_HAZAAR"}]}
+{"text": "budget do lakh paanch hai", "spans": [{"start": 7, "end": 21, "value": 200005, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_2 SEP UNIT_LAKH SEP CARD_5"}]}
+{"text": "usko ek lakh dus hazaar mila", "spans": [{"start": 5, "end": 23, "value": 110000, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_1 SEP UNIT_LAKH SEP CARD_10 SEP UNIT_HAZAAR"}]}
 {"text": "usko ek lakh dus hazaar paanch sau mila", "spans": [{"start": 5, "end": 34, "value": 110500, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_1 SEP UNIT_LAKH SEP CARD_10 SEP UNIT_HAZAAR SEP CARD_5 SEP UNIT_SAU"}]}
 {"text": "teen crore chalis lakh ka budget hai", "spans": [{"start": 0, "end": 22, "value": 34000000, "range": null, "unit": "crore", "currency": null, "classes": "CARD_3 SEP UNIT_CRORE SEP CARD_40 SEP UNIT_LAKH"}]}
 {"text": "sava lakh aur dedh lakh mein deal hui", "spans": [{"start": 0, "end": 9, "value": 125000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_SAVA SEP UNIT_LAKH"}, {"start": 14, "end": 23, "value": 150000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_DEDH SEP UNIT_LAKH"}]}
-{"text": "50k ya 60k mein le lo", "spans": [{"start": 0, "end": 10, "value": 50000, "range": [50000, 60000], "unit": "hazaar", "currency": null, "classes": "DIGITS UNIT_HAZAAR RANGE O RANGE DIGITS UNIT_HAZAAR"}]}
+{"text": "50k ya 60k mein le lo", "spans": [{"start": 0, "end": 3, "value": 50000, "range": null, "unit": "hazaar", "currency": null, "classes": "DIGITS UNIT_HAZAAR"}, {"start": 7, "end": 10, "value": 60000, "range": null, "unit": "hazaar", "currency": null, "classes": "DIGITS UNIT_HAZAAR"}]}
 {"text": "teen lakh nahi to paanch lakh dedo", "spans": [{"start": 0, "end": 9, "value": 300000, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_3 SEP UNIT_LAKH"}, {"start": 18, "end": 29, "value": 500000, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_5 SEP UNIT_LAKH"}]}
 {"text": "2lakh's ka fark hai", "spans": [{"start": 0, "end": 5, "value": 200000, "range": null, "unit": "lakh", "currency": null, "classes": "DIGITS UNIT_LAKH"}]}
 {"text": "us lakh's mein ho jayega", "spans": [{"start": 3, "end": 7, "value": 100000, "range": null, "unit": "lakh", "currency": null, "classes": "UNIT_LAKH"}]}
@@ -337,7 +337,7 @@
 {"text": "पहले बीस हज़ार था अब पचास हज़ार हो गया", "spans": [{"start": 5, "end": 14, "value": 20000, "range": null, "unit": "hazaar", "currency": null, "classes": "CARD_20 SEP UNIT_HAZAAR"}, {"start": 21, "end": 31, "value": 50000, "range": null, "unit": "hazaar", "currency": null, "classes": "CARD_50 SEP UNIT_HAZAAR"}]}
 {"text": "कल दो लाख था आज तीन लाख है", "spans": [{"start": 3, "end": 9, "value": 200000, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_2 SEP UNIT_LAKH"}, {"start": 16, "end": 23, "value": 300000, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_3 SEP UNIT_LAKH"}]}
 {"text": "दस बीस हज़ार में आ जाएगा", "spans": [{"start": 0, "end": 12, "value": 10000, "range": [10000, 20000], "unit": "hazaar", "currency": null, "classes": "CARD_10 RANGE CARD_20 SEP UNIT_HAZAAR"}]}
-{"text": "तीस पैंतीस हज़ार का फोन है", "spans": [{"start": 0, "end": 16, "value": 35030, "range": null, "unit": "hazaar", "currency": null, "classes": "CARD_30 SEP CARD_35 SEP UNIT_HAZAAR"}]}
+{"text": "तीस पैंतीस हज़ार का फोन है", "spans": [{"start": 0, "end": 16, "value": 30000, "range": [30000, 35000], "unit": "hazaar", "currency": null, "classes": "CARD_30 RANGE CARD_35 SEP UNIT_HAZAAR"}]}
 {"text": "50-60 हज़ार का स्कोप है", "spans": [{"start": 0, "end": 11, "value": 50000, "range": [50000, 60000], "unit": "hazaar", "currency": null, "classes": "DIGITS RANGE DIGITS SEP UNIT_HAZAAR"}]}
 {"text": "1.5 to 2 करोड़ की रेंज", "spans": [{"start": 0, "end": 14, "value": 15000000, "range": [15000000, 20000000], "unit": "crore", "currency": null, "classes": "DIGITS DOT DIGITS RANGE O RANGE DIGITS SEP UNIT_CRORE"}]}
 {"text": "ढाई तीन लाख के बीच", "spans": [{"start": 0, "end": 11, "value": 250000, "range": [250000, 300000], "unit": "lakh", "currency": null, "classes": "PFX_DHAI RANGE CARD_3 SEP UNIT_LAKH"}]}
@@ -391,7 +391,7 @@
 {"text": "बजट दो लाख पाँच है", "spans": [{"start": 4, "end": 15, "value": 200005, "range": null, "unit": "lakh", "currency": null, "classes": "CARD_2 SEP UNIT_LAKH SEP CARD_5"}]}
 {"text": "उसे तीन करोड़ चालीस लाख का बजट चाहिए", "spans": [{"start": 4, "end": 23, "value": 34000000, "range": null, "unit": "crore", "currency": null, "classes": "CARD_3 SEP UNIT_CRORE SEP CARD_40 SEP UNIT_LAKH"}]}
 {"text": "सवा लाख और डेढ़ लाख में डील हुई", "spans": [{"start": 0, "end": 7, "value": 125000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_SAVA SEP UNIT_LAKH"}, {"start": 11, "end": 19, "value": 150000, "range": null, "unit": "lakh", "currency": null, "classes": "PFX_DEDH SEP UNIT_LAKH"}]}
-{"text": "तीन लाख या पाँच लाख दे दो", "spans": [{"start": 0, "end": 19, "value": 300000, "range": [300000, 500000], "unit": "lakh", "currency": null, "classes": "CARD_3 SEP UNIT_LAKH SEP O RANGE CARD_5 SEP UNIT_LAKH"}]}
+{"text": "तीन लाख या पाँच लाख दे दो", "spans": [{"start": 0, "end": 19, "value": 300000, "range": [300000, 500000], "unit": "lakh", "currency": null, "classes": "CARD_3 SEP UNIT_LAKH RANGE O RANGE CARD_5 SEP UNIT_LAKH"}]}
 {"text": "लखपति बन गया वो", "spans": []}
 {"text": "करोड़पति बन गया आखिर", "spans": []}
 {"text": "लाखों में बिक गया", "spans": []}

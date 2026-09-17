@@ -1,0 +1,600 @@
+{"text": "क्लासची फी आधी पंचवीस हजार होती आता चाळीस हजार झाली आहे", "lang": "mr_deva", "phrases": [{"phrase": "पंचवीस हजार", "value": 25000}, {"phrase": "चाळीस हजार", "value": 40000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "पीएचडीचं स्टायपेंड साडेबारा हजार होतं, आता वाढून सोळा हजार झालं", "lang": "mr_deva", "phrases": [{"phrase": "साडेबारा हजार", "value": 12500}, {"phrase": "सोळा हजार", "value": 16000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "क्रिप्टोत गुंतवलेले साडेबारा हजार आता पंचवीस हजार झालेत, मस्त नफा", "lang": "mr_deva", "phrases": [{"phrase": "साडेबारा हजार", "value": 12500}, {"phrase": "पंचवीस हजार", "value": 25000}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "रिक्षावाल्याशी वाद झाला, तो पंचवीस मागत होता मी वीस दिले शेवटी", "lang": "mr_deva", "phrases": [{"phrase": "पंचवीस", "value": 25}, {"phrase": "वीस", "value": 20}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "शेअर ऑटोवाला म्हणतोय पंधरा रुपये सीट, मीटरने तर बारा होतील", "lang": "mr_deva", "phrases": [{"phrase": "पंधरा रुपये", "value": 15}, {"phrase": "बारा", "value": 12}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "ओला बुक केली तर दीडशे रुपये दाखवतंय, रिक्षावाला दोनशे मागतोय उगाच", "lang": "mr_deva", "phrases": [{"phrase": "दीडशे रुपये", "value": 150}, {"phrase": "दोनशे", "value": 200}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "तेवढ्या अंतरासाठी ऐंशी रुपये फार वाटतायत, साठमध्ये चला की जरा", "lang": "mr_deva", "phrases": [{"phrase": "ऐंशी रुपये", "value": 80}, {"phrase": "साठमध्ये", "value": 60}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "ई-रिक्षावाल्याने तीस रुपये मागितले, बसने गेलो असतो तर दहामध्येच झालं असतं", "lang": "mr_deva", "phrases": [{"phrase": "तीस रुपये", "value": 30}, {"phrase": "दहामध्येच", "value": 10}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "ऑटोवाल्याने चाळीस रुपये मागितले, मी पंचवीसमध्येच जाईन म्हणून ठाम राहिलो", "lang": "mr_deva", "phrases": [{"phrase": "चाळीस रुपये", "value": 40}, {"phrase": "पंचवीसमध्येच", "value": 25}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "सामान जास्त आहे म्हणून पन्नास रुपये जास्त लागतील, नाहीतर तीसच झालं असतं", "lang": "mr_deva", "phrases": [{"phrase": "पन्नास रुपये", "value": 50}, {"phrase": "तीसच", "value": 30}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "बॅग जड आहे म्हणून वीस रुपये जास्त मागतोय हमाल, नाहीतर दहाच पुरेसे होते", "lang": "mr_deva", "phrases": [{"phrase": "वीस रुपये", "value": 20}, {"phrase": "दहाच", "value": 10}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "स्टँडपासून घरापर्यंत नेहमी पंचवीस घेतो तो, आज उगाच चाळीस मागतोय", "lang": "mr_deva", "phrases": [{"phrase": "पंचवीस", "value": 25}, {"phrase": "चाळीस", "value": 40}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "एवढ्या कमी अंतरासाठी तीस रुपये जास्तच आहेत, वीसमध्येच जाऊया आपण चालत", "lang": "mr_deva", "phrases": [{"phrase": "तीस रुपये", "value": 30}, {"phrase": "वीसमध्येच", "value": 20}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "मंडईपासून घरापर्यंत रिक्षा नेहमी तीसमध्ये जाते, आज पन्नास मागतोय उगाच", "lang": "mr_deva", "phrases": [{"phrase": "तीसमध्ये", "value": 30}, {"phrase": "पन्नास", "value": 50}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "कॉलेजपासून घरापर्यंत रोज पंधरा घेतो रिक्षावाला, सुट्टीच्या दिवशी वीस मागतो उगाच", "lang": "mr_deva", "phrases": [{"phrase": "पंधरा", "value": 15}, {"phrase": "वीस", "value": 20}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "कॉलेजपासून हॉस्टेलपर्यंत नेहमी दहा घेतो रिक्षावाला, आज पंधरा मागतोय पावसामुळे", "lang": "mr_deva", "phrases": [{"phrase": "दहा", "value": 10}, {"phrase": "पंधरा", "value": 15}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "दुकानाचं भाडं पूर्वी दीड हजार होतं, आता वाढून अडीच हजार झालंय गेल्या वर्षापासून", "lang": "mr_deva", "phrases": [{"phrase": "दीड हजार", "value": 1500}, {"phrase": "अडीच हजार", "value": 2500}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "आधी घराचं भाडं आठ हजार होतं, आता वाढून दहा हजार झालंय यंदापासून", "lang": "mr_deva", "phrases": [{"phrase": "आठ हजार", "value": 8000}, {"phrase": "दहा हजार", "value": 10000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "कांद्याचा भाव काल वीस रुपये होता, आज पंचवीस रुपयांवर पोहोचला अचानक", "lang": "mr_deva", "phrases": [{"phrase": "वीस रुपये", "value": 20}, {"phrase": "पंचवीस रुपयांवर", "value": 25}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "पहिल्या वर्षी पगार अठरा हजार होता, तिसऱ्या वर्षी सत्तावीस हजार झाला", "lang": "mr_deva", "phrases": [{"phrase": "अठरा हजार", "value": 18000}, {"phrase": "सत्तावीस हजार", "value": 27000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "मंडपाचं बुकिंग आधी बत्तीस हजाराचं होतं, स्टेजसह आता अडतीस हजार झालंय", "lang": "mr_deva", "phrases": [{"phrase": "बत्तीस हजाराचं", "value": 32000}, {"phrase": "अडतीस हजार", "value": 38000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "स्टँडवर पंधरा रुपये भाडं असतं, रात्री उशिरा तेच वाढून तीस होतं", "lang": "mr_deva", "phrases": [{"phrase": "पंधरा रुपये", "value": 15}, {"phrase": "तीस", "value": 30}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "डिपॉझिट म्हणून पाच हजार घेतले मालकाने, नंतर दुरुस्तीसाठी अजून दोन हजार मागितले", "lang": "mr_deva", "phrases": [{"phrase": "पाच हजार", "value": 5000}, {"phrase": "दोन हजार", "value": 2000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "आधी वीस हजार EMI होती, रिफायनान्स केल्यावर पंधरा हजारावर आली आता", "lang": "mr_deva", "phrases": [{"phrase": "वीस हजार", "value": 20000}, {"phrase": "पंधरा हजारावर", "value": 15000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "शेअर काल सत्तर रुपयांना होता, आज त्र्याऐंशी रुपयांवर बंद झाला बाजारात", "lang": "mr_deva", "phrases": [{"phrase": "सत्तर रुपयांना", "value": 70}, {"phrase": "त्र्याऐंशी रुपयांवर", "value": 83}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "पहिल्या ऑर्डरला बारा हजार मिळाले, दुसऱ्या ऑर्डरला सोळा हजार मिळाले फ्रीलान्समधून", "lang": "mr_deva", "phrases": [{"phrase": "बारा हजार", "value": 12000}, {"phrase": "सोळा हजार", "value": 16000}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "क्लासची फी आधी दहा हजार सांगितली, ॲडमिशनच्या वेळी बारा हजार झाली अचानक", "lang": "mr_deva", "phrases": [{"phrase": "दहा हजार", "value": 10000}, {"phrase": "बारा हजार", "value": 12000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "प्रकल्पाचा खर्च सुरुवातीला पन्नास कोटी अपेक्षित होता, आता साठ कोटींवर पोहोचलाय", "lang": "mr_deva", "phrases": [{"phrase": "पन्नास कोटी", "value": 500000000}, {"phrase": "साठ कोटींवर", "value": 600000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "तो सांगतो पाच हजार कमावतो रोज, पण खर्च मात्र दहा हजार करतो सहज", "lang": "mr_deva", "phrases": [{"phrase": "पाच हजार", "value": 5000}, {"phrase": "दहा हजार", "value": 10000}], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "बाईकची किंमत आधी पंचावन्न हजार सांगितली, नंतर पन्नास हजारात देतो म्हणाला", "lang": "mr_deva", "phrases": [{"phrase": "पंचावन्न हजार", "value": 55000}, {"phrase": "पन्नास हजारात", "value": 50000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "पहिल्या महिन्यात सहा हजार स्टायपेंड मिळाला, दुसऱ्या महिन्यात आठ हजार मिळाला वाढून", "lang": "mr_deva", "phrases": [{"phrase": "सहा हजार", "value": 6000}, {"phrase": "आठ हजार", "value": 8000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "मंडईत सकाळी टोमॅटो तीस रुपये होते, संध्याकाळी पंचवीस रुपयांना विकले गेले", "lang": "mr_deva", "phrases": [{"phrase": "तीस रुपये", "value": 30}, {"phrase": "पंचवीस रुपयांना", "value": 25}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "साखरपुड्याचं बजेट पंचवीस हजार होतं, लग्नासाठी मात्र अडीच लाख ठरवलंय आम्ही", "lang": "mr_deva", "phrases": [{"phrase": "पंचवीस हजार", "value": 25000}, {"phrase": "अडीच लाख", "value": 250000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "रिक्षावाला आधी वीस मागत होता, वाद झाल्यावर पंधरामध्ये तयार झाला शेवटी", "lang": "mr_deva", "phrases": [{"phrase": "वीस", "value": 20}, {"phrase": "पंधरामध्ये", "value": 15}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "जुना भाडेकरू सहा हजार भरत होता, नवीन कराराप्रमाणे आता आठ हजार द्यावे लागतील", "lang": "mr_deva", "phrases": [{"phrase": "सहा हजार", "value": 6000}, {"phrase": "आठ हजार", "value": 8000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "पहिली EMI तीन हजार होती, टॉप-अप लोन घेतल्यावर साडेचार हजार झाली आता", "lang": "mr_deva", "phrases": [{"phrase": "तीन हजार", "value": 3000}, {"phrase": "साडेचार हजार", "value": 4500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "निफ्टी काल अठराशे पॉइंटने वाढला, आज मात्र बाराशे पॉइंटने घसरला परत", "lang": "mr_deva", "phrases": [{"phrase": "अठराशे", "value": 1800}, {"phrase": "बाराशे", "value": 1200}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "पहिल्या डिलिव्हरीत साडेतीनशे मिळाले, वीकेंडच्या दुसऱ्या डिलिव्हरीत साडेपाचशे मिळाले जास्त", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीनशे", "value": 350}, {"phrase": "साडेपाचशे", "value": 550}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "ट्युशन फी पहिल्या सत्रात सात हजार होती, दुसऱ्या सत्रात नऊ हजार झाली", "lang": "mr_deva", "phrases": [{"phrase": "सात हजार", "value": 7000}, {"phrase": "नऊ हजार", "value": 9000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "अर्थसंकल्पात आधी दोनशे कोटींची तरतूद होती, सुधारित आराखड्यात अडीचशे कोटी झाली", "lang": "mr_deva", "phrases": [{"phrase": "दोनशे कोटींची", "value": 2000000000}, {"phrase": "अडीचशे कोटी", "value": 2500000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "अरे तू म्हणत होतास शंभर कमावशील रोज, बघ आता हजार कमावतोयस", "lang": "mr_deva", "phrases": [{"phrase": "शंभर", "value": 100}, {"phrase": "हजार", "value": 1000}], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "फ्रीज आधी बारा हजाराला सांगितला होता, बार्गेनिंगनंतर नऊ हजारात दिला दुकानदाराने", "lang": "mr_deva", "phrases": [{"phrase": "बारा हजाराला", "value": 12000}, {"phrase": "नऊ हजारात", "value": 9000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "रिसर्च फेलोशिप पहिल्या वर्षी बावीस हजार होती, तिसऱ्या वर्षी अठ्ठावीस हजार झाली", "lang": "mr_deva", "phrases": [{"phrase": "बावीस हजार", "value": 22000}, {"phrase": "अठ्ठावीस हजार", "value": 28000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "मक्याचा भाव सकाळी अठराशे होता, दुपारी घसरून सोळाशेवर आला व्यापाऱ्यांमुळे", "lang": "mr_deva", "phrases": [{"phrase": "अठराशे", "value": 1800}, {"phrase": "सोळाशेवर", "value": 1600}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "मेहंदीचा खर्च आधी बाराशे धरला होता, आर्टिस्ट बदलल्यावर अठराशे झाला शेवटी", "lang": "mr_deva", "phrases": [{"phrase": "बाराशे", "value": 1200}, {"phrase": "अठराशे", "value": 1800}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "स्टँडपासून घरापर्यंत नेहमी दहा असतं भाडं, सणाच्या दिवशी मात्र वीस झालं आज", "lang": "mr_deva", "phrases": [{"phrase": "दहा", "value": 10}, {"phrase": "वीस", "value": 20}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "जुनं भाडं सात हजार होतं, नवीन करारात नऊ हजारावर गेलंय आता", "lang": "mr_deva", "phrases": [{"phrase": "सात हजार", "value": 7000}, {"phrase": "नऊ हजारावर", "value": 9000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "पहिल्या हप्त्यात अकरा हजार भरले, दुसऱ्या हप्त्यात तेरा हजार भरावे लागले जास्त", "lang": "mr_deva", "phrases": [{"phrase": "अकरा हजार", "value": 11000}, {"phrase": "तेरा हजार", "value": 13000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "सोन्याचा भाव सकाळी बहात्तर हजार होता, संध्याकाळी पंचाहत्तर हजारावर बंद झाला", "lang": "mr_deva", "phrases": [{"phrase": "बहात्तर हजार", "value": 72000}, {"phrase": "पंचाहत्तर हजारावर", "value": 75000}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "आधीच्या महिन्यात नऊशे कमावले डिलिव्हरीतून, या महिन्यात बाराशे कमावले जास्त ऑर्डरमुळे", "lang": "mr_deva", "phrases": [{"phrase": "नऊशे", "value": 900}, {"phrase": "बाराशे", "value": 1200}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "शाळेची फी मागच्या वर्षी पंधरा हजार होती, यंदा अठरा हजार झालीये वाढून", "lang": "mr_deva", "phrases": [{"phrase": "पंधरा हजार", "value": 15000}, {"phrase": "अठरा हजार", "value": 18000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "रस्ता बांधकामासाठी आधी तीस कोटी मंजूर होते, सुधारित प्रस्तावात चाळीस कोटी झाले", "lang": "mr_deva", "phrases": [{"phrase": "तीस कोटी", "value": 300000000}, {"phrase": "चाळीस कोटी", "value": 400000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "तो म्हणतो होता पन्नास रुपयांत जेवण मिळतं, आता शंभर रुपये मोजतो तेच जेवायला", "lang": "mr_deva", "phrases": [{"phrase": "पन्नास रुपयांत", "value": 50}, {"phrase": "शंभर रुपये", "value": 100}], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "सोफा दुकानात पंधरा हजाराला होता, ऑनलाईन साईटवर बारा हजारात मिळाला स्वस्त", "lang": "mr_deva", "phrases": [{"phrase": "पंधरा हजाराला", "value": 15000}, {"phrase": "बारा हजारात", "value": 12000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "नर्सिंग इंटर्नशिप पहिल्या वर्षी चार हजार होती, दुसऱ्या वर्षी सहा हजार झाली", "lang": "mr_deva", "phrases": [{"phrase": "चार हजार", "value": 4000}, {"phrase": "सहा हजार", "value": 6000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "हळदीचा भाव गेल्या वर्षी सहा हजार होता, यंदा साडेसात हजारावर पोहोचला", "lang": "mr_deva", "phrases": [{"phrase": "सहा हजार", "value": 6000}, {"phrase": "साडेसात हजारावर", "value": 7500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "फोटोग्राफीचं पॅकेज साध्या कॅमेऱ्यासाठी वीस हजार होतं, ड्रोनसह पंचवीस हजार झालं", "lang": "mr_deva", "phrases": [{"phrase": "वीस हजार", "value": 20000}, {"phrase": "पंचवीस हजार", "value": 25000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "ऑटोवाला दिवसा दहा घेतो, रात्री उशिरा तेच भाडं वीस रुपयांवर जातं", "lang": "mr_deva", "phrases": [{"phrase": "दहा", "value": 10}, {"phrase": "वीस रुपयांवर", "value": 20}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "गाळ्याचं भाडं आधी बारा हजार होतं, नूतनीकरणानंतर पंधरा हजार झालंय आता", "lang": "mr_deva", "phrases": [{"phrase": "बारा हजार", "value": 12000}, {"phrase": "पंधरा हजार", "value": 15000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "गोल्ड लोनचा हप्ता पहिल्या महिन्यात दोन हजार होता, नंतर अडीच हजार झाला", "lang": "mr_deva", "phrases": [{"phrase": "दोन हजार", "value": 2000}, {"phrase": "अडीच हजार", "value": 2500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "सेन्सेक्स सकाळी पाचशे पॉइंटने वाढला, दुपारी मात्र सातशे पॉइंटने घसरला अचानक", "lang": "mr_deva", "phrases": [{"phrase": "पाचशे", "value": 500}, {"phrase": "सातशे", "value": 700}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "वेब डिझायनिंगच्या पहिल्या प्रोजेक्टला पाच हजार मिळाले, दुसऱ्याला आठ हजार मिळाले जास्त", "lang": "mr_deva", "phrases": [{"phrase": "पाच हजार", "value": 5000}, {"phrase": "आठ हजार", "value": 8000}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "कोचिंग क्लासचं शुल्क आधी बारा हजार सांगितलं होतं, ॲडमिशनला पंधरा हजार झालं", "lang": "mr_deva", "phrases": [{"phrase": "बारा हजार", "value": 12000}, {"phrase": "पंधरा हजार", "value": 15000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "धरण प्रकल्पासाठी सुरुवातीला ऐंशी कोटी मंजूर होते, आता नव्वद कोटींपर्यंत वाढले", "lang": "mr_deva", "phrases": [{"phrase": "ऐंशी कोटी", "value": 800000000}, {"phrase": "नव्वद कोटींपर्यंत", "value": 900000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "तो सांगत होता महिन्याला वीस हजार वाचवतो, प्रत्यक्षात दोन हजारही वाचत नाहीत त्याचे", "lang": "mr_deva", "phrases": [{"phrase": "वीस हजार", "value": 20000}, {"phrase": "दोन हजारही", "value": 2000}], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "मोबाईल आधी अठरा हजाराला होता, सेलमध्ये पंधरा हजारात मिळाला ऑफरमुळे", "lang": "mr_deva", "phrases": [{"phrase": "अठरा हजाराला", "value": 18000}, {"phrase": "पंधरा हजारात", "value": 15000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "अ‍ॅप्रेंटिसशिप पहिल्या महिन्यात साडेतीन हजार होती, सहाव्या महिन्यात साडेपाच हजार झाली", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}, {"phrase": "साडेपाच हजार", "value": 5500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "बाजरीचा भाव गेल्या आठवड्यात सोळाशे होता, यंदा एकोणीसशेवर पोहोचलाय बाजारात", "lang": "mr_deva", "phrases": [{"phrase": "सोळाशे", "value": 1600}, {"phrase": "एकोणीसशेवर", "value": 1900}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "बँडचं बुकिंग आधी अठरा हजाराचं होतं, वरातीच्या दिवशी बावीस हजार झालं शेवटी", "lang": "mr_deva", "phrases": [{"phrase": "अठरा हजाराचं", "value": 18000}, {"phrase": "बावीस हजार", "value": 22000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "रिक्षाभाडं सकाळी वीस असतं, रात्री उशिरा तेच पस्तीसवर जातं नेहमी", "lang": "mr_deva", "phrases": [{"phrase": "वीस", "value": 20}, {"phrase": "पस्तीसवर", "value": 35}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "जुनी सोसायटी भाडं नऊ हजार होती, नवीन बिल्डिंगमध्ये बारा हजार पडतंय आता", "lang": "mr_deva", "phrases": [{"phrase": "नऊ हजार", "value": 9000}, {"phrase": "बारा हजार", "value": 12000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "बिझनेस लोनचा पहिला हप्ता सहा हजार होता, व्याज वाढल्यावर आठ हजार झाला", "lang": "mr_deva", "phrases": [{"phrase": "सहा हजार", "value": 6000}, {"phrase": "आठ हजार", "value": 8000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "चांदीचा भाव सकाळी पंच्याहत्तर हजार होता, संध्याकाळी ऐंशी हजारावर बंद झाला", "lang": "mr_deva", "phrases": [{"phrase": "पंच्याहत्तर हजार", "value": 75000}, {"phrase": "ऐंशी हजारावर", "value": 80000}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "पहिल्या महिन्यात कंटेंट रायटिंगमधून तीन हजार मिळाले, दुसऱ्या महिन्यात सहा हजार मिळाले", "lang": "mr_deva", "phrases": [{"phrase": "तीन हजार", "value": 3000}, {"phrase": "सहा हजार", "value": 6000}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "डान्स क्लासची फी सुरुवातीला पाच हजार होती, अ‍ॅडव्हान्स बॅचसाठी आठ हजार झाली", "lang": "mr_deva", "phrases": [{"phrase": "पाच हजार", "value": 5000}, {"phrase": "आठ हजार", "value": 8000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "शाळा दुरुस्तीसाठी आधी पन्नास लाख मंजूर झाले, सुधारित अंदाजपत्रकात साठ लाख झाले", "lang": "mr_deva", "phrases": [{"phrase": "पन्नास लाख", "value": 5000000}, {"phrase": "साठ लाख", "value": 6000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "तू सांगत होतास पाचशेत काम होईल, आता हजार रुपये मागतोयस उगाच जास्तीचे", "lang": "mr_deva", "phrases": [{"phrase": "पाचशेत", "value": 500}, {"phrase": "हजार", "value": 1000}], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "कपाट आधी सहा हजाराला होतं, सेलमध्ये साडेचार हजारात मिळालं शेवटी दुकानातून", "lang": "mr_deva", "phrases": [{"phrase": "सहा हजाराला", "value": 6000}, {"phrase": "साडेचार हजारात", "value": 4500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "लॅब असिस्टंटचा स्टायपेंड पहिल्या सत्रात साडेतीन हजार होता, दुसऱ्या सत्रात साडेचार हजार झाला", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}, {"phrase": "साडेचार हजार", "value": 4500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "ज्वारीचा भाव मागच्या हंगामात अठरा रुपये होता, यंदा तेवीस रुपयांवर पोहोचलाय", "lang": "mr_deva", "phrases": [{"phrase": "अठरा रुपये", "value": 18}, {"phrase": "तेवीस रुपयांवर", "value": 23}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "मंडपाची डेकोरेशन आधी दहा हजाराची ठरली होती, LED लायटिंगसह चौदा हजार झाली", "lang": "mr_deva", "phrases": [{"phrase": "दहा हजाराची", "value": 10000}, {"phrase": "चौदा हजार", "value": 14000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "ऑटोवाल्याने आधी तीस मागितले, थोडी घासाघीस केल्यावर पंचवीसमध्ये तयार झाला शेवटी", "lang": "mr_deva", "phrases": [{"phrase": "तीस", "value": 30}, {"phrase": "पंचवीसमध्ये", "value": 25}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "पीजीचं भाडं मुलांसाठी सहा हजार होतं, नवीन सत्रापासून साडेसात हजार झालंय", "lang": "mr_deva", "phrases": [{"phrase": "सहा हजार", "value": 6000}, {"phrase": "साडेसात हजार", "value": 7500}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "एज्युकेशन लोनचा पहिला हप्ता दोन हजार होता, व्याजासह आता साडेतीन हजार भरावा लागतो", "lang": "mr_deva", "phrases": [{"phrase": "दोन हजार", "value": 2000}, {"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "बिटकॉईनचा भाव सकाळी तीन लाख होता, संध्याकाळी अडीच लाखावर घसरला अचानक", "lang": "mr_deva", "phrases": [{"phrase": "तीन लाख", "value": 300000}, {"phrase": "अडीच लाखावर", "value": 250000}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "पेंटिंगच्या पहिल्या ऑर्डरला अठराशे मिळाले, मोठ्या घरासाठी नंतर साडेतीन हजार मिळाले", "lang": "mr_deva", "phrases": [{"phrase": "अठराशे", "value": 1800}, {"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "स्विमिंग क्लासची फी सुरुवातीला तीन हजार होती, वर्षभरासाठी सहा हजार झाली एकूण", "lang": "mr_deva", "phrases": [{"phrase": "तीन हजार", "value": 3000}, {"phrase": "सहा हजार", "value": 6000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "पूल बांधकामासाठी आधी वीस कोटी अपेक्षित होते, प्रत्यक्षात पंचवीस कोटी खर्च झाले", "lang": "mr_deva", "phrases": [{"phrase": "वीस कोटी", "value": 200000000}, {"phrase": "पंचवीस कोटी", "value": 250000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "अगं आई, ट्युशनची फी सव्वा दोन लाख झाली यंदा", "lang": "mr_deva", "phrases": [{"phrase": "सव्वा दोन लाख", "value": 225000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "2BHK आहे साहेब, सोसायटीत सगळ्या सुविधा, किंमत फक्त पावणे तीन लाख डाऊनपेमेंट", "lang": "mr_deva", "phrases": [{"phrase": "पावणे तीन लाख", "value": 275000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "फ्लॅट बुक करायचा असेल तर टोकन साडेचार हजार आधी भरावा लागेल", "lang": "mr_deva", "phrases": [{"phrase": "साडेचार हजार", "value": 4500}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "यंदा कांद्याचा भाव मंडईत १८ ते २२ रुपये किलो आहे", "lang": "mr_deva", "phrases": [{"phrase": "१८ ते २२ रुपये", "value": 18, "range": [18, 22]}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "सोयाबीन विकून यंदा एकोणीस हजार मिळाले फक्त एकरी", "lang": "mr_deva", "phrases": [{"phrase": "एकोणीस हजार", "value": 19000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "स्टायपेंड दरमहा आठ हजार मिळतो, त्यातूनच हॉस्टेलचं भाडं भागवतो", "lang": "mr_deva", "phrases": [{"phrase": "आठ हजार", "value": 8000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "लग्नाच्या जेवणाचं कोटेशन दीड लाख दिलंय, दोनशे पाहुण्यांसाठी", "lang": "mr_deva", "phrases": [{"phrase": "दीड लाख", "value": 150000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "साखरपुड्याच्या केटरिंगला सत्तर हजार लागतील, स्टार्टर धरून", "lang": "mr_deva", "phrases": [{"phrase": "सत्तर हजार", "value": 70000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "रिक्षावाला म्हणतोय शंभर रुपये, स्टँडपासून एवढं जवळ आहे तरी", "lang": "mr_deva", "phrases": [{"phrase": "शंभर रुपये", "value": 100}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "मीटर टाकून जा म्हणलं तर साठ रुपये दाखवतोय, मीटरप्रमाणेच देतो", "lang": "mr_deva", "phrases": [{"phrase": "साठ रुपये", "value": 60}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "घरमालकाने डिपॉझिट म्हणून पन्नास हजार मागितले आहेत अ‍ॅडव्हान्समध्ये", "lang": "mr_deva", "phrases": [{"phrase": "पन्नास हजार", "value": 50000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "डिपॉझिट परत हवं असेल तर घर स्वच्छ ठेवा, अन्यथा पाच हजार कापणार", "lang": "mr_deva", "phrases": [{"phrase": "पाच हजार", "value": 5000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "फॉरवर्ड आलंय की लकी ड्रॉमध्ये पंचवीस लाखाचं बक्षीस लागलंय तुम्हाला", "lang": "mr_deva", "phrases": [{"phrase": "पंचवीस लाखाचं", "value": 2500000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "असले मेसेज फॉरवर्ड करू नका रे, कोणी फुकट अडीच कोटी देत नाही", "lang": "mr_deva", "phrases": [{"phrase": "अडीच कोटी", "value": 25000000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "ब्रेकिंग: राज्याचं अर्थसंकल्प सहा लाख कोटींचं, शेतीसाठी विशेष तरतूद", "lang": "mr_deva", "phrases": [{"phrase": "सहा लाख कोटींचं", "value": 60000000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "महामार्ग प्रकल्पासाठी केंद्राकडून बाराशे कोटींचा निधी मंजूर", "lang": "mr_deva", "phrases": [{"phrase": "बाराशे कोटींचा", "value": 12000000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "हो का, मग माझ्या बापाची पण लॉटरी लागली म्हणा की एक कोटीची", "lang": "mr_deva", "phrases": [{"phrase": "एक कोटीची", "value": 10000000}], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "बाईक विकायची आहे, दोन वर्ष जुनी, बावीस हजार किमी चाललीये, भाव पंचवीस हजार", "lang": "mr_deva", "phrases": [{"phrase": "पंचवीस हजार", "value": 25000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "स्प्लेंडर विकतोय, चाळीस हजार किमी झालीये, किंमत अठरा हजार फिक्स", "lang": "mr_deva", "phrases": [{"phrase": "अठरा हजार", "value": 18000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "EMI आज भरायची आहे, खात्यात फक्त बाराशे रुपये आहेत बघ जरा", "lang": "mr_deva", "phrases": [{"phrase": "बाराशे रुपये", "value": 1200}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "तुमची EMI साडेसहा हजार उद्या कापली जाईल, खात्यात बॅलन्स ठेवा", "lang": "mr_deva", "phrases": [{"phrase": "साडेसहा हजार", "value": 6500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "अरे काय रे, आवाज नीट येतोय का? मी सांगत होतो की गाडीचा हप्ता तीन हजार आहे", "lang": "mr_deva", "phrases": [{"phrase": "तीन हजार", "value": 3000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "अगं ऐक ना, त्या दुकानदाराने साडेतीन हजारात मोबाईल कव्हर दिलं मला", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजारात", "value": 3500}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "भाजीवाल्याने टोमॅटो पन्नास रुपये किलो सांगितलं, काल तीस होतं ना", "lang": "mr_deva", "phrases": [{"phrase": "पन्नास रुपये", "value": 50}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "मासे विकत घेताना तिनशे रुपये किलो सांगितला कोळणीने, घासाघीस करावी लागली", "lang": "mr_deva", "phrases": [{"phrase": "तिनशे रुपये", "value": 300}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "टाटा मोटर्सचा शेअर आज बत्तीस रुपयांनी वाढला, बरं झालं घेतला होता", "lang": "mr_deva", "phrases": [{"phrase": "बत्तीस रुपयांनी", "value": 32}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "डिलिव्हरी बॉयला रोज साडेआठशे रुपये मिळतात, पेट्रोलचा खर्च वेगळा", "lang": "mr_deva", "phrases": [{"phrase": "साडेआठशे रुपये", "value": 850}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "स्विगीवरून यंदा महिन्याला अठरा हजार कमावले, दिवाळीचा बोनस वेगळा", "lang": "mr_deva", "phrases": [{"phrase": "अठरा हजार", "value": 18000}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "काय रे, फ्रीलान्सिंगमधून यंदा किती कमावलंस? माझं पावणे लाख झालं", "lang": "mr_deva", "phrases": [{"phrase": "पावणे लाख", "value": 75000}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "नवीन जॉबमध्ये पॅकेज साडेसहा लाख मिळालं, इनहँड मात्र कमीच वाटतोय", "lang": "mr_deva", "phrases": [{"phrase": "साडेसहा लाख", "value": 650000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "बँकेत मॅनेजरने सांगितलं की होम लोनसाठी उत्पन्नाचा दाखला बत्तीस हजार हवा", "lang": "mr_deva", "phrases": [{"phrase": "बत्तीस हजार", "value": 32000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "गाडीचं लोन घेताना डाऊनपेमेंट पावणे दोन लाख भरावं लागलं", "lang": "mr_deva", "phrases": [{"phrase": "पावणे दोन लाख", "value": 175000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "जमीन विकायला काढलीये गावाबाहेर, एकरी भाव अडीच लाख सांगतायत दलाल", "lang": "mr_deva", "phrases": [{"phrase": "अडीच लाख", "value": 250000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "प्लॉट बघितला मी, ब्रोकर म्हणतोय अठरा लाखात होईल, पण नोंदणी खर्च वेगळा", "lang": "mr_deva", "phrases": [{"phrase": "अठरा लाखात", "value": 1800000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "अरे ऐक, मंडईत आज कापूस पाच हजार सहाशे रुपये क्विंटल गेला", "lang": "mr_deva", "phrases": [{"phrase": "पाच हजार सहाशे रुपये", "value": 5600}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "हरभरा घेऊन गेलो मंडईत, भाव फक्त बेचाळीसशे रुपये क्विंटल मिळाला", "lang": "mr_deva", "phrases": [{"phrase": "बेचाळीसशे रुपये", "value": 4200}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "अगं, नवरीच्या दागिन्यांचं बजेट साडेतीन लाख ठरवलंय आम्ही घरी", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन लाख", "value": 350000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "मंडपवाल्याने डेकोरेशनसाठी एक लाख दहा हजार कोट केलंय, जरा जास्तच वाटतंय", "lang": "mr_deva", "phrases": [{"phrase": "एक लाख दहा हजार", "value": 110000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "व्हॉइस नोट ऐकली का माझी? त्यात सांगितलं होतं की दुकानाचं भाडं वाढून बारा हजार झालं", "lang": "mr_deva", "phrases": [{"phrase": "बारा हजार", "value": 12000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "अरे थांब जरा, नेटवर्क नाहीये, सांगतो की दुधाचा भाव आता साठ रुपये लिटर झालाय", "lang": "mr_deva", "phrases": [{"phrase": "साठ रुपये", "value": 60}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "ब्रेकिंग न्यूज: सोन्याचा भाव आज प्रति तोळा त्र्याहत्तर हजारांवर पोहोचला", "lang": "mr_deva", "phrases": [{"phrase": "त्र्याहत्तर हजारांवर", "value": 73000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "पेट्रोलचा दर आज एक रुपयाने वाढून एकशे सहा रुपये लिटर झाला", "lang": "mr_deva", "phrases": [{"phrase": "एकशे सहा रुपये", "value": 106}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "शाळेची वार्षिक फी बावीस हजार भरावी लागते, पुस्तकं वेगळी", "lang": "mr_deva", "phrases": [{"phrase": "बावीस हजार", "value": 22000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "स्विमिंग क्लाससाठी दरमहा अठराशे रुपये मोजावे लागतात मुलाचे", "lang": "mr_deva", "phrases": [{"phrase": "अठराशे रुपये", "value": 1800}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "इंग्रजी माध्यमाच्या शाळेत ऍडमिशनसाठी पंचावन्न हजार डोनेशन मागतायत", "lang": "mr_deva", "phrases": [{"phrase": "पंचावन्न हजार", "value": 55000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "मेन रोडवरचा 2BHK आहे, ब्रोकरेज सोडून किंमत बासष्ठ लाख आहे", "lang": "mr_deva", "phrases": [{"phrase": "बासष्ठ लाख", "value": 6200000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "1RK हवं असेल तर बजेट अकरा हजार ठेवा दरमहा, चांगली सोसायटी आहे", "lang": "mr_deva", "phrases": [{"phrase": "अकरा हजार", "value": 11000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "टेरेस फ्लॅट आहे साहेब, थोडा महाग पडेल, पंचाऐंशी लाख मागतायत मालक", "lang": "mr_deva", "phrases": [{"phrase": "पंचाऐंशी लाख", "value": 8500000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ऊस तोडणीचं काम केलं यंदा, मजुरी मिळाली एकवीस हजार महिन्याला", "lang": "mr_deva", "phrases": [{"phrase": "एकवीस हजार", "value": 21000}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "मंडईत आज बटाटा फक्त सोळा रुपये किलो, चांगली आवक आहे यंदा", "lang": "mr_deva", "phrases": [{"phrase": "सोळा रुपये", "value": 16}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "तुरीचा भाव यंदा नऊशे रुपये मणाने पडला, नुकसानच झालं शेतकऱ्यांचं", "lang": "mr_deva", "phrases": [{"phrase": "नऊशे रुपये", "value": 900}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "द्राक्ष बागेतून यंदा साडेतीन लाख उत्पन्न मिळालं, हवामान चांगलं राहिलं", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन लाख", "value": 350000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "कापसाला भाव मिळेना, सात हजार क्विंटलच्या खाली गेला आहे बाजार", "lang": "mr_deva", "phrases": [{"phrase": "सात हजार", "value": 7000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "MBA करताना दरमहा पंधरा हजार स्टायपेंड मिळत होता इंटर्नशिपमध्ये", "lang": "mr_deva", "phrases": [{"phrase": "पंधरा हजार", "value": 15000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "रिसर्च फेलोशिपचा स्टायपेंड एकतीस हजार आहे, टॅक्स कापून", "lang": "mr_deva", "phrases": [{"phrase": "एकतीस हजार", "value": 31000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "इंटर्नशिपमध्ये पहिल्यांदा पगार मिळाला, फक्त सहा हजार पण खूप आनंद झाला", "lang": "mr_deva", "phrases": [{"phrase": "सहा हजार", "value": 6000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "PhD चं स्टायपेंड वाढून अठ्ठावीस हजार झालं, UGC ने जाहीर केलं", "lang": "mr_deva", "phrases": [{"phrase": "अठ्ठावीस हजार", "value": 28000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "मंडपाचं बुकिंग करायचं असेल तर आधी वीस हजार अ‍ॅडव्हान्स भरा", "lang": "mr_deva", "phrases": [{"phrase": "वीस हजार", "value": 20000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "फोटोग्राफीचं पॅकेज पंचेचाळीस हजाराचं आहे, ड्रोन शूटसहित", "lang": "mr_deva", "phrases": [{"phrase": "पंचेचाळीस हजाराचं", "value": 45000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "बँडवाल्यांनी सत्तावीस हजार सांगितलेत, वरात आणि स्टेज दोन्हीसाठी", "lang": "mr_deva", "phrases": [{"phrase": "सत्तावीस हजार", "value": 27000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "साखरपुड्याचे मिठाई ऑर्डर दिली, पन्नास किलोचा खर्च अठरा हजार आला", "lang": "mr_deva", "phrases": [{"phrase": "अठरा हजार", "value": 18000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "एवढ्या लांब जायला तीनशे पन्नास घेईन, ट्रॅफिक पण भयंकर आहे आता", "lang": "mr_deva", "phrases": [{"phrase": "तीनशे पन्नास", "value": 350}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "मालकांनी सांगितलं डिपॉझिट दोन महिन्याचं भाडं म्हणजे सव्वीस हजार होईल", "lang": "mr_deva", "phrases": [{"phrase": "सव्वीस हजार", "value": 26000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "घर सोडताना पेंटिंगचा खर्च म्हणून चार हजार डिपॉझिटमधून कापले मालकाने", "lang": "mr_deva", "phrases": [{"phrase": "चार हजार", "value": 4000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "लॉटरी लागल्याचा मेसेज आलाय, म्हणतायत सव्वा कोटी जिंकलात तुम्ही", "lang": "mr_deva", "phrases": [{"phrase": "सव्वा कोटी", "value": 12500000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "राज्यात यंदा दुष्काळ निवारणासाठी अठराशे कोटींची तरतूद जाहीर", "lang": "mr_deva", "phrases": [{"phrase": "अठराशे कोटींची", "value": 18000000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "शहरातील मेट्रो प्रकल्पाचा खर्च वाढून बावीस हजार कोटींवर पोहोचला", "lang": "mr_deva", "phrases": [{"phrase": "बावीस हजार कोटींवर", "value": 220000000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "अ‍ॅक्टिवा विकतोय, तीन वर्ष जुनी, बावन्न हजार रुपये अंतिम भाव", "lang": "mr_deva", "phrases": [{"phrase": "बावन्न हजार रुपये", "value": 52000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "पल्सर घ्यायचीये, बजेट पंचावन्न हजार आहे माझं, सेकंड हॅन्ड चालेल", "lang": "mr_deva", "phrases": [{"phrase": "पंचावन्न हजार", "value": 55000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "बँकेकडून SMS आलाय, उद्या EMI साडेतीन हजार कापली जाईल खात्यातून", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "होम लोनचा हप्ता एकोणीस हजार जातो दरमहा, पगारातला मोठा भाग निघतो", "lang": "mr_deva", "phrases": [{"phrase": "एकोणीस हजार", "value": 19000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "गोल्ड लोन घेतलं होतं, व्याजासह परतफेड करताना अकरा हजार जास्त गेले", "lang": "mr_deva", "phrases": [{"phrase": "अकरा हजार", "value": 11000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "पर्सनल लोनचा हप्ता बाकी आहे, उद्यापर्यंत साडेआठ हजार भरा नाहीतर पेनल्टी लागेल", "lang": "mr_deva", "phrases": [{"phrase": "साडेआठ हजार", "value": 8500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "निफ्टीने आज नवा उच्चांक गाठला, पोर्टफोलिओ आता एक लाख वीस हजार झालाय", "lang": "mr_deva", "phrases": [{"phrase": "एक लाख वीस हजार", "value": 120000}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "IPOमध्ये पैसे लावले होते साडेसात हजार, आता दुप्पट झालेत ऐकून बरं वाटलं", "lang": "mr_deva", "phrases": [{"phrase": "साडेसात हजार", "value": 7500}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "म्युच्युअल फंडात दरमहा दोन हजार SIP सुरू केलीये, हळूहळू वाढवणार आहे", "lang": "mr_deva", "phrases": [{"phrase": "दोन हजार", "value": 2000}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "डिलिव्हरी पार्टनर म्हणून काम करतो, पावसाळ्यात रोज साडेबाराशे मिळतात", "lang": "mr_deva", "phrases": [{"phrase": "साडेबाराशे", "value": 1250}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "उबरवर गाडी चालवतो, वीकेंडला कमाई पंधराशेपर्यंत जाते सहज", "lang": "mr_deva", "phrases": [{"phrase": "पंधराशेपर्यंत", "value": 1500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "फ्रीलान्स डिझायनिंगमधून यंदा तीन लाख कमावले, वेबसाइट डिझाइन करून", "lang": "mr_deva", "phrases": [{"phrase": "तीन लाख", "value": 300000}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "ट्युशन क्लास घेतो संध्याकाळी, महिन्याला बारा हजार जमा होतात त्यातून", "lang": "mr_deva", "phrases": [{"phrase": "बारा हजार", "value": 12000}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "तो स्वतःला लखपती समजतो पण खिशात धड शंभरही नसतात कधी", "lang": "mr_deva", "phrases": [{"phrase": "शंभरही", "value": 100}], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "मुलाची ट्युशन फी दरमहा अठराशे रुपये आहे, दोन विषयांची मिळून", "lang": "mr_deva", "phrases": [{"phrase": "अठराशे रुपये", "value": 1800}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "गणिताच्या खाजगी शिकवणीला वेगळे बारा हजार मोजावे लागले या सेमिस्टरला", "lang": "mr_deva", "phrases": [{"phrase": "बारा हजार", "value": 12000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "मुलीच्या डान्स क्लाससाठी दरमहा नऊशे रुपये भरतो आम्ही न चुकता", "lang": "mr_deva", "phrases": [{"phrase": "नऊशे रुपये", "value": 900}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "कोचिंग क्लासची फुल फी सव्वा लाख आहे, हप्त्यात भरायची सोय आहे का विचारलं", "lang": "mr_deva", "phrases": [{"phrase": "सव्वा लाख", "value": 125000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "रो हाऊस बघितलं का माझं? रजिस्ट्रीसकट किंमत अठ्ठावन्न लाख होईल", "lang": "mr_deva", "phrases": [{"phrase": "अठ्ठावन्न लाख", "value": 5800000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "गाळा भाड्याने द्यायचाय दुकानासाठी, महिन्याचं भाडं सोळा हजार ठरवलंय", "lang": "mr_deva", "phrases": [{"phrase": "सोळा हजार", "value": 16000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "स्टुडिओ अपार्टमेंट आहे बॅचलर्ससाठी, भाडं नऊ हजार, वीज पाणी वेगळं", "lang": "mr_deva", "phrases": [{"phrase": "नऊ हजार", "value": 9000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "आज मंडईत ज्वारीचा भाव फक्त एकोणतीस रुपये किलो होता, तेजी नाहीये अजिबात", "lang": "mr_deva", "phrases": [{"phrase": "एकोणतीस रुपये", "value": 29}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "शेवग्याच्या शेंगा घेऊन गेलो बाजारात, चाळीस रुपये किलोने विकल्या गेल्या", "lang": "mr_deva", "phrases": [{"phrase": "चाळीस रुपये", "value": 40}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "कांदा साठवलेला होता, आता भाव वाढल्यामुळे बावीस रुपये किलो मिळतोय", "lang": "mr_deva", "phrases": [{"phrase": "बावीस रुपये", "value": 22}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "द्राक्षाला यंदा निर्यातीसाठी शहात्तर रुपये किलो भाव मिळाला, समाधान आहे", "lang": "mr_deva", "phrases": [{"phrase": "शहात्तर रुपये", "value": 76}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "नवीन इंटर्नशिपमध्ये विद्यावेतन साडेसतरा हजार ठरलंय, तीन महिन्यांसाठी", "lang": "mr_deva", "phrases": [{"phrase": "साडेसतरा हजार", "value": 17500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "रिसर्च असिस्टंट म्हणून काम करतो, स्टायपेंड तेवीस हजार मिळतो प्रकल्पातून", "lang": "mr_deva", "phrases": [{"phrase": "तेवीस हजार", "value": 23000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "स्कॉलरशिपमधून वर्षाला अडीच लाख मिळणार आहेत, परदेशी शिक्षणासाठी", "lang": "mr_deva", "phrases": [{"phrase": "अडीच लाख", "value": 250000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "नवीन जॉईनरला ट्रेनिंग पिरीयडमध्ये फक्त साडेचौदा हजार दिले जातात कंपनीकडून", "lang": "mr_deva", "phrases": [{"phrase": "साडेचौदा हजार", "value": 14500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "वऱ्हाडासाठी बसचं भाडं वीस हजार लागेल, चाळीस लोकांची व्यवस्था करायचीये", "lang": "mr_deva", "phrases": [{"phrase": "वीस हजार", "value": 20000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "हळदी समारंभासाठी वेगळा मंडप घ्यावा लागेल, त्याचा खर्च आठ हजार धरलाय", "lang": "mr_deva", "phrases": [{"phrase": "आठ हजार", "value": 8000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "मेहंदीवालीने सांगितलं की फॅमिली पॅकेज सहा हजारात होईल, पंधरा जणांसाठी", "lang": "mr_deva", "phrases": [{"phrase": "सहा हजारात", "value": 6000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "लग्नपत्रिका छापायला बत्तीसशे रुपये लागले, पाचशे पत्रिकांसाठी", "lang": "mr_deva", "phrases": [{"phrase": "बत्तीसशे रुपये", "value": 3200}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "रात्रीचं भाडं जास्त लागतं साहेब, नाहीतर मी तुम्हाला पन्नासमध्ये नेलं असतं", "lang": "mr_deva", "phrases": [{"phrase": "पन्नासमध्ये", "value": 50}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "अगं बघ हा फॉरवर्ड, म्हणतायत मोबाईल कंपनीकडून पन्नास हजाराचं गिफ्ट मिळेल", "lang": "mr_deva", "phrases": [{"phrase": "पन्नास हजाराचं", "value": 50000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "ग्रुपवर मेसेज आलाय की व्हॉट्सअ‍ॅपकडून अनुदान मिळतंय पंचाहत्तर हजाराचं", "lang": "mr_deva", "phrases": [{"phrase": "पंचाहत्तर हजाराचं", "value": 75000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "शहरातील उड्डाणपूल प्रकल्पासाठी नगरपालिकेने साडेतीनशे कोटींची निविदा काढली", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीनशे कोटींची", "value": 3500000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "राज्यातील शेतकऱ्यांना यंदा दुष्काळी अनुदान म्हणून एकूण नऊशे कोटी वाटले जाणार", "lang": "mr_deva", "phrases": [{"phrase": "नऊशे कोटी", "value": 9000000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "होंडा सिटी विकायची आहे, पाच वर्ष जुनी, किंमत साडेपाच लाख फिक्स ठेवलीये", "lang": "mr_deva", "phrases": [{"phrase": "साडेपाच लाख", "value": 550000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "आयफोन विकायचाय अर्जंट, दोन वर्षांपूर्वीचा, भाव अठ्ठावीस हजार सांगतोय मी", "lang": "mr_deva", "phrases": [{"phrase": "अठ्ठावीस हजार", "value": 28000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "वॉशिंग मशीन विकायचंय, वर्षभरच वापरलीये, किंमत साडेसहा हजार ठरवलीये", "lang": "mr_deva", "phrases": [{"phrase": "साडेसहा हजार", "value": 6500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "बँकेकडून मेसेज आलाय, क्रेडिट कार्डचं बिल चौदाशे रुपये भरायचं आहे उद्यापर्यंत", "lang": "mr_deva", "phrases": [{"phrase": "चौदाशे रुपये", "value": 1400}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "एज्युकेशन लोनचा हप्ता साडेपाच हजार जातो दरमहा, अजून तीन वर्ष बाकी आहेत", "lang": "mr_deva", "phrases": [{"phrase": "साडेपाच हजार", "value": 5500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "बाईक लोनची शेवटची EMI साडेतीन हजार भरली आणि गाडी पूर्ण माझी झाली", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "क्रेडिट कार्डचं मिनिमम ड्यू सातशे रुपये आहे, पूर्ण बिल भरणं शक्य नाहीये यावेळी", "lang": "mr_deva", "phrases": [{"phrase": "सातशे रुपये", "value": 700}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "रिलायन्सचा शेअर आज अठ्ठावन्न रुपयांनी वधारला, बाजारात तेजी आहे एकूणच", "lang": "mr_deva", "phrases": [{"phrase": "अठ्ठावन्न रुपयांनी", "value": 58}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "बिटकॉईनमध्ये गुंतवलेले साडेचार हजार आता निम्मे झालेत, बाजार खूप पडलाय", "lang": "mr_deva", "phrases": [{"phrase": "साडेचार हजार", "value": 4500}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "डिमॅट खात्यात यंदा पहिल्यांदा दहा हजार गुंतवले, हळूहळू शिकतोय मार्केट", "lang": "mr_deva", "phrases": [{"phrase": "दहा हजार", "value": 10000}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "झोमॅटोवर काम करतो, आजचा दिवस चांगला गेला, कमाई साडेनऊशे झाली", "lang": "mr_deva", "phrases": [{"phrase": "साडेनऊशे", "value": 950}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "कंटेंट रायटिंगचं काम मिळालं, प्रति लेख साडेतीनशे रुपये मिळतात मला", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीनशे रुपये", "value": 350}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "फोटोग्राफीचं फ्रीलान्स काम करतो, इव्हेंटमागे पाच हजार मिळतात साधारण", "lang": "mr_deva", "phrases": [{"phrase": "पाच हजार", "value": 5000}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "ट्यूटरिंग अॅपवरून ऑनलाईन क्लास घेतो, तासाला साडेतीनशे रुपये मिळतात मला", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीनशे रुपये", "value": 350}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "अरे रे, चिरंजीवांची कराटे क्लासची फी परवडत नाहीये, दरमहा साडेबाराशे मागतायत", "lang": "mr_deva", "phrases": [{"phrase": "साडेबाराशे", "value": 1250}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "संगीत क्लाससाठी ऍडमिशन घेतली मुलीची, वर्षाची फी साडेसात हजार भरली आज", "lang": "mr_deva", "phrases": [{"phrase": "साडेसात हजार", "value": 7500}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "पाचवीत गेल्यावर बुक्स आणि युनिफॉर्मचा खर्च वेगळाच वाढतो, यंदा नऊशे जास्त लागले", "lang": "mr_deva", "phrases": [{"phrase": "नऊशे", "value": 900}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "पाल्याच्या करिअर काउन्सिलिंगसाठी एका सेशनला अठराशे रुपये मोजले काल", "lang": "mr_deva", "phrases": [{"phrase": "अठराशे रुपये", "value": 1800}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "स्टिल्ट पार्किंगसह फ्लॅटची किंमत त्रेसष्ठ लाख आहे, रजिस्ट्री खर्च वेगळा", "lang": "mr_deva", "phrases": [{"phrase": "त्रेसष्ठ लाख", "value": 6300000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "पीजी हवं असेल मुलांसाठी, दोन शेअरिंगमध्ये साडेसहा हजार दरमहा पडेल", "lang": "mr_deva", "phrases": [{"phrase": "साडेसहा हजार", "value": 6500}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ऑफिस स्पेस हवीय का? कमर्शियल गाळ्याचं भाडं बावीस हजार सांगतायत मालक", "lang": "mr_deva", "phrases": [{"phrase": "बावीस हजार", "value": 22000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "बाजरीची पेरणी केली होती यंदा, विक्रीतून एकरी अठ्ठावीस हजार मिळाले फक्त", "lang": "mr_deva", "phrases": [{"phrase": "अठ्ठावीस हजार", "value": 28000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "मंडईत भेंडी घेऊन गेलो, भाव फक्त पस्तीस रुपये किलो मिळाला आज", "lang": "mr_deva", "phrases": [{"phrase": "पस्तीस रुपये", "value": 35}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "मक्याचा भाव क्विंटलमागे अठराशे रुपयांवर स्थिरावला, फार तेजी नाहीये", "lang": "mr_deva", "phrases": [{"phrase": "अठराशे रुपयांवर", "value": 1800}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "आंब्याची पेटी यंदा साडेबाराशे रुपयांना विकली, हापूसला मागणी चांगली आहे", "lang": "mr_deva", "phrases": [{"phrase": "साडेबाराशे रुपयांना", "value": 1250}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "अप्रेंटिसशिपमध्ये विद्यावेतन साडेनऊ हजार मिळतं, कंपनीत सहा महिन्यांसाठी आहे", "lang": "mr_deva", "phrases": [{"phrase": "साडेनऊ हजार", "value": 9500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "डॉक्टरेटच्या अंतिम वर्षात फेलोशिप वाढून सदतीस हजार झाली आहे यूजीसीकडून", "lang": "mr_deva", "phrases": [{"phrase": "सदतीस हजार", "value": 37000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "समर इंटर्नशिपचा स्टायपेंड फक्त साडेतीन हजार आहे, पण अनुभव मौल्यवान आहे", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "परदेशातल्या विद्यापीठाकडून पूर्ण स्कॉलरशिप मिळाली, वर्षाला साडेचार लाख वाचणार आहेत", "lang": "mr_deva", "phrases": [{"phrase": "साडेचार लाख", "value": 450000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "वऱ्हाडासाठी हॉटेलमध्ये रूम बुक केल्या, एका रात्रीचं भाडं बावीसशे रुपये आहे", "lang": "mr_deva", "phrases": [{"phrase": "बावीसशे रुपये", "value": 2200}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "फुलांच्या सजावटीसाठी वेगळे साडेसहा हजार लागतील, गेट आणि स्टेज दोन्हीसाठी", "lang": "mr_deva", "phrases": [{"phrase": "साडेसहा हजार", "value": 6500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "लग्नाचा व्हिडिओ शूट करायला सिनेमॅटिक पॅकेज सत्तावीस हजाराचं घेतलंय आम्ही", "lang": "mr_deva", "phrases": [{"phrase": "सत्तावीस हजाराचं", "value": 27000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "नवरदेवाच्या आहेराचं बजेट साडेसात हजार ठेवलंय, त्यात कपडे आणि घड्याळ बसवायचंय", "lang": "mr_deva", "phrases": [{"phrase": "साडेसात हजार", "value": 7500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "रात्री उशिरा भाडं दुप्पट लागतं, नाहीतर दिवसा तीस रुपयातच झालं असतं", "lang": "mr_deva", "phrases": [{"phrase": "तीस रुपयातच", "value": 30}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "शेवटची फेरी आहे, नाईलाजाने साठ रुपये द्यावेच लागतील तुला बहुतेक", "lang": "mr_deva", "phrases": [{"phrase": "साठ रुपये", "value": 60}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "ग्रुपवर आलेला मेसेज म्हणतोय की सरकारकडून थेट खात्यात अठरा हजार जमा होणार", "lang": "mr_deva", "phrases": [{"phrase": "अठरा हजार", "value": 18000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "कोणीतरी मेसेज केलाय की मोबाईलचं रिचार्ज केलं की पावणे लाख जिंकाल तुम्ही", "lang": "mr_deva", "phrases": [{"phrase": "पावणे लाख", "value": 75000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "शहरातील नवीन विमानतळ प्रकल्पासाठी केंद्र सरकारने साडेसहाशे कोटींचा निधी दिला", "lang": "mr_deva", "phrases": [{"phrase": "साडेसहाशे कोटींचा", "value": 6500000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "पूरग्रस्तांसाठी मदत निधी म्हणून राज्य सरकारने दोनशे कोटी जाहीर केले आज", "lang": "mr_deva", "phrases": [{"phrase": "दोनशे कोटी", "value": 2000000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "फ्रीज विकायचा आहे, दुहेरी दरवाजाचा, तीन वर्ष जुना, किंमत नऊ हजार", "lang": "mr_deva", "phrases": [{"phrase": "नऊ हजार", "value": 9000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "सोफा सेट विकतोय, पाच सीटरचा, वापरलेला पण चांगल्या स्थितीत, भाव सहा हजार", "lang": "mr_deva", "phrases": [{"phrase": "सहा हजार", "value": 6000}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "डायनिंग टेबल विकायचंय सहा खुर्च्यांसह, किंमत साडेचार हजार अंतिम ठरवलीये", "lang": "mr_deva", "phrases": [{"phrase": "साडेचार हजार", "value": 4500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "बँकेचा SMS आलाय, या महिन्याची EMI साडेचार हजार उद्या कापली जाणार आहे", "lang": "mr_deva", "phrases": [{"phrase": "साडेचार हजार", "value": 4500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "शेतीसाठी घेतलेल्या कर्जाचा हप्ता साडेतेरा हजार भरायचा आहे या महिन्यात", "lang": "mr_deva", "phrases": [{"phrase": "साडेतेरा हजार", "value": 13500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "क्रेडिट कार्डचं बिल थकलंय, व्याजासकट आता अठराशे रुपये भरावे लागतील", "lang": "mr_deva", "phrases": [{"phrase": "अठराशे रुपये", "value": 1800}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "एचडीएफसी बँकेचा शेअर आज सव्वीस रुपयांनी घसरला, नफावसुली सुरू आहे बाजारात", "lang": "mr_deva", "phrases": [{"phrase": "सव्वीस रुपयांनी", "value": 26}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "क्रिप्टोतले साडेतीन हजार काढून घेतले, आता जास्त धोका नको वाटतोय", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "नवीन डिमॅट खातं उघडून पहिल्यांदा पाच हजार गुंतवले आज म्युच्युअल फंडात", "lang": "mr_deva", "phrases": [{"phrase": "पाच हजार", "value": 5000}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "अ‍ॅमेझॉनवर पॅकर म्हणून काम करतो, रोजची कमाई साडेसातशे रुपये मिळते हातात", "lang": "mr_deva", "phrases": [{"phrase": "साडेसातशे रुपये", "value": 750}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "पेंटिंगचं काम करतो, एका खोलीला रंगकाम करून अठराशे रुपये मिळतात मला", "lang": "mr_deva", "phrases": [{"phrase": "अठराशे रुपये", "value": 1800}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "व्हॉईस ओव्हर आर्टिस्ट म्हणून काम करतो, एका प्रोजेक्टला बाराशे रुपये मिळतात", "lang": "mr_deva", "phrases": [{"phrase": "बाराशे रुपये", "value": 1200}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "स्विगीवरून यंदा दिवाळीत रोज पंधराशेपर्यंत कमाई झाली, ऑर्डर खूप होत्या", "lang": "mr_deva", "phrases": [{"phrase": "पंधराशेपर्यंत", "value": 1500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "अभ्यासिकेत जागा बुक करायला दरमहा साडेतीनशे रुपये मोजावे लागतात मुलांना", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीनशे रुपये", "value": 350}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "मुलाच्या क्रिकेट कोचिंगसाठी वार्षिक शुल्क अठ्ठावीस हजार भरलं यंदा", "lang": "mr_deva", "phrases": [{"phrase": "अठ्ठावीस हजार", "value": 28000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "अ‍ॅबॅकस क्लाससाठी दरमहा साडेआठशे भरतो, मुलगी हल्ली खूप हुशार झालीये", "lang": "mr_deva", "phrases": [{"phrase": "साडेआठशे", "value": 850}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "शाळेच्या सहलीसाठी वेगळे साडेसहाशे रुपये भरायचे आहेत सोमवारपर्यंत", "lang": "mr_deva", "phrases": [{"phrase": "साडेसहाशे रुपये", "value": 650}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "डुप्लेक्स घर बघितलं का साहेब? किंमत एक कोटी सतरा लाख सांगतायत बिल्डर", "lang": "mr_deva", "phrases": [{"phrase": "एक कोटी सतरा लाख", "value": 11700000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "वन बीएचके हवं असेल तर भाडं साडेआठ हजार ठेवा, सोसायटी नवीनच आहे", "lang": "mr_deva", "phrases": [{"phrase": "साडेआठ हजार", "value": 8500}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "वेअरहाऊससाठी जागा हवीय का? गोडाऊनचं भाडं महिन्याला अठ्ठावन्न हजार आहे", "lang": "mr_deva", "phrases": [{"phrase": "अठ्ठावन्न हजार", "value": 58000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "मूगडाळीचा भाव यंदा मंडईत नव्वद रुपये किलोपर्यंत गेला, तेजीतच आहे बाजार", "lang": "mr_deva", "phrases": [{"phrase": "नव्वद रुपये", "value": 90}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "वांगी घेऊन गेलो होतो बाजारात, फक्त पंचवीस रुपये किलोने विकली गेली", "lang": "mr_deva", "phrases": [{"phrase": "पंचवीस रुपये", "value": 25}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "गव्हाचा भाव एकवीसशे रुपये क्विंटलवर स्थिर आहे गेल्या आठवड्यापासून", "lang": "mr_deva", "phrases": [{"phrase": "एकवीसशे रुपये", "value": 2100}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "केळीचा घड यंदा साडेतीनशे रुपयांना विकला, वाहतुकीचा खर्च वेगळा भरावा लागला", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीनशे रुपयांना", "value": 350}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "नर्सिंग कॉलेजमध्ये प्रॅक्टिकलसाठी स्टायपेंड साडेचार हजार मिळतो दरमहा तिसऱ्या वर्षी", "lang": "mr_deva", "phrases": [{"phrase": "साडेचार हजार", "value": 4500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "आर्किटेक्चर इंटर्नशिपमध्ये पहिल्या महिन्याचा स्टायपेंड पाच हजार जमा झाला खात्यात", "lang": "mr_deva", "phrases": [{"phrase": "पाच हजार", "value": 5000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "सरकारी योजनेतून कौशल्य प्रशिक्षणासाठी दरमहा बत्तीसशे भत्ता मिळतो विद्यार्थ्यांना", "lang": "mr_deva", "phrases": [{"phrase": "बत्तीसशे", "value": 3200}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "पोस्ट डॉक फेलोशिप मिळाली परदेशात, महिन्याला जवळपास एक लाख दहा हजार मिळणार", "lang": "mr_deva", "phrases": [{"phrase": "एक लाख दहा हजार", "value": 110000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "डीजेवाल्याने संगीत आणि लाईटसाठी अठ्ठावीस हजार सांगितलेत, वरातीच्या रात्रीसाठी", "lang": "mr_deva", "phrases": [{"phrase": "अठ्ठावीस हजार", "value": 28000}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "चुरमुऱ्याच्या लाडवांचा हलवाई खर्च सव्वा सात हजार सांगतोय, पन्नास किलोसाठी", "lang": "mr_deva", "phrases": [{"phrase": "सव्वा सात हजार", "value": 8750}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "मंडपावर विजेच्या रोषणाईसाठी वेगळे साडेचार हजार लागतील, कॉन्ट्रॅक्टरने सांगितलं", "lang": "mr_deva", "phrases": [{"phrase": "साडेचार हजार", "value": 4500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "वधूच्या साडीसाठी बजेट साडेबारा हजार ठेवलंय, बनारसी हवीय म्हणतेय ती", "lang": "mr_deva", "phrases": [{"phrase": "साडेबारा हजार", "value": 12500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "बाजारपेठेत सणासुदीला भाडं वाढतं, आज शंभर घ्यावं लागेल तुमच्याकडून", "lang": "mr_deva", "phrases": [{"phrase": "शंभर", "value": 100}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "फॉरवर्ड आलाय की या लिंकवर क्लिक केल्यावर लगेच वीस हजार जमा होतील खात्यात", "lang": "mr_deva", "phrases": [{"phrase": "वीस हजार", "value": 20000}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "मेसेजमध्ये लिहिलंय की गॅस सिलेंडरवर सबसिडी म्हणून साडेतीनशे रुपये मिळणार आहेत", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीनशे रुपये", "value": 350}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "जिल्ह्यातील रस्ते दुरुस्तीसाठी प्रशासनाने साडेचार कोटींचा निधी मंजूर केला आज", "lang": "mr_deva", "phrases": [{"phrase": "साडेचार कोटींचा", "value": 45000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "आरोग्य विभागाला नवीन उपकरणांसाठी अठ्ठ्याण्णव लाखांचा निधी वितरित करण्यात आला", "lang": "mr_deva", "phrases": [{"phrase": "अठ्ठ्याण्णव लाखांचा", "value": 9800000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "मायक्रोवेव्ह ओव्हन विकतोय, सहा महिन्यांपूर्वी घेतलेला, किंमत बत्तीसशे रुपये अंतिम", "lang": "mr_deva", "phrases": [{"phrase": "बत्तीसशे रुपये", "value": 3200}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "डबल बेड विकायचा आहे अर्जंट, गादीसह, किंमत साडेतीन हजार ठरवलीये", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "सायकल विकायचीये मुलाची, नवीनच घेतलेली, किंमत साडेबाराशे रुपये सांगितलीये", "lang": "mr_deva", "phrases": [{"phrase": "साडेबाराशे रुपये", "value": 1250}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "बजाज फायनान्सकडून मेसेज आलाय, बाराशे रुपये EMI उद्या खात्यातून वजा होईल", "lang": "mr_deva", "phrases": [{"phrase": "बाराशे रुपये", "value": 1200}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "ट्रॅक्टर लोनचा हप्ता महिन्याला साडेसहा हजार भरावा लागतो शेतकऱ्याला", "lang": "mr_deva", "phrases": [{"phrase": "साडेसहा हजार", "value": 6500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "पर्सनल लोनवरचं व्याज जास्त वाटतंय, एकूण परतफेड साडेसात लाख होणार आहे", "lang": "mr_deva", "phrases": [{"phrase": "साडेसात लाख", "value": 750000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "इन्फोसिसचा शेअर आज एकोणचाळीस रुपयांनी वाढला, गुंतवणूकदार खूश आहेत", "lang": "mr_deva", "phrases": [{"phrase": "एकोणचाळीस रुपयांनी", "value": 39}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "वायदा बाजारात पैसे लावले होते साडेआठ हजार, आज सगळे बुडाले एकाच दिवसात", "lang": "mr_deva", "phrases": [{"phrase": "साडेआठ हजार", "value": 8500}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "गोल्ड ईटीएफमध्ये दरमहा तीन हजार गुंतवतो, सुरक्षित पर्याय वाटतो मला तो", "lang": "mr_deva", "phrases": [{"phrase": "तीन हजार", "value": 3000}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "ई-कॉमर्स कंपनीत पार्टटाईम पॅकिंगचं काम करतो, तासाला साडेएकशे रुपये मिळतात", "lang": "mr_deva", "phrases": [{"phrase": "साडेएकशे रुपये", "value": 150}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "वेडिंग फोटोग्राफी करतो पार्टटाईम, वीकेंडला एका इव्हेंटला सहा हजार मिळतात", "lang": "mr_deva", "phrases": [{"phrase": "सहा हजार", "value": 6000}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "डेटा एंट्रीचं फ्रीलान्स काम करतो घरबसल्या, महिन्याला साडेसहा हजार मिळतात सध्या", "lang": "mr_deva", "phrases": [{"phrase": "साडेसहा हजार", "value": 6500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "कार वॉशिंगचं काम करतो सोसायटीत, गाडीमागे साठ रुपये मिळतात मला रोज", "lang": "mr_deva", "phrases": [{"phrase": "साठ रुपये", "value": 60}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "स्केटिंग क्लाससाठी अ‍ॅडमिशन घेतली, नोंदणी शुल्क साडेसहाशे रुपये भरलं आज", "lang": "mr_deva", "phrases": [{"phrase": "साडेसहाशे रुपये", "value": 650}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "बोर्डाच्या परीक्षेसाठी खाजगी क्लास लावलाय, संपूर्ण वर्षाची फी पावणे लाख आहे", "lang": "mr_deva", "phrases": [{"phrase": "पावणे लाख", "value": 75000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "नृत्य स्पर्धेसाठी ड्रेस शिवून घेतला, टेलरने साडेबाराशे रुपये घेतले मजुरी म्हणून", "lang": "mr_deva", "phrases": [{"phrase": "साडेबाराशे रुपये", "value": 1250}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "शाळेत नवीन कॉम्प्युटर लॅब उभारायला पालकांकडून पाचशे रुपये देणगी मागितली गेली", "lang": "mr_deva", "phrases": [{"phrase": "पाचशे रुपये", "value": 500}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "पेंटहाऊस बघायला या साहेब, टेरेस गार्डनसह, किंमत एक कोटी बत्तीस लाख आहे", "lang": "mr_deva", "phrases": [{"phrase": "एक कोटी बत्तीस लाख", "value": 13200000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "वन बीएचके फ्लॅट रिकामा आहे, भाडं साडेसात हजार ठरवलंय मालकांनी", "lang": "mr_deva", "phrases": [{"phrase": "साडेसात हजार", "value": 7500}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "शोरूमसाठी जागा हवी का? मुख्य रस्त्यावरचं दुकान महिन्याला बहात्तर हजार भाड्याने मिळेल", "lang": "mr_deva", "phrases": [{"phrase": "बहात्तर हजार", "value": 72000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "तांदळाचा भाव यंदा साडेचोवीसशे रुपये क्विंटलपर्यंत वाढला, मान्सून चांगला राहिला त्यामुळे", "lang": "mr_deva", "phrases": [{"phrase": "साडेचोवीसशे रुपये", "value": 2450}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "मिरचीचा भाव मंडईत साठ रुपये किलोवर गेला, तिखट मालाला मागणी वाढलीये", "lang": "mr_deva", "phrases": [{"phrase": "साठ रुपये", "value": 60}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "गुळाचा भाव यंदा पंचाहत्तर रुपये किलो ठरला, उसाचं उत्पादन कमी झालं म्हणून", "lang": "mr_deva", "phrases": [{"phrase": "पंचाहत्तर रुपये", "value": 75}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "पावटा शेंगा घेऊन गेलो बाजारात, फक्त अठ्ठेचाळीस रुपये किलोने घेतल्या व्यापाऱ्याने", "lang": "mr_deva", "phrases": [{"phrase": "अठ्ठेचाळीस रुपये", "value": 48}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "बीएड करताना प्रॅक्टिस टीचिंगसाठी शाळेकडून दरमहा साडेसतराशे मानधन मिळत होतं", "lang": "mr_deva", "phrases": [{"phrase": "साडेसतराशे", "value": 1750}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "आयटीआयमधून अप्रेंटिस म्हणून काम करतो, स्टायपेंड सव्वा नऊ हजार मिळतो मला", "lang": "mr_deva", "phrases": [{"phrase": "सव्वा नऊ हजार", "value": 11250}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "शिष्यवृत्तीतून यंदा पहिल्यांदा साडेतीन हजार मिळाले, पुस्तकं घेण्यासाठी उपयोगी पडतील", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "नर्सिंग होमला रात्रपाळीसाठी दरमहा वेगळे साडेचार हजार भत्ता म्हणून मिळतात सध्या", "lang": "mr_deva", "phrases": [{"phrase": "साडेचार हजार", "value": 4500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "वऱ्हाडाच्या स्वागतासाठी शरबत आणि नाश्त्याचा खर्च साडेतीन हजार धरलाय बजेटमध्ये", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "नवरीच्या मेहंदीसाठी आर्टिस्टने अठराशे रुपये सांगितलेत, फुल हातासाठी डिझाइन करून", "lang": "mr_deva", "phrases": [{"phrase": "अठराशे रुपये", "value": 1800}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "रिटर्न गिफ्टसाठी छोट्या बॉक्समागे साठ रुपये खर्च येतोय, दोनशे पाहुण्यांसाठी हवेत", "lang": "mr_deva", "phrases": [{"phrase": "साठ रुपये", "value": 60}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "स्टेजवरच्या फुलांच्या सजावटीचं कोटेशन साडेनऊ हजार आलंय, फक्त ताज्या फुलांचं", "lang": "mr_deva", "phrases": [{"phrase": "साडेनऊ हजार", "value": 9500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "कोणीतरी पाठवलंय की स्क्रॅच कार्ड घासलं की थेट साडेबारा हजार जिंकाल तुम्ही", "lang": "mr_deva", "phrases": [{"phrase": "साडेबारा हजार", "value": 12500}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "मेसेजमध्ये लिहिलंय की नवीन सिम घेतल्यावर कंपनी थेट पावणे दहा हजार बोनस देईल", "lang": "mr_deva", "phrases": [{"phrase": "पावणे दहा हजार", "value": 9750}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "जिल्हा रुग्णालयासाठी नवीन इमारत बांधायला आरोग्य खात्याने साडेअकरा कोटी मंजूर केले", "lang": "mr_deva", "phrases": [{"phrase": "साडेअकरा कोटी", "value": 115000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "पाणीपुरवठा योजनेसाठी ग्रामपंचायतीला शासनाकडून बासष्ठ लाखांचं अनुदान मिळालं आज", "lang": "mr_deva", "phrases": [{"phrase": "बासष्ठ लाखांचं", "value": 6200000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "गिटार विकायचंय, सहा महिन्यांपूर्वी घेतलेलं, किंमत साडेतीन हजार अंतिम सांगतो", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "टीव्ही विकायचाय बत्तीस इंची, चार वर्ष जुना, किंमत साडेसहा हजार ठेवलीये", "lang": "mr_deva", "phrases": [{"phrase": "साडेसहा हजार", "value": 6500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "किचन ट्रॉली विकायची आहे, नवीनच बसवलेली, किंमत साडेचार हजार सांगतो शेवटची", "lang": "mr_deva", "phrases": [{"phrase": "साडेचार हजार", "value": 4500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "मारुती सुझुकीकडून SMS आलाय, गाडीच्या कर्जाची EMI साडेसात हजार उद्या कापली जाईल", "lang": "mr_deva", "phrases": [{"phrase": "साडेसात हजार", "value": 7500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "दुकान सुरू करायला घेतलेल्या कर्जाचा हप्ता महिन्याला नऊ हजार भरावा लागतो सध्या", "lang": "mr_deva", "phrases": [{"phrase": "नऊ हजार", "value": 9000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "गृहकर्जाचं व्याजदर वाढल्यामुळे हप्ता आता साडेबावीस हजार झालाय दरमहा", "lang": "mr_deva", "phrases": [{"phrase": "साडेबावीस हजार", "value": 22500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "विप्रोचा शेअर आज एकोणपन्नास रुपयांनी घसरला, आयटी सेक्टरमध्ये सुस्ती आहे सध्या", "lang": "mr_deva", "phrases": [{"phrase": "एकोणपन्नास रुपयांनी", "value": 49}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "मित्राच्या सल्ल्यावरून पेनी स्टॉकमध्ये साडेसहा हजार लावले, धोका आहे माहीत असूनही", "lang": "mr_deva", "phrases": [{"phrase": "साडेसहा हजार", "value": 6500}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "पीपीएफ खात्यात यंदा वार्षिक साडेबारा हजार भरले, दीर्घकालीन बचतीसाठी चांगलं", "lang": "mr_deva", "phrases": [{"phrase": "साडेबारा हजार", "value": 12500}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "बेकरीत पार्टटाईम काम करतो, केकवर डेकोरेशन करून प्रति केक साडेतीनशे मिळतात", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीनशे", "value": 350}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "मेहंदी काढायचं काम करते घरोघरी जाऊन, एका हातामागे दीडशे रुपये घेते मी", "lang": "mr_deva", "phrases": [{"phrase": "दीडशे रुपये", "value": 150}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "ट्यूशन क्लासला मदत करतो शिक्षकांना, महिन्याला वेगळे साडेतीन हजार मिळतात यातून", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "कारपूलिंग सर्व्हिसमधून रोज ये-जा करून वीकला साडेबाराशे कमावतो सहज", "lang": "mr_deva", "phrases": [{"phrase": "साडेबाराशे", "value": 1250}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "कराटे बेल्ट टेस्टसाठी वेगळे साडेचारशे रुपये भरावे लागले मुलाला परवा", "lang": "mr_deva", "phrases": [{"phrase": "साडेचारशे रुपये", "value": 450}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "स्केच बुक आणि रंग विकत घ्यायला आर्ट क्लाससाठी साडेसातशे लागले मुलीला", "lang": "mr_deva", "phrases": [{"phrase": "साडेसातशे", "value": 750}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "दहावीच्या क्लासची फुल फी अडीच लाख आहे, तीन विषयांचं पॅकेज घेतलं आम्ही", "lang": "mr_deva", "phrases": [{"phrase": "अडीच लाख", "value": 250000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "उन्हाळी शिबिरासाठी नोंदणी करायला साडेआठशे रुपये भरलं ऑनलाइन काल रात्री", "lang": "mr_deva", "phrases": [{"phrase": "साडेआठशे रुपये", "value": 850}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "नदीकिनारी प्लॉट आहे साहेब, व्ह्यू छान आहे, भाव सव्वा चार लाख गुंठ्याला", "lang": "mr_deva", "phrases": [{"phrase": "सव्वा चार लाख", "value": 425000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "तीन खोल्यांचं घर हवं असेल तर भाडं सतरा हजार ठेवा, गार्डन एरियात आहे", "lang": "mr_deva", "phrases": [{"phrase": "सतरा हजार", "value": 17000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ब्युटी पार्लरसाठी जागा हवीय का? मुख्य चौकातलं दुकान बत्तीस हजारात मिळेल भाड्याने", "lang": "mr_deva", "phrases": [{"phrase": "बत्तीस हजारात", "value": 32000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "नारळाचा भाव यंदा पंचवीस रुपये नगाला मिळाला, वादळामुळे उत्पादन कमी झालं", "lang": "mr_deva", "phrases": [{"phrase": "पंचवीस रुपये", "value": 25}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "पेरू घेऊन गेलो बाजारात, चांगल्या मालाला पस्तीस रुपये किलो भाव मिळाला आज", "lang": "mr_deva", "phrases": [{"phrase": "पस्तीस रुपये", "value": 35}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "हळदीचा भाव यंदा क्विंटलमागे साडेसात हजार रुपयांवर गेला, चांगली कमाई झाली", "lang": "mr_deva", "phrases": [{"phrase": "साडेसात हजार रुपयांवर", "value": 7500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "लसणाचा भाव अचानक वाढला, आज एकशे वीस रुपये किलो झालाय मंडईत", "lang": "mr_deva", "phrases": [{"phrase": "एकशे वीस रुपये", "value": 120}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "फार्मसी इंटर्नशिपमध्ये स्टायपेंड साडेतीन हजार मिळतो, हॉस्पिटलमध्ये सहा महिन्यांसाठी", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "लॉ कॉलेजमधून इंटर्नशिप करतो वकिलांकडे, स्टायपेंड चार हजार मिळतो महिन्याला", "lang": "mr_deva", "phrases": [{"phrase": "चार हजार", "value": 4000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "नॅशनल स्कॉलरशिपमधून वर्षाला साठ हजार मिळणार आहेत, अभ्यासासाठी खूप मदत होईल", "lang": "mr_deva", "phrases": [{"phrase": "साठ हजार", "value": 60000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "अंगणवाडी सेविकेचं मानधन वाढून साडेसात हजार झालं, शासनाने जाहीर केलं आज", "lang": "mr_deva", "phrases": [{"phrase": "साडेसात हजार", "value": 7500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "वरातीसाठी घोडागाडी बुक केली, दोन तासांसाठी साडेतीन हजार भाडं ठरलंय", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "नवरीच्या दागिन्यांचं इन्शुरन्स काढलंय, प्रीमियम साडेतीन हजार भरला यंदा", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "जेवणावळीसाठी पंगत पद्धत ठेवली, प्लेटमागे साडेतीनशे रुपये खर्च येतोय हलवायाचा", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीनशे रुपये", "value": 350}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "स्टेजवरचा सोफा आणि फुलांची कमान भाड्याने घेतली, खर्च साडेतीन हजार आला", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "स्टेशनवर गर्दी असल्यामुळे रिक्षावाले मनमानी भाडं आकारतात, आज सत्तर मागितलं एकाने", "lang": "mr_deva", "phrases": [{"phrase": "सत्तर", "value": 70}], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "कोणीतरी पाठवलंय की पेट्रोल पंपावर QR कोड स्कॅन केलं की सव्वा दोन हजार कॅशबॅक मिळेल", "lang": "mr_deva", "phrases": [{"phrase": "सव्वा दोन हजार", "value": 2500}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "ग्रुपवर सर्कुलेट होतंय की नवीन योजनेत गुंतवणूक केली की महिन्याला पावणे तीन हजार परतावा मिळेल", "lang": "mr_deva", "phrases": [{"phrase": "पावणे तीन हजार", "value": 2750}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "नगरपालिकेच्या शाळांसाठी शिक्षण विभागाने यंदा साडेतीन कोटींचा वाढीव निधी दिला", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन कोटींचा", "value": 35000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "ग्रामीण भागातील रस्त्यांसाठी जिल्हा परिषदेला सत्तर लाखांचं विशेष अनुदान मिळालं आज", "lang": "mr_deva", "phrases": [{"phrase": "सत्तर लाखांचं", "value": 7000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "डेस्कटॉप कॉम्प्युटर विकायचा आहे, गेमिंगसाठी योग्य, किंमत साडेआठ हजार ठेवलीये", "lang": "mr_deva", "phrases": [{"phrase": "साडेआठ हजार", "value": 8500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "कपाट विकायचं आहे, तीन दरवाज्यांचं, किंमत साडेतीन हजार अंतिम भाव आहे", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "इंडक्शन कुकर विकायचा आहे, दोन महिन्यांपूर्वी घेतलेला, किंमत बाराशे रुपये सांगतो", "lang": "mr_deva", "phrases": [{"phrase": "बाराशे रुपये", "value": 1200}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "आयसीआयसीआय बँकेचा SMS आलाय, पर्सनल लोनची EMI साडेतीन हजार उद्या कापली जाईल", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "शेळीपालनासाठी घेतलेल्या कर्जाचा हप्ता महिन्याला साडेतीन हजार भरावा लागतो सध्या", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "शैक्षणिक कर्जाचा व्याजदर वाढल्यामुळे हप्ता आता साडेपाच हजार झालाय महिन्याला", "lang": "mr_deva", "phrases": [{"phrase": "साडेपाच हजार", "value": 5500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "अदानी ग्रुपचा शेअर आज त्रेसष्ठ रुपयांनी वाढला, बाजारात सकारात्मक वातावरण आहे", "lang": "mr_deva", "phrases": [{"phrase": "त्रेसष्ठ रुपयांनी", "value": 63}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "डेरिव्हेटिव्ह मार्केटमध्ये रिस्क घेतली होती साडेनऊ हजाराची, आज पूर्ण तोटा झाला", "lang": "mr_deva", "phrases": [{"phrase": "साडेनऊ हजाराची", "value": 9500}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "रेकरिंग डिपॉझिटमध्ये दरमहा अठराशे भरतो, पाच वर्षांनी चांगली रक्कम जमा होईल", "lang": "mr_deva", "phrases": [{"phrase": "अठराशे", "value": 1800}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "पार्सल डिलिव्हरी करतो बाईकवरून, रोज पंचवीस ऑर्डरमागे साडेसातशे कमावतो सहज", "lang": "mr_deva", "phrases": [{"phrase": "साडेसातशे", "value": 750}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "वेब डेव्हलपमेंटचं फ्रीलान्स प्रोजेक्ट मिळालं, एका वेबसाइटसाठी साडेबारा हजार ठरलंय", "lang": "mr_deva", "phrases": [{"phrase": "साडेबारा हजार", "value": 12500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "होम ट्यूटर म्हणून काम करते, एका विद्यार्थ्यामागे महिन्याला अठराशे घेते मी", "lang": "mr_deva", "phrases": [{"phrase": "अठराशे", "value": 1800}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "पाळीव प्राण्यांना फिरवायचं काम करतो सोसायटीत, कुत्रामागे रोज दीडशे मिळतात", "lang": "mr_deva", "phrases": [{"phrase": "दीडशे", "value": 150}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "जिमखान्यात बॅडमिंटन कोर्टचं मासिक शुल्क साडेसहाशे रुपये आहे, रॅकेट वेगळी घ्यावी लागते", "lang": "mr_deva", "phrases": [{"phrase": "साडेसहाशे रुपये", "value": 650}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "स्पर्धा परीक्षेच्या क्लाससाठी फुल कोर्स फी अडीच लाख भरलीये भावाने यंदा", "lang": "mr_deva", "phrases": [{"phrase": "अडीच लाख", "value": 250000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "मुलीच्या पोहण्याच्या स्पर्धेसाठी कॉस्च्युम आणि गॉगलचा खर्च साडेतीनशे झाला काल", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीनशे", "value": 350}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "शालेय पुस्तकांच्या दुकानात वार्षिक सेटसाठी बावीसशे रुपये मोजावे लागले यंदा", "lang": "mr_deva", "phrases": [{"phrase": "बावीसशे रुपये", "value": 2200}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "फार्महाऊस विकायचं आहे नदीकाठी, दोन एकर जागेसह किंमत एक कोटी सव्वीस लाख", "lang": "mr_deva", "phrases": [{"phrase": "एक कोटी सव्वीस लाख", "value": 12600000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "दोन खोल्यांचं घर हवं असेल विद्यार्थ्यांसाठी, भाडं साडेनऊ हजार ठेवलंय मालकांनी", "lang": "mr_deva", "phrases": [{"phrase": "साडेनऊ हजार", "value": 9500}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "क्लिनिक थाटायला जागा हवीय का? मेन रोडवरचा गाळा अठ्ठावन्न हजारात भाड्याने देतो", "lang": "mr_deva", "phrases": [{"phrase": "अठ्ठावन्न हजारात", "value": 58000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "शेवग्याच्या पानांचा भाव यंदा वाढला, वीस रुपये जुडीला मागणी वाढल्यामुळे", "lang": "mr_deva", "phrases": [{"phrase": "वीस रुपये", "value": 20}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "पपई नेली विक्रीसाठी आज, दर्जेदार मालाला बावीस रुपये किलो भाव मिळाला", "lang": "mr_deva", "phrases": [{"phrase": "बावीस रुपये", "value": 22}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "आल्याचा भाव मंडईत क्विंटलमागे साडेसात हजार रुपयांवर पोहोचला, तेजी कायम आहे", "lang": "mr_deva", "phrases": [{"phrase": "साडेसात हजार रुपयांवर", "value": 7500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "पालेभाज्यांचा भाव पावसामुळे वाढला, कोथिंबीर आज तीस रुपये जुडीला विकली गेली", "lang": "mr_deva", "phrases": [{"phrase": "तीस रुपये", "value": 30}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "डेंटल कॉलेजमध्ये हाऊस सर्जनशिपचा स्टायपेंड साडेसात हजार आहे, वर्षभरासाठी ठरलेला", "lang": "mr_deva", "phrases": [{"phrase": "साडेसात हजार", "value": 7500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "पत्रकारितेच्या इंटर्नशिपमध्ये पहिल्या महिन्याचा स्टायपेंड साडेतीन हजार मिळाला वृत्तपत्रातून", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "वनविभागाच्या हंगामी कर्मचाऱ्याला दरमहा नऊ हजार मानधन मिळतं सध्या", "lang": "mr_deva", "phrases": [{"phrase": "नऊ हजार", "value": 9000}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "आशा वर्करचं मानधन वाढून साडेपाच हजार झालं, शासनाने घोषणा केली आज", "lang": "mr_deva", "phrases": [{"phrase": "साडेपाच हजार", "value": 5500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "वरातीत जेवणासाठी पत्रावळी आणि द्रोण मागवले, खर्च फक्त साडेसातशे आला", "lang": "mr_deva", "phrases": [{"phrase": "साडेसातशे", "value": 750}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "नवरदेवाच्या पगडीसाठी टेलरने साडेसातशे रुपये मजुरी घेतली, रेशमी कापड वापरून", "lang": "mr_deva", "phrases": [{"phrase": "साडेसातशे रुपये", "value": 750}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "पत्रिकेवर सोन्याचा मुलामा हवा असेल तर प्रत्येकी वीस रुपये जास्त लागतील", "lang": "mr_deva", "phrases": [{"phrase": "वीस रुपये", "value": 20}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "स्टेजच्या मागच्या बॅकड्रॉपसाठी डिझायनरने साडेचार हजार कोट केलंय, LED सहित", "lang": "mr_deva", "phrases": [{"phrase": "साडेचार हजार", "value": 4500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "फॉरवर्ड फिरतोय की आधार लिंक केलं की सरकार थेट साडेसहा हजार खात्यात टाकेल", "lang": "mr_deva", "phrases": [{"phrase": "साडेसहा हजार", "value": 6500}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "मेसेज आलाय की ॲपवरून सर्व्हे भरला की कंपनी तुम्हाला सव्वा हजार बक्षीस देईल", "lang": "mr_deva", "phrases": [{"phrase": "सव्वा हजार", "value": 1250}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "तालुक्यातील अंगणवाड्यांच्या नूतनीकरणासाठी जिल्हा परिषदेने साडेचार कोटी मंजूर केले काल", "lang": "mr_deva", "phrases": [{"phrase": "साडेचार कोटी", "value": 45000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "स्वच्छता अभियानासाठी नगरपालिकेला केंद्राकडून एक्क्याऐंशी लाखांचा निधी प्राप्त झाला आहे", "lang": "mr_deva", "phrases": [{"phrase": "एक्क्याऐंशी लाखांचा", "value": 8100000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "स्पीकर सिस्टीम विकायची आहे होम थिएटरची, किंमत साडेसहा हजार ठरवलीये अंतिम", "lang": "mr_deva", "phrases": [{"phrase": "साडेसहा हजार", "value": 6500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "प्रिंटर विकायचा आहे, कलर स्कॅनरसह, वर्षभर वापरलेला, किंमत अठराशे रुपये", "lang": "mr_deva", "phrases": [{"phrase": "अठराशे रुपये", "value": 1800}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "वॉटर प्युरिफायर विकतोय, RO सिस्टीमसह, किंमत साडेतीन हजार सांगतो शेवटची", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "एसबीआय बँकेचा SMS आलाय, गृहकर्जाची EMI साडेएकोणीस हजार उद्या कापली जाईल", "lang": "mr_deva", "phrases": [{"phrase": "साडेएकोणीस हजार", "value": 19500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "पिकाच्या हंगामासाठी घेतलेल्या कर्जाचा हप्ता महिन्याला साडेचार हजार भरावा लागतो शेतकऱ्याला", "lang": "mr_deva", "phrases": [{"phrase": "साडेचार हजार", "value": 4500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "मोबाईल फोनचं कर्ज सहा हप्त्यांत फेडायचं ठरलंय, प्रत्येकी बाराशे रुपये", "lang": "mr_deva", "phrases": [{"phrase": "बाराशे रुपये", "value": 1200}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "बिझनेस लोनवरचं व्याज परवडेना, एकूण परतफेड साडेनऊ लाख होणार आहे शेवटी", "lang": "mr_deva", "phrases": [{"phrase": "साडेनऊ लाख", "value": 950000}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "मारुतीचा शेअर आज एकोणऐंशी रुपयांनी वाढला, ऑटो सेक्टरमध्ये तेजी परतलीये", "lang": "mr_deva", "phrases": [{"phrase": "एकोणऐंशी रुपयांनी", "value": 79}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "ऑप्शन ट्रेडिंगमध्ये साडेसात हजार गुंतवले होते, आज मार्जिन कॉल आला अचानक", "lang": "mr_deva", "phrases": [{"phrase": "साडेसात हजार", "value": 7500}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "नॅशनल पेन्शन स्कीममध्ये दरमहा साडेबाराशे भरतो, निवृत्तीसाठी लांब पल्ल्याची योजना आहे", "lang": "mr_deva", "phrases": [{"phrase": "साडेबाराशे", "value": 1250}], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "रात्रपाळीत सुरक्षारक्षक म्हणून काम करतो सोसायटीत, महिन्याला साडेबारा हजार पगार मिळतो", "lang": "mr_deva", "phrases": [{"phrase": "साडेबारा हजार", "value": 12500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "पार्किंगचं व्यवस्थापन करतो मॉलमध्ये पार्टटाईम, तासाला साठ रुपये मिळतात हातात", "lang": "mr_deva", "phrases": [{"phrase": "साठ रुपये", "value": 60}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "सोशल मीडिया मॅनेजमेंटचं काम करतो लहान दुकानांसाठी, महिन्याला साडेचार हजार मिळतात प्रत्येकाकडून", "lang": "mr_deva", "phrases": [{"phrase": "साडेचार हजार", "value": 4500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "बागकामाचं काम करतो बंगल्यांमध्ये, तीन घरांतून मिळून साडेतीन हजार जमतात दर महिन्याला", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "तबला शिकवणीसाठी गुरुजींना दरमहा साडेआठशे रुपये गुरुदक्षिणा देतो मुलगा माझा", "lang": "mr_deva", "phrases": [{"phrase": "साडेआठशे रुपये", "value": 850}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "बारावीनंतर इंजिनिअरिंग एन्ट्रन्सच्या क्लाससाठी संपूर्ण फी साडेतीन लाख भरली यंदा", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन लाख", "value": 350000}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "नाटकाच्या तालमीसाठी मेकअप आणि कॉस्च्युमचा खर्च साडेपाचशे झाला मुलीचा", "lang": "mr_deva", "phrases": [{"phrase": "साडेपाचशे", "value": 550}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "वक्तृत्व स्पर्धेच्या तयारीसाठी खाजगी शिक्षक ठेवला, तासाला साडेतीनशे घेतो तो", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीनशे", "value": 350}], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "जुनं वाडा टाईप घर विकायचंय गावात, जुन्या बांधकामासह किंमत बावीस लाख", "lang": "mr_deva", "phrases": [{"phrase": "बावीस लाख", "value": 2200000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "हॉस्टेलच्या खोलीत तीन जणांसाठी जागा आहे, प्रत्येकी भाडं साडेतीन हजार पडेल", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "जिममध्ये सेटअप हवा असेल तर जागा भाड्याने द्यायला तयार आहे, अठ्ठेचाळीस हजार महिन्याला", "lang": "mr_deva", "phrases": [{"phrase": "अठ्ठेचाळीस हजार", "value": 48000}], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "चिकूचा भाव यंदा घसरला, फक्त अठरा रुपये किलो मिळतोय शेतकऱ्यांना बाजारात", "lang": "mr_deva", "phrases": [{"phrase": "अठरा रुपये", "value": 18}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "संत्र्याची पेटी विक्रीला काढली, नागपुरी मालाला साडेआठशे रुपये भाव मिळाला", "lang": "mr_deva", "phrases": [{"phrase": "साडेआठशे रुपये", "value": 850}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "तिळाचा भाव क्विंटलमागे साडेदहा हजार रुपयांवर पोहोचला, तेलगिरण्यांची मागणी वाढली", "lang": "mr_deva", "phrases": [{"phrase": "साडेदहा हजार रुपयांवर", "value": 10500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "फ्लॉवरचा भाव मंडईत आज पस्तीस रुपये किलो झाला, थंडीमुळे उत्पादन वाढलं", "lang": "mr_deva", "phrases": [{"phrase": "पस्तीस रुपये", "value": 35}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "पशुवैद्यकीय कॉलेजमध्ये इंटर्नशिपचा स्टायपेंड साडेचार हजार मिळतो सहा महिन्यांसाठी", "lang": "mr_deva", "phrases": [{"phrase": "साडेचार हजार", "value": 4500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "होमिओपॅथी कॉलेजमधून क्लिनिकल प्रॅक्टिससाठी दरमहा साडेतीन हजार भत्ता मिळतो विद्यार्थ्यांना", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "ग्रामसेवकाचं तात्पुरतं मानधन साडेआठ हजार आहे, कायम होईपर्यंत तेवढंच मिळणार", "lang": "mr_deva", "phrases": [{"phrase": "साडेआठ हजार", "value": 8500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "मध्यान्ह भोजन योजनेतील स्वयंपाक्याला दरमहा साडेचार हजार मानधन दिलं जातं शाळेकडून", "lang": "mr_deva", "phrases": [{"phrase": "साडेचार हजार", "value": 4500}], "scenario": "salary", "gen": "sonnet-a"}
+{"text": "नवरदेवाच्या शेरवानीसाठी बुटीकमध्ये साडेतीन हजार मोजले, कढाई काम केलेली होती", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "आईस्क्रीम स्टॉलसाठी वेगळा खर्च साडेतीन हजार धरलाय, लहान मुलं खूप खुश होतील", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "पान सुपारीच्या स्टॉलसाठी हलवायाला वेगळे साडेबाराशे द्यावे लागले शेवटी", "lang": "mr_deva", "phrases": [{"phrase": "साडेबाराशे", "value": 1250}], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "फॉरवर्ड आलाय की टोल फ्री नंबरवर मिस्ड कॉल दिली की साडेतीन हजार रिचार्ज मिळेल", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "ग्रुपवर फिरतोय की नोकरीसाठी अर्ज करताना आधी प्रोसेसिंग फी पावणे दोन हजार भरावी लागेल", "lang": "mr_deva", "phrases": [{"phrase": "पावणे दोन हजार", "value": 1750}], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "तालुक्यातील प्राथमिक आरोग्य केंद्रासाठी शासनाने नवीन उपकरणांसाठी बावन्न लाख मंजूर केले", "lang": "mr_deva", "phrases": [{"phrase": "बावन्न लाख", "value": 5200000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "शहरातील उद्यान सुशोभीकरणासाठी महापालिकेने साडेतीन कोटींचा प्रस्ताव मंजूर केला आज", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन कोटींचा", "value": 35000000}], "scenario": "news", "gen": "sonnet-a"}
+{"text": "गिझर विकायचा आहे, पंचवीस लिटरचा, दोन वर्ष जुना, किंमत साडेतीन हजार", "lang": "mr_deva", "phrases": [{"phrase": "साडेतीन हजार", "value": 3500}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "बुक शेल्फ विकायचं आहे, लाकडी बांधणीचं, किंमत बाराशे रुपये अंतिम सांगतो", "lang": "mr_deva", "phrases": [{"phrase": "बाराशे रुपये", "value": 1200}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "मिक्सर ग्राइंडर विकायचा आहे, तीन जार सोबत, किंमत साडेबाराशे रुपये सांगतो", "lang": "mr_deva", "phrases": [{"phrase": "साडेबाराशे रुपये", "value": 1250}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "पीएनबी बँकेचा SMS आलाय, बिझनेस लोनची EMI साडेआठ हजार उद्या कापली जाईल", "lang": "mr_deva", "phrases": [{"phrase": "साडेआठ हजार", "value": 8500}], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "अच्छा, म्हणजे तुझ्याकडे लाखो रुपये पडलेत आणि तरी उधार मागतोयस", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "कालचा फोन नंबर 9823456712 सेव्ह कर बरं", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "उद्या सकाळी साडेसात वाजता स्टेशनवर ये", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "15 जून ला परीक्षा आहे, नीट अभ्यास कर", "lang": "mr_deva", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "पिनकोड 411038 टाक फॉर्ममध्ये, चुकू नकोस", "lang": "mr_deva", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "आजोबांचं वय ब्याऐंशी वर्षे आहे, तब्येत बरी आहे", "lang": "mr_deva", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "तीन तास रांगेत उभं राहिल्यावर टोकन मिळालं शेवटी", "lang": "mr_deva", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "कार्यक्रमाला सातशे लोक जमले होते हॉलमध्ये", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "गावात हजारो लोक जमले होते यात्रेसाठी काल", "lang": "mr_deva", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "तो आता करोडपती झाला म्हणे, गाडी बंगला सगळं झालं", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "सीट नंबर अठ्ठेचाळीस आहे तुझी, तिकिटावर चेक कर", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "शेअर मार्केटमध्ये आज साडेतीन टक्के घसरण झाली, गुंतवणूकदार घाबरलेत", "lang": "mr_deva", "phrases": [], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "हो का मग, तुझा पगार लाखोंत आहे तर आम्हाला का सांगत नाहीस चहा तरी पाज", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "सुनिता ताई, तुमच्या मुलीच्या क्लासची फी किती आहे यंदा?", "lang": "mr_deva", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "साहेब, हा फ्लॅट सेकंड फ्लोअरला आहे, पार्किंगसह किंमत बोलू का?", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "सर, इथून एअरपोर्टला जायला किती घेणार? मीटर बंद ठेवलंय तुम्ही", "lang": "mr_deva", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "काका, हा मेसेज खरंच बँकेकडून आलाय का? OTP मागतायत माझा", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "फेक मेसेज आहे तो, त्यावर क्लिक करू नकोस अजिबात, फसवणूक होईल", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "असल्या मेसेजला उत्तर देऊ नकोस, बँक कधीच OTP मागत नाही फोनवर", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "नोकरी सोडून व्यवसाय सुरू केला, बरं झालं लगेच करोडपती नाही झालो नाहीतर टॅक्स भरावा लागला असता", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "अच्छा म्हणजे पगारवाढ मिळाली म्हणून पार्टी नाही देणार तर काय फक्त चहा पाजणार", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "स्कूटी विकायची आहे अर्जंट, पस्तीस हजार किमी झालीये, किंमत बोला जरा", "lang": "mr_deva", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "सेन्सेक्स आज सातशे पॉइंटने कोसळला, गुंतवणूकदारांचे लाखो रुपये बुडाले", "lang": "mr_deva", "phrases": [], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "उद्या सकाळी ऑफिसला यायला उशीर होईल, ट्रेन नऊ वाजता आहे", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "OTP आला असेल तर लगेच पाठव, वेळ संपत आलीये माझी", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "वयाच्या पासष्ठाव्या वर्षी निवृत्त झाले आजोबा, पेन्शन सुरू झाली त्यांची", "lang": "mr_deva", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "चार किलोमीटर चालत गेलो शाळेपर्यंत, बस बंद होती आज", "lang": "mr_deva", "phrases": [], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "लग्नाला हजारो पाहुणे बोलावले होते, गावातलं सगळं कुटुंब आलं होतं", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "आयटी क्षेत्रात करोडोंची गुंतवणूक आली यंदा राज्यात, हजारो नोकऱ्या मिळणार", "lang": "mr_deva", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "रांगेत साडेतीन तास उभे राहिलो तरीही तिकीट मिळालं नाही शेवटी", "lang": "mr_deva", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "ऑर्डर नंबर सत्तेचाळीस अजून आलेली नाहीये, कस्टमर केअरला फोन कर", "lang": "mr_deva", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "पेढ्यांचा बॉक्स तयार आहे का? उद्या सकाळी घ्यायला येतो मी", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "साहेब, हा प्लॉट कॉर्नरचा आहे, रेट थोडा जास्त पडेल म्हणून सांगतो आधीच", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "दादा, इथून रेल्वे स्टेशनपर्यंत नुसता भाडं किती होईल थोडं कमी करा ना", "lang": "mr_deva", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "मालकीणबाईंनी सांगितलं की डिपॉझिट न परत करता पुढच्या भाड्यात जमा करू", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "नवीन भाडेकरूकडून तीन महिन्याचं भाडं ऍडव्हान्स म्हणून घेतलं जातं इथे नेहमी", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "असले गिफ्ट मेसेज उघडूही नकोस, फोन हॅक होण्याची भीती असते त्यातून", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "असले लिंक कधीच क्लिक करू नका, बँक खातं रिकामं होईल क्षणात", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "बरं झालं मी करोडपती नाही, नाहीतर नातेवाईकांची रांग लागली असती दारात", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "अरे वा, इतकी मोठी पार्टी दिलीस, वाटलं होतं तुला लॉटरी लागली की काय", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "आज बँक निफ्टी दीड टक्क्याने वाढला, पोर्टफोलिओत चांगला परतावा दिसतोय", "lang": "mr_deva", "phrases": [], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "अरे यार, उद्या सकाळी लवकर उठवशील का मला? गजर लागत नाही माझा", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "काय ग, कालच्या पार्टीचे फोटो पाठव ना ग्रुपवर लवकर", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "पणजोबांचं वय शहाण्णव वर्षे होतं, गावातले सगळे त्यांना ओळखत होते", "lang": "mr_deva", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "सहा किलोमीटरची सायकल रेस पूर्ण केली आज सकाळी न थांबता", "lang": "mr_deva", "phrases": [], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "वरातीत हजारो दिवे लावले होते, गावभर उजेड पसरला होता रात्री", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "परदेशी गुंतवणूकदारांनी यंदा राज्यात करोडोंची गुंतवणूक जाहीर केली उद्योगात", "lang": "mr_deva", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "तो स्वतःला करोडपती समजतो, पण अजून भाड्याच्या घरातच राहतो बिचारा", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "तिकीट काउंटरवर दोन तास रांगेत उभं राहावं लागलं आजही नेहमीसारखं", "lang": "mr_deva", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "ऑर्डर क्रमांक त्र्याण्णव अजून डिस्पॅच झालेली नाहीये, दोन दिवस झाले आता", "lang": "mr_deva", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "लाडवांचा बॉक्स तयार ठेवा उद्यासाठी, पाहुणे लवकर येणार आहेत घरी", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "ताई, हा बंगला कॉर्नर प्लॉटवर आहे, समोर मोकळी जागा पण आहे", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "मावशी, रिक्षावाल्याला सांग जरा कमी घे, स्टँडपासून जवळच आहे इथे", "lang": "mr_deva", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "नवीन भाडेकरूला घर देण्यापूर्वी पोलीस व्हेरिफिकेशन करून घ्यायचं आहे आधी", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "मालकीणबाई म्हणाल्या की दुरुस्तीचा खर्च भाडेकरूने उचलावा असं ठरलंय", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "अशा फेक स्कीम मेसेजवर विश्वास ठेवू नका, सरकार असं थेट पैसे देत नाही", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "नंबर ब्लॉक कर तो, वारंवार असले फसवे मेसेज पाठवतोय आपल्याला", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "हो हो, तुझी कंपनी रोज करोडोंची उलाढाल करते ना, मग चहाचे पैसे तरी दे", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "बापरे, एवढा मोठा हिरा घातलायस, वाटलं तुला सोन्याची खाणच सापडली की काय", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "होम लोनची शेवटची किस्त भरली आज, वीस वर्षांनंतर घर पूर्ण माझं झालं", "lang": "mr_deva", "phrases": [], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "आज सोन्याचा भाव स्थिर राहिला, चांदीत मात्र चांगली तेजी बघायला मिळाली", "lang": "mr_deva", "phrases": [], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "अगं काय रे, तू कुठे आहेस सध्या? मी बाहेर वाट बघतोय तुझी", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "आवाज तुटतोय जरा, नंतर व्हिडिओ कॉल कर सिग्नल चांगला मिळाला की", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "आजी नव्वद वर्षांची झाली तरी रोज बागेत फेरी मारतात न चुकता", "lang": "mr_deva", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "मॅरेथॉनमध्ये दहा किलोमीटर धावलो आज, पाय दुखतायत पण समाधान वाटतंय", "lang": "mr_deva", "phrases": [], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "वरातीसाठी सजवलेला घोडा बघून सगळे पाहुणे खूश झाले लगेच", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "उद्योगधंद्यांना चालना देण्यासाठी सरकारने नव्या धोरणाची घोषणा केली आज सकाळी", "lang": "mr_deva", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "तो सतत सांगत असतो की मी लवकरच करोडपती होणार आहे नक्की", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "पासपोर्ट ऑफिसमध्ये तीन तास थांबूनही टोकन नंबर आला नाही अजून", "lang": "mr_deva", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "डिलिव्हरी ट्रॅक करत होतो, ऑर्डर क्रमांक पासष्ठ अजून पॅकिंगमध्येच दिसतोय", "lang": "mr_deva", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "बुंदीचे लाडू तयार करायला सांगितलंय, पाहुणे संध्याकाळपर्यंत पोहोचतील घरी", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "बंगल्याच्या बाजूला मोकळं मैदान आहे, मुलांना खेळायला जागा मिळेल भरपूर", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "अहो काका, इथून मार्केटपर्यंत भाडं किती घेणार, जरा सांगा ना आधी", "lang": "mr_deva", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "पावसामुळे रिक्षा मिळेना, शेवटी दीडपट भाडं देऊन घरी पोहोचलो कसाबसा", "lang": "mr_deva", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "नवीन करार करताना दोन महिन्याचं भाडं डिपॉझिट म्हणून घेतलं जाईल असं ठरलं", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "मालकांनी सांगितलं की पाणी बिल भाडेकरूनेच भरायचं असतं दर महिन्याला", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "अशा लिंकवर कधीच क्लिक करू नकोस, सगळी माहिती चोरीला जाऊ शकते", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "खरी सबसिडी बँकेतच जमा होते थेट, असले मेसेज बहुतेक फसवे असतात", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "तुझा भाऊ कंपनीचा मालक झाला म्हणे, आम्हाला बोलवायला विसरला वाटतं तो", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "अरे बापरे, नवीन गाडी घेतलीस, बँकेने कर्ज मंजूर केलं की घर विकलंस", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "बाईकचं लोन फेडून झालं शेवटी, आता कुठलाही हप्ता भरायचा नाहीये पुढे", "lang": "mr_deva", "phrases": [], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "आज मार्केट रेड झोनमध्ये होतं, बहुतेक सगळ्याच शेअर्सने तोटा दाखवला", "lang": "mr_deva", "phrases": [], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "अगं आई, जेवण तयार आहे का? भूक लागलीये खूप मला आता", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "रेकॉर्डिंग नीट झालं का माझं? आवाज स्पष्ट येतोय का ऐकून सांग", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "वृद्धाश्रमातील आजी अठ्ठ्याऐंशी वर्षांच्या असूनही रोज सकाळी योगा करतात", "lang": "mr_deva", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "पंधरा किलोमीटर सायकल चालवली आज कॉलेजपर्यंत, पेट्रोल वाचलं यामुळे", "lang": "mr_deva", "phrases": [], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "वरातीत बँड वाजत होता, गावातली सगळी मुलं नाचत मागे चालत होती", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "नव्या औद्योगिक धोरणामुळे राज्यात परदेशी कंपन्यांचा ओघ वाढणार असल्याचं तज्ज्ञांचं मत", "lang": "mr_deva", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "तो नेहमी म्हणतो की उद्या मी लखपती होणार, गेली दहा वर्षं तेच ऐकतोय", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "आधार कार्ड सेंटरवर चार तास रांगेत उभं राहूनही नंबर आला नाही आज", "lang": "mr_deva", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "पार्सल ट्रॅकिंगमध्ये ऑर्डर क्रमांक अठ्ठ्याहत्तर अजून वेअरहाऊसमध्येच दिसतंय", "lang": "mr_deva", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "गुलाबजामांचा डबा तयार आहे का विचारायला फोन केला होता मी सकाळी", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "बंगल्याला वेगळा गेट आणि कंपाउंड वॉल आहे, सुरक्षिततेच्या दृष्टीने चांगली जागा", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "अहो दादा, टेम्पोवाला जास्त भाडं मागतोय, जरा घासाघीस करा त्याच्याशी", "lang": "mr_deva", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "सणाच्या दिवशी टॅक्सीवाले नेहमीपेक्षा जास्त भाडं आकारतात, आज पन्नास टक्के जास्तच घेतलं", "lang": "mr_deva", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "नवीन भाडेकरूकडून करारपत्र आणि आधार कार्डची प्रत घेणं गरजेचं असतं नेहमी", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "सोसायटीचं मेंटेनन्स भाडेकरूने भरायचं की मालकाने हे आधीच ठरवून घ्या", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "असल्या स्क्रॅच कार्ड स्कीम बनावट असतात, त्यावर विश्वास ठेवू नकोस अजिबात", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "नंबर रिपोर्ट कर तो, अशा फसव्या स्कीमने अनेकांची फसवणूक झालीये आधी", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "तू सारखं म्हणतोस माझी कंपनी मोठी आहे, मग पगारवाढ का देत नाहीस मला", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "अरे वा, फॉरेन ट्रिप करून आलास, प्रमोशन मिळालं की लॉटरी लागली तुला", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "ट्रॅक्टरचं कर्ज पूर्ण फेडलं शेवटी, आता शेतीत नफाच नफा राहणार हातात", "lang": "mr_deva", "phrases": [], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "आज ऑटो सेक्टरमधील शेअर्सने चांगली कामगिरी केली, गुंतवणूकदार समाधानी दिसतायत", "lang": "mr_deva", "phrases": [], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "अरे मिस्ड कॉल दिली होतीस का मला? नेटवर्क नव्हतं इथे बराच वेळ", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "अगं जरा माझा पत्ता पाठव लोकेशनसकट, सापडत नाहीये मला तुझं घर", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "वयाच्या सत्त्याहत्तराव्या वर्षीही आजोबा रोज सकाळी वर्तमानपत्र वाचतात न चुकता", "lang": "mr_deva", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "बारा किलोमीटर अंतर चालत पार केलं यात्रेकरूंनी अनवाणी पायाने डोंगरावर", "lang": "mr_deva", "phrases": [], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "वरातीमध्ये फटाके फोडून सगळ्यांनी आनंद साजरा केला रात्री उशिरापर्यंत", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "जलसंधारण प्रकल्पामुळे यंदा परिसरातील विहिरींची पाणीपातळी लक्षणीय वाढली असल्याचं दिसून आलं", "lang": "mr_deva", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "तो नेहमी सांगतो की बिझनेसमधून करोडो कमावणार, अजून भांडवलच जमवतोय बिचारा", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "RTO ऑफिसमध्ये लायसन्ससाठी सकाळपासून पाच तास ताटकळत बसावं लागलं आज", "lang": "mr_deva", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "कुरिअर ट्रॅकिंगमध्ये पार्सल क्रमांक चोपन्न अजून हबवरच पडून आहे दोन दिवसांपासून", "lang": "mr_deva", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "बासुंदीचं पातेलं तयार करायला सांगितलंय सकाळपासून, संध्याकाळी वऱ्हाड येणार आहे", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "तळमजल्यावरचा फ्लॅट आहे हा, वयस्कर लोकांना जिना चढायचा त्रास नाही होणार", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "बाबा, आजचं भाडं जरा जास्तच वाटतंय, नेहमीपेक्षा दुप्पट सांगताय तुम्ही", "lang": "mr_deva", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "पावसाळ्यात रिक्षावाले नेहमी जास्त भाडं मागतात, आज नाईलाजाने द्यावंच लागलं", "lang": "mr_deva", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "कराराच्या वेळी लाईट बिल आणि गॅस कनेक्शन नावावर करून घ्यायला विसरू नका", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "भाडेकरू बदलताना जुनी नोटीस पिरीयड एक महिना आधी द्यायची असते नेहमी", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "असले बनावट QR कोड स्कॅन करू नका, खात्यातून पैसे उलट कापले जातील", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "अशा जास्त परताव्याच्या स्कीम नेहमीच फसव्या असतात, कधीच पैसे गुंतवू नका त्यात", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "तू म्हणतोस पगार कमी आहे, पण नवीन फोन दर सहा महिन्यांनी बदलतोस कसा", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "बापरे, इतक्या मोठ्या हॉटेलात जेवायला नेलंस, बोनस मिळाला की कर्ज काढलंस", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "बाईकचं कर्ज फेडायला अजून सहा महिने बाकी आहेत, धीर धरावा लागेल आता", "lang": "mr_deva", "phrases": [], "scenario": "loan_emi", "gen": "sonnet-a"}
+{"text": "आज बँकिंग सेक्टरमध्ये चांगली तेजी दिसली, गुंतवणूकदारांचा विश्वास वाढलेला दिसतोय", "lang": "mr_deva", "phrases": [], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "अरे कुठे गायब झालास तू, कालपासून फोनच उचलत नाहीयेस माझा", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "अगं थोडं थांब, मी गाडी चालवतोय सध्या, नंतर बोलतो सविस्तर तुझ्याशी", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "पंचाहत्तर वर्षांच्या आजोबांनी आजही गावातलं शेत स्वतः नांगरलं सकाळी लवकर", "lang": "mr_deva", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "वीस किलोमीटर पायी चालत गावकऱ्यांनी दिंडी काढली मंदिरापर्यंत सकाळपासून", "lang": "mr_deva", "phrases": [], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "साखरपुड्यासाठी नातेवाईक गावोगावाहून जमले होते, हॉल पाहुण्यांनी खचाखच भरला", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "डिजिटल पेमेंट प्रणालीमुळे ग्रामीण भागातील व्यवहार आता पूर्वीपेक्षा वेगवान झाल्याचं निरीक्षण", "lang": "mr_deva", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "तो नेहमी सांगतो की या वर्षी नक्की करोडपती होणार, गेली पाच वर्षं तेच बोलतोय", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "पासपोर्ट रिन्यूअलसाठी ऑनलाईन स्लॉट मिळेना, तीन आठवडे वाट बघावी लागली अखेर", "lang": "mr_deva", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "रिटर्न पार्सलसाठी ऑर्डर क्रमांक एकाहत्तर अजून पिकअप झालेलं नाहीये घरातून", "lang": "mr_deva", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "शिरखुर्मा तयार आहे का विचारलं शेजारणीने, ईदच्या दिवशी वाटायचाय सगळ्यांना", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "टॉवरजवळ असल्यामुळे नेटवर्क छान मिळतं इथे, कधीच कॉल ड्रॉप होत नाही", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "ताई, इथून बाजारापर्यंत नुसता रिक्षाचा दर काय सांगा बरं मला", "lang": "mr_deva", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "रात्रीची शेवटची बस चुकली म्हणून शेअर टॅक्सीवाला दुप्पट भाडं मागतोय आता", "lang": "mr_deva", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "लग्नाच्या सीझनमध्ये टेम्पोवाले नेहमीपेक्षा जास्त भाडं आकारतात हल्ली सगळीकडे", "lang": "mr_deva", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "करार करताना घराच्या दुरुस्तीची जबाबदारी कोणाची हे स्पष्ट लिहून घ्या", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "सोसायटीच्या नियमांप्रमाणे भाडेकरूने पाळीव प्राणी ठेवण्यापूर्वी परवानगी घ्यावी लागते", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "आधार लिंकिंग मोफत असतं, त्यासाठी कधीच पैसे मिळत नाहीत, फसवू नका स्वतःला", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "असल्या सर्व्हे लिंकमध्ये तुमचा डेटा चोरला जातो, भरू नकोस अशा फॉर्म्स कधीच", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "तू सारखं म्हणतोस बिझनेसमध्ये तोटा होतोय, मग परवा नवा फ्लॅट कसा घेतलास", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "अरे वा, गोव्याला जाऊन आलास पाच दिवस, ऑफिसमधून पगारवाढ मिळाली वाटतं", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "आज फार्मा सेक्टरमधील शेअर्सने बाजारात चांगली उसळी घेतली, तज्ज्ञांनी सांगितलं", "lang": "mr_deva", "phrases": [], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "अगं ऐक, आज संध्याकाळी घरी येऊ शकशील का जरा वेळ काढून", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "अरे रे, बॅटरी संपली फोनची, चार्जरला लावून परत कॉल करतो तुला", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "त्र्याऐंशी वर्षांचे आजोबा आजही रोज पहाटे मंदिरात जाऊन घंटा वाजवतात", "lang": "mr_deva", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "आठ किलोमीटर पोहून समुद्र पार करणाऱ्या जलतरणपटूचं सगळीकडे कौतुक होतंय सध्या", "lang": "mr_deva", "phrases": [], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "लग्नानंतर वधूवरांना आशीर्वाद देण्यासाठी हजारो नातेवाईक रांगेत उभे होते हॉलमध्ये", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "ग्रामीण भागातील इंटरनेट कनेक्टिव्हिटी सुधारण्यासाठी नवीन टॉवर उभारणीचं काम सुरू झालं", "lang": "mr_deva", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "तो नेहमी बोलतो की शेअर मार्केटमधून करोडो कमावणार आहे, अजून खातंच उघडलं नाहीये", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "नवीन रेशन कार्डसाठी अर्ज करूनही तीन महिने झाले तरी अजून मंजूर झालेलं नाही", "lang": "mr_deva", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "रिटर्न पार्सलचा ट्रॅकिंग नंबर एकोणऐंशी अजून कुरियर ऑफिसातच पडून आहे", "lang": "mr_deva", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "बर्फीचा डबा तयार ठेवायला सांगितलंय हलवायाला, संध्याकाळी पाहुणे घरी येणार आहेत", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "शाळेजवळ असल्यामुळे मुलांना चालत जाता येईल, रिक्षाचा वेगळा खर्च वाचेल", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "वरातीच्या स्वागतासाठी गुलाबपाणी शिंपडायला दहा हजार लिटर मागवलं होतं हलवायाकडून", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "भावोजी, हॉस्पिटलपर्यंत जायचंय अर्जंट, जरा कमी भाड्यात नेता का प्लीज", "lang": "mr_deva", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "मध्यरात्री रिक्षा शोधणं अवघड झालं, मिळाली ती पण दुप्पट भाडं मागत होती", "lang": "mr_deva", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "गर्दीच्या वेळी ई-रिक्षावाले शेअरिंगमध्ये जास्त पैसे आकारतात नेहमीच सगळीकडे", "lang": "mr_deva", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "भाडेकरूने घर सोडण्यापूर्वी एक महिना आधी लेखी कळवावं लागतं मालकाला नेहमी", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "सोसायटीचं पार्किंग शुल्क भाड्यात समाविष्ट आहे की वेगळं हे आधी विचारून घ्या", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "मिस्ड कॉलवरून कधीच पैसे मिळत नाहीत, अशा मेसेजवर उगाच वेळ घालवू नकोस", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "खऱ्या कंपन्या नोकरीसाठी कधीच आधी पैसे मागत नाहीत, ही स्कॅम असणार पक्की", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "तू म्हणतोस पैसे नाहीयेत, पण नवीन बाईक घेऊन फिरतोयस कशी मग ही", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "अरे वा, दुसऱ्यांदा हनिमूनला जातोयस परदेशात, यावेळी बोनस मोठा मिळाला वाटतं", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "आज एफएमसीजी सेक्टरमधील शेअर्सने बाजारात चांगली कामगिरी नोंदवली सकाळपासूनच", "lang": "mr_deva", "phrases": [], "scenario": "stocks", "gen": "sonnet-a"}
+{"text": "काय ग, उद्या सुट्टी आहे का शाळेला? विचारायला विसरले मी काल", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "अरे यार, लोकेशन शेअर कर बरं, तुला शोधण्यात वेळ चाललाय माझा", "lang": "mr_deva", "phrases": [], "scenario": "whatsapp", "gen": "sonnet-a"}
+{"text": "एकोणनव्वद वर्षांच्या पणजीबाई अजूनही स्वतःच्या हाताने भाकरी भाजतात रोज सकाळी", "lang": "mr_deva", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}
+{"text": "चोवीस किलोमीटर सायकल फेरी मारली आज सकाळी मित्रांसोबत डोंगरापर्यंत", "lang": "mr_deva", "phrases": [], "scenario": "gigwork", "gen": "sonnet-a"}
+{"text": "वऱ्हाडाच्या स्वागतासाठी गावभर तोरणं आणि रांगोळ्या काढल्या होत्या सकाळपासून", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "ग्रामीण रस्त्यांच्या डांबरीकरणामुळे शेतमाल वाहतूक आता अधिक सुलभ झाल्याचं शेतकऱ्यांचं म्हणणं", "lang": "mr_deva", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "तो नेहमी बोलतो की स्टार्टअपमधून करोडो कमावणार, अजून ऑफिसचं भाडंही भरलेलं नाहीये", "lang": "mr_deva", "phrases": [], "scenario": "jokes", "gen": "sonnet-a"}
+{"text": "ड्रायव्हिंग लायसन्ससाठी टेस्ट द्यायला दोन महिने वाट बघावी लागली स्लॉट मिळेपर्यंत", "lang": "mr_deva", "phrases": [], "scenario": "news", "gen": "sonnet-a"}
+{"text": "एक्सचेंज पार्सलचा ट्रॅकिंग नंबर सदतीस अजून लॉजिस्टिक हबवरच अडकलेला दिसतोय", "lang": "mr_deva", "phrases": [], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "रव्याचे लाडू आणि करंज्या दोन्ही तयार ठेवा उद्यासाठी, पाहुणे सकाळीच येणार आहेत", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "मंदिराजवळ असल्यामुळे सकाळ संध्याकाळ घंटानाद ऐकू येतो, शांत वातावरण आहे इथलं", "lang": "mr_deva", "phrases": [], "scenario": "rent", "gen": "sonnet-a"}
+{"text": "वरातीच्या मिरवणुकीत बग्गीवर बसवलेल्या नवरदेवाला बघायला रस्त्याच्या दुतर्फा गर्दी झाली होती", "lang": "mr_deva", "phrases": [], "scenario": "wedding", "gen": "sonnet-a"}
+{"text": "मामा, इथून बसस्टँडपर्यंत नुसता भाडं काय होईल जरा सांगा बघू", "lang": "mr_deva", "phrases": [], "scenario": "bargaining", "gen": "sonnet-a"}
+{"text": "नारळपाणी विकणाऱ्याने आज पस्तीस रुपये नगाला मागितले, उन्हाळ्यात भाव नेहमी वाढतो", "lang": "mr_deva", "phrases": [{"phrase": "पस्तीस रुपये", "value": 35}], "scenario": "classifieds", "gen": "sonnet-a"}
+{"text": "बहिणीच्या मुलाचं बारसं आहे उद्या, संध्याकाळी सातला या सगळे नक्की घरी", "lang": "mr_deva", "phrases": [], "scenario": "family_budget", "gen": "sonnet-a"}

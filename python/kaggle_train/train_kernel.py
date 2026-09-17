@@ -70,6 +70,8 @@ DILATION = int(os.environ.get("DILATION", "2"))
 TRAIN_SEED = int(os.environ.get("TRAIN_SEED", "5"))
 VAL_SEED = int(os.environ.get("VAL_SEED", "6"))
 MATRIX = os.environ.get("MATRIX", "v1:32:0")
+EXTRA = os.environ.get("EXTRA", "")
+EXTRA_RATIO = float(os.environ.get("EXTRA_RATIO", "0.2"))
 # === CONFIG END ===
 
 SMOKE = os.environ.get("SMOKE") == "1"
@@ -194,14 +196,18 @@ def step_train_one(pydir, entry, out_dir):
            f"(epochs={EPOCHS} out={out_dir})")
     os.makedirs(os.path.join(pydir, out_dir), exist_ok=True)
     t0 = time.time()
-    py([
+    cmd = [
         "sankhya.train",
         "--train", "data/train.jsonl", "--val", "data/val.jsonl",
         "--epochs", str(EPOCHS), "--batch", "128", "--lr", "3e-3",
         "--arch", entry["arch"], "--channels", str(entry["channels"]),
         "--seed", str(entry["seed"]),
         "--lang", LANGS, "--out", out_dir + "/", "--device", "auto",
-    ], cwd=pydir)
+    ]
+    extra_paths = [p.strip() for p in EXTRA.split(",") if p.strip()]
+    if extra_paths:
+        cmd += ["--extra"] + extra_paths + ["--extra-ratio", str(EXTRA_RATIO)]
+    py(cmd, cwd=pydir)
     print(f"  train wall time: {time.time() - t0:.1f}s", flush=True)
 
 

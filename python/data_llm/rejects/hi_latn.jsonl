@@ -1,0 +1,13 @@
+{"text": "pyaz ka rate gir gaya bhai, ab sirf saath sau rupaye quintal reh gaya", "phrases": [{"phrase": "saath sau rupaye", "value": 700}], "reason": "value_mismatch: ours=6000 theirs=700", "src_file": "data_llm/raw/hi_latn.sonnet.jsonl", "src_line": 27}
+{"text": "unnees so pachasi mein paida hua tha mera dada", "phrases": [], "reason": "negative_contains_quantity", "src_file": "data_llm/raw/hi_latn.sonnet.jsonl", "src_line": 28}
+{"text": "unnees sau chaurasi mein bana tha ye ghar", "phrases": [], "reason": "negative_contains_quantity", "src_file": "data_llm/raw/hi_latn.sonnet.jsonl", "src_line": 109}
+{"text": "Holi colors kharide, pehle dukaan pe do sau maanga phir sirf paune do sau mein diya", "phrases": [{"phrase": "do sau", "value": 200}, {"phrase": "paune do sau", "value": 175}], "reason": "ambiguous_phrase", "src_file": "data_llm/raw/hi_latn.sonnet.jsonl", "src_line": 195}
+{"text": "sawalakh mein deal pakki ho gayi aakhir kaar dono taraf se", "phrases": [{"phrase": "sawalakh", "value": 125000}], "reason": "unknown_token:sawalakh", "src_file": "data_llm/raw/hi_latn.sonnet.jsonl", "src_line": 249}
+{"text": "kisan credit card pe loan lakhs mein milta hai bina zamanat ke aajkal", "phrases": [], "reason": "negative_contains_quantity", "src_file": "data_llm/raw/hi_latn.sonnet.jsonl", "src_line": 253}
+{"text": "cloth market mein wholesale rate pe saree paanch sau se sattar sau tak milti hai", "phrases": [{"phrase": "paanch sau se sattar sau", "value": 500, "range": [500, 700]}], "reason": "value_mismatch: ours_range=[500, 7000] theirs_range=[500, 700]", "src_file": "data_llm/raw/hi_latn.sonnet.jsonl", "src_line": 310}
+{"text": "unka washing machine kharab ho gaya hai", "phrases": [], "reason": "negative_contains_quantity", "src_file": "data_llm/raw/hi_latn.sonnet.jsonl", "src_line": 413}
+{"text": "irrigation pump kal se kharab pada hai khet mein", "phrases": [], "reason": "negative_contains_quantity", "src_file": "data_llm/raw/hi_latn.sonnet.jsonl", "src_line": 548}
+{"text": "unka earphone bhi kharab ho gaya hai", "phrases": [], "reason": "negative_contains_quantity", "src_file": "data_llm/raw/hi_latn.sonnet.jsonl", "src_line": 602}
+{"text": "hardware store mein sab kuch mil jaata hai", "phrases": [], "reason": "negative_contains_quantity", "src_file": "data_llm/raw/hi_latn.sonnet.jsonl", "src_line": 900}
+{"text": "dono dost ka phone recently kharab hua tha", "phrases": [], "reason": "negative_contains_quantity", "src_file": "data_llm/raw/hi_latn.sonnet.jsonl", "src_line": 1094}
+{"text": "intern ko full time job ka offer mil sakta hai", "phrases": [], "reason": "negative_contains_quantity", "src_file": "data_llm/raw/hi_latn.sonnet.jsonl", "src_line": 1192}
