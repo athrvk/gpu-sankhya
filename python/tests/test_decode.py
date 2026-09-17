@@ -29,6 +29,52 @@ def cnames(cls_ids, start, end):
     return [C.CLASSES[c] for c in cls_ids[start:end]]
 
 
+UNIT_KHARAB = C.CLASS_TO_ID["UNIT_KHARAB"]
+
+
+def _apply_lone_ambiguous_unit_gate(spans):
+    """Mirrors eval_gold._apply_bare_digits_gate's R4 half, for decode-level
+    tests: drop a lone-ambiguous-unit span with no detected currency."""
+    from sankhya import core
+    kept = []
+    for sp in spans:
+        toks = [(C.CLASSES[cid], sub) for cid, sub in sp["tokens"]]
+        if core.should_drop_lone_ambiguous_unit(toks):
+            continue
+        kept.append(sp)
+    return kept
+
+
+def test_decode_lone_kharab_dropped_by_gate():
+    # "washing machine kharab ho gaya" -- bare "kharab" with no preceding
+    # number should decode as a span but get dropped by the R4 gate.
+    text = "washing machine kharab ho gaya"
+    start, end = text.index("kharab"), text.index("kharab") + len("kharab")
+    bio = [O] * len(text)
+    cls = [O] * len(text)
+    bio[start] = 1
+    for i in range(start + 1, end):
+        bio[i] = 2
+    for i in range(start, end):
+        cls[i] = UNIT_KHARAB
+    spans = decode_spans(text, bio, cls)
+    assert len(spans) == 1
+    kept = _apply_lone_ambiguous_unit_gate(spans)
+    assert kept == []
+
+
+def test_decode_das_kharab_kept_by_gate():
+    # "das kharab" -- a preceding number ("das") means the unit is a real
+    # amount, so the R4 gate must NOT drop it.
+    text = "das kharab"
+    bio = [1, 2, 2] + [2] + [2, 2, 2, 2, 2, 2]
+    cls = [CARD_10] * 3 + [SEP] + [UNIT_KHARAB] * 6
+    spans = decode_spans(text, bio, cls)
+    assert len(spans) == 1
+    kept = _apply_lone_ambiguous_unit_gate(spans)
+    assert len(kept) == 1
+
+
 def test_repair_dot_between_digits_mistagged_o():
     # "1.5cr" -> per-char raw pred: DIGITS O DIGITS UNIT_CRORE UNIT_CRORE
     text = "1.5cr"

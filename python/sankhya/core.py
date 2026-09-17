@@ -263,6 +263,34 @@ def should_drop_bare_digits(tokens: List[Tuple[str, str]]) -> bool:
     return False
 
 
+_IGNORED_GLUE_CLASSES = ("SEP", "RANGE", "DOT", "COMMA", "O")
+
+
+def should_drop_lone_ambiguous_unit(tokens: List[Tuple[str, str]]) -> bool:
+    """R4: whether a span consisting of a single ambiguous unit word (with
+    no preceding number) should be dropped. "kharab" (Hindi: usually
+    "broken") and "mil"/"million" (often just an English loanword/fragment)
+    are only genuine amount units when a number precedes them ("das
+    kharab", "2 mil"); alone they are almost always false positives
+    ("washing machine kharab ho gaya", "mil ke rehna").
+
+    True when the span's meaningful tokens (ignoring SEP/RANGE/DOT/COMMA/O
+    glue) consist of exactly one token whose class is UNIT_KHARAB or
+    UNIT_MILLION, and there is no CARD_*/DIGITS/PFX_* token anywhere in the
+    span. This is class-level (not surface-level), so it needs no lexicon.
+    """
+    meaningful = [(cls, text) for cls, text in tokens if cls not in _IGNORED_GLUE_CLASSES]
+    if len(meaningful) != 1:
+        return False
+    cls, _ = meaningful[0]
+    if cls not in ("UNIT_KHARAB", "UNIT_MILLION"):
+        return False
+    for c, _ in tokens:
+        if c == "DIGITS" or c.startswith("CARD_") or c.startswith("PFX_"):
+            return False
+    return True
+
+
 def detect_currency(text: str, start: int, end: int, pack) -> Optional[str]:
     """Scan up to 8 chars before/after [start,end) for a currency marker.
 

@@ -97,21 +97,36 @@ class TokenizeError(Exception):
         self.reason = reason
 
 
+def _is_letters(s: str) -> bool:
+    """Like str.isalpha() but also accepts combining marks (Unicode
+    category starting with "M", e.g. Devanagari vowel signs), so lexicon
+    words like "से" (S + combining vowel sign E) are not rejected: plain
+    isalpha() is False for a bare combining mark. Empty string is not
+    letters."""
+    if not s:
+        return False
+    for ch in s:
+        cat = unicodedata.category(ch)
+        if not (ch.isalpha() or cat.startswith("M")):
+            return False
+    return True
+
+
 def _word_class(pack, word_lower):
     """Classify a single letters-run. Returns a class string, or None if
     unrecognised (caller decides whether that is fatal)."""
     forms = pack.all_forms()
     if word_lower in forms:
         return forms[word_lower]
-    if word_lower in {w.strip().lower() for w in pack.range_connectors if w.strip().isalpha()}:
+    if word_lower in {w.strip().lower() for w in pack.range_connectors if _is_letters(w.strip())}:
         return "RANGE"
     if word_lower in {w.lower() for w in getattr(pack, "conj_connectors", [])}:
         return "O"
-    if word_lower in {w.lower() for w in getattr(pack, "approximators", []) if w.isalpha()}:
+    if word_lower in {w.lower() for w in getattr(pack, "approximators", []) if _is_letters(w)}:
         return "O"
-    if word_lower in {w.lower() for w in getattr(pack, "currency_words_after", []) if w.isalpha()}:
+    if word_lower in {w.lower() for w in getattr(pack, "currency_words_after", []) if _is_letters(w)}:
         return "O"
-    if word_lower in {w.strip(".").lower() for w in getattr(pack, "currency_markers_before", []) if w.strip(".").isalpha()}:
+    if word_lower in {w.strip(".").lower() for w in getattr(pack, "currency_markers_before", []) if _is_letters(w.strip("."))}:
         return "O"
     return None
 
@@ -217,10 +232,11 @@ def _negative_has_quantity(pack, normalized_text):
     for cls, surfaces in pack.symbol_units.items():
         symbol_forms.update(s.lower() for s in surfaces)
 
-    marker_words = {m.strip(".").lower() for m in pack.currency_markers_before if m.strip(".").isalpha()}
-    marker_symbols = {m for m in pack.currency_markers_before if not m.strip(".").isalpha()}
-    after_words = {w.lower() for w in getattr(pack, "currency_words_after", []) if w.isalpha()}
-    after_symbols = {w for w in getattr(pack, "currency_words_after", []) if not w.isalpha()}
+    marker_words = {m.strip(".").lower() for m in pack.currency_markers_before if _is_letters(m.strip("."))}
+    marker_symbols = {m for m in pack.currency_markers_before if not _is_letters(m.strip("."))}
+    after_words = {w.lower() for w in getattr(pack, "currency_words_after", []) if _is_letters(w)}
+    after_symbols = {w for w in getattr(pack, "currency_words_after", []) if not _is_letters(w)}
+    ambiguous_units = {w.lower() for w in getattr(pack, "ambiguous_units", [])}
 
     for sym in marker_symbols | after_symbols:
         if sym and sym in normalized_text:
@@ -228,6 +244,7 @@ def _negative_has_quantity(pack, normalized_text):
 
     prev_numeric_digits = 0
     prev_run_kind = None
+    prev_numberish = False  # was the last non-space token CARD_*/PFX_*/a digit run?
     for kind, run in _iter_runs(normalized_text):
         if kind == "letter":
             wl = run.lower()
@@ -235,16 +252,28 @@ def _negative_has_quantity(pack, normalized_text):
                 return True
             cls = forms.get(wl)
             if cls and cls.startswith("UNIT_"):
-                if wl not in symbol_forms:
+                if wl in ambiguous_units and not prev_numberish:
+                    # lone ambiguous unit word not glued to a preceding
+                    # number-ish token: likely its non-numeric sense
+                    # ("kharab" = broken, "mil" = meet), not a quantity.
+                    pass
+                elif wl not in symbol_forms:
                     return True  # spelled-out unit word: always disqualifies
-                if prev_run_kind == "numeric" and prev_numeric_digits >= 3:
+                elif prev_run_kind == "numeric" and prev_numeric_digits >= 3:
                     return True
             prev_run_kind = "letter"
+            prev_numberish = bool(cls) and (cls.startswith("CARD_") or cls.startswith("PFX_"))
         elif kind == "numeric":
             prev_numeric_digits = sum(1 for ch in run if ch.isdigit())
             prev_run_kind = "numeric"
+            prev_numberish = True
+        elif kind == "space":
+            prev_run_kind = kind
+            # spaces don't reset "immediately preceded by a number" for
+            # word-separated number+unit ("das kharab")
         else:
             prev_run_kind = kind
+            prev_numberish = False
     return False
 
 

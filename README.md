@@ -323,6 +323,15 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   scans 8 characters past the amount for a trailing marker word (up from
   a shorter window that missed `"1200 rupees"` — `"rupees"` alone runs to
   6 characters plus the leading space).
+- **Lone-ambiguous-unit gate**: a span whose only meaningful token is a
+  single `UNIT_KHARAB` or `UNIT_MILLION` word, with no preceding
+  number/prefix and no detected currency marker, is dropped — `"kharab"`
+  (Hindi: usually "broken") and `"mil"`/`"million"` (often just an
+  English loanword/fragment) are only genuine amount units when a number
+  precedes them. `"unka washing machine kharab ho gaya hai"` no longer
+  parses; `"das kharab"`, `"2 mil"`, and `"kharab rupaye"` (currency
+  marker present) still parse. Other unit words (`"lakh"`, `"hazaar"`)
+  are unaffected.
 - **Range-connector repair**: a bare `-`/`–`/`—`/`/` between two amounts
   becomes a `RANGE` tag (spaces around it stay `SEP`) when the left side
   can end an amount by itself and the right side can start a fresh one
