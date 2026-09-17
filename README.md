@@ -212,21 +212,21 @@ training): 0.925 value accuracy. This number is optimistic — it's testing
 the model on its own distribution.
 
 On two hand-written gold sets, written independently of the generator —
-`python/tests/gold.jsonl` (romanised Hindi, 220 sentences / 194 spans)
-and `python/tests/gold_deva.jsonl` (Devanagari Hindi, 182 sentences / 151
+`python/tests/gold.jsonl` (romanised Hindi, 225 sentences / 197 spans)
+and `python/tests/gold_deva.jsonl` (Devanagari Hindi, 185 sentences / 154
 spans) — evaluated against the shipped int8-quantized weights:
 
 | gold set | examples | spans | value accuracy | span precision | span recall | span F1 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| gold.jsonl (romanised) | 220 | 194 | 0.9536 | 0.9585 | 0.9536 | 0.9561 |
-| gold_deva.jsonl (Devanagari) | 182 | 151 | 0.9801 | 0.9867 | 0.9801 | 0.9834 |
-| combined | 402 | 345 | 0.9652 | 0.9708 | 0.9652 | 0.9680 |
+| gold.jsonl (romanised) | 225 | 197 | 0.9543 | 0.9497 | 0.9594 | 0.9545 |
+| gold_deva.jsonl (Devanagari) | 185 | 154 | 0.9740 | 0.9805 | 0.9805 | 0.9805 |
+| combined | 410 | 351 | 0.9632 | 0.9632 | 0.9687 | 0.9659 |
 
-Negatives (zero-gold-span examples, 73 total): 0 false positives.
-Miss summary: missed 3, spurious 0, wrong value 0, wrong boundary 9.
-Per-category value accuracy: digits 0.967, words 0.940, prefix 0.926,
-range 0.917, currency 1.0, multi_unit 0.952, symbol_unit 0.970,
-mixed_script 1.0, long 0.80.
+Negatives (zero-gold-span examples, 75 total): 0 false positives.
+Miss summary: missed 1, spurious 1, wrong value 2, wrong boundary 10.
+Per-category value accuracy: digits 0.967, words 0.961, prefix 0.963,
+range 0.889, currency 1.0, multi_unit 0.917, symbol_unit 1.0,
+mixed_script 1.0, long 0.667.
 
 For comparison, the previous shipped weights scored, on this same
 enlarged gold set: 0.9096 (romanised) / 0.9603 (Devanagari) / 0.9322

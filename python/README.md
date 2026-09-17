@@ -202,6 +202,7 @@ corpora at 20%, deterministic seeds)
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | plain (no CRF), 3 seeds | 0.959 / 0.957 / 0.962 | — | — | — | — | — | 17 |
 | plain, shipped 0.3.3 | 0.965 | 0.954 | 0.980 | 0.968 | 0 | 0/73 | 17 |
+| plain, shipped 0.3.4 (seed 0, CPU, 410-example gold) | 0.963 | 0.954 | 0.974 | 0.966 | 0 | 0/75 | 75 (CPU) |
 | CRF, pure NLL objective | 0.968 (best epoch; diverged to NaN by ep 20) | — | — | — | — | — | 118 |
 | CRF, fixed objective (above) | 0.957 (best ckpt; loss still exploded to 1.4e6 by ep 20) | 0.949 | 0.967 | — | 0 | 0/73 | 118 |
 
@@ -231,8 +232,8 @@ remove both the instability and the extra training cost.
 
 ## Evaluate on gold
 
-The hand-written gold sets (`tests/gold.jsonl`, 220 sentences / 194 spans,
-romanised; `tests/gold_deva.jsonl`, 182 sentences / 151 spans, Devanagari
+The hand-written gold sets (`tests/gold.jsonl`, 225 sentences / 197 spans,
+romanised; `tests/gold_deva.jsonl`, 185 sentences / 154 spans, Devanagari
 — this round added conjunction-joined multi-span sentences,
 trailing-cardinal chains, new negative families, possessive noise,
 in-context typos, and curated romanised cardinal variants 11-99) are the
@@ -303,14 +304,14 @@ python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl \
 
 | gold set          | examples | spans | precision | recall | F1     | value_acc |
 |--------------------|---------:|------:|----------:|-------:|-------:|----------:|
-| gold.jsonl          |      214 |   188 |    0.9585 | 0.9536 | 0.9561 |    0.9536 |
-| gold_deva.jsonl      |      182 |   151 |    0.9867 | 0.9801 | 0.9834 |    0.9801 |
-| combined             |      396 |   339 |    0.9540 | 0.9623 | 0.9582 |    0.9536 |
+| gold.jsonl          |      225 |   197 |    0.9497 | 0.9594 | 0.9545 |    0.9543 |
+| gold_deva.jsonl      |      185 |   154 |    0.9805 | 0.9805 | 0.9805 |    0.9740 |
+| combined             |      410 |   351 |    0.9632 | 0.9687 | 0.9659 |    0.9630 |
 
-Negatives: 73 examples, 0 false positives. Miss summary: missed 2,
-spurious 7, wrong value 3, wrong boundary 13. Per-category value_acc:
-digits 0.967, words 0.940, prefix 0.926, range 0.917, currency 1.0,
-multi_unit 0.952, symbol_unit 0.970, mixed_script 1.0, long 0.80.
+Negatives: 75 examples, 0 false positives. Miss summary: missed 1,
+spurious 1, wrong value 2, wrong boundary 10. Per-category value_acc:
+digits 0.967, words 0.961, prefix 0.963, range 0.889, currency 1.0,
+multi_unit 0.917, symbol_unit 1.0, mixed_script 1.0, long 0.667.
 
 For comparison, the previous shipped weights scored, on this same
 enlarged gold set, 0.9096 (romanised) / 0.9603 (Devanagari) / 0.9322
