@@ -181,6 +181,95 @@ def extend_digit_spans(text: str, bio_ids: List[int]) -> List[int]:
     return out
 
 
+_MAX_WORD_RUN_LEN = 24
+
+
+def _run_unanimous_class(raw_run: List[int]) -> Optional[int]:
+    """Like `_repair_letters_run`'s sub-run smoothing, but returns a class
+    id ONLY when every sub-run resolves from real, DIRECT evidence -- its
+    own length >= 3, or adoption from an immediately adjacent sub-run of
+    length >= 3 -- and all of those resolved classes agree. If any sub-run
+    would need the whole-run majority-vote fallback (no qualifying
+    neighbour on either side), that's diffuse/weak evidence -- this
+    returns None rather than trust it, even if a fallback vote would
+    happen to be unanimous (e.g. a 6-char run with 3 scattered chars of
+    one class and 3 O's: majority-vote alone would call that unanimous,
+    but no sub-run of it ever reaches 3 in a row on its own or via a
+    qualifying neighbour, so it must stay untrusted)."""
+    n = len(raw_run)
+    sub_runs = []
+    i = 0
+    while i < n:
+        c = raw_run[i]
+        j = i + 1
+        while j < n and raw_run[j] == c:
+            j += 1
+        sub_runs.append((c, i, j))
+        i = j
+
+    resolved = []
+    for idx, (c, s, e) in enumerate(sub_runs):
+        if e - s >= 3:
+            resolved.append(c)
+            continue
+        prev_run = sub_runs[idx - 1] if idx > 0 else None
+        next_run = sub_runs[idx + 1] if idx < len(sub_runs) - 1 else None
+        prev_ok = prev_run is not None and (prev_run[2] - prev_run[1]) >= 3
+        next_ok = next_run is not None and (next_run[2] - next_run[1]) >= 3
+        if prev_ok and next_ok:
+            prev_len = prev_run[2] - prev_run[1]
+            next_len = next_run[2] - next_run[1]
+            resolved.append(prev_run[0] if prev_len >= next_len else next_run[0])
+        elif prev_ok:
+            resolved.append(prev_run[0])
+        elif next_ok:
+            resolved.append(next_run[0])
+        else:
+            return None  # would need the whole-run fallback -- untrusted
+    if len(set(resolved)) == 1:
+        return resolved[0]
+    return None
+
+
+def extend_word_integrity_bio(text: str, bio_ids: List[int], cls_ids: List[int], letter_runs: List[tuple]) -> List[int]:
+    """BIO repair (applied after bridge_bio/extend_digit_spans, before span
+    construction): a word-class (UNIT_/PFX_/CARD_) token whose predicted
+    span only PARTIALLY covers its letter word is not necessarily a bad
+    match -- if the whole run's RAW per-char classes unanimously resolve
+    (via `_run_unanimous_class`, direct-evidence-only sub-run smoothing)
+    to a SINGLE word class, the partial coverage is just low-confidence
+    BIO dropout on an otherwise-agreed word, not a genuinely mixed/
+    ambiguous run. Extend the span's BIO to cover the whole run (I for
+    every char, B at the run start) instead of leaving it for R2 to drop
+    -- this also merges spans that were split by an internal O gap inside
+    that run back into a single span (e.g. "unnasi" B I I O I O ->
+    B I I I I I).
+
+    A run whose raw classes do NOT resolve to one unanimous word class
+    this way (e.g. only part of the run predicts a word class, or the
+    agreement is only visible via `_repair_letters_run`'s diffuse
+    whole-run majority-vote fallback rather than direct evidence) is left
+    alone, so R2's drop still applies to it. Runs longer than 24 chars are
+    skipped.
+    """
+    out = list(bio_ids)
+    for rs, re_ in letter_runs:
+        length = re_ - rs
+        if length == 0 or length > _MAX_WORD_RUN_LEN:
+            continue
+        covered = [bio_ids[k] in (1, 2) for k in range(rs, re_)]
+        if not any(covered) or all(covered):
+            continue  # nothing to extend: no span touches it, or already full
+        raw_run = [cls_ids[k] for k in range(rs, re_)]
+        unanimous = _run_unanimous_class(raw_run)
+        if unanimous is None or not _is_word_class(C.CLASSES[unanimous]):
+            continue
+        for k in range(rs, re_):
+            out[k] = 2
+        out[rs] = 1
+    return out
+
+
 def _run_repr_class(run_type: str, rs: int, re_: int, cls_ids: List[int]) -> Optional[str]:
     """Best-guess resulting class name for a run, without mutating cls_ids.
     Used by the R4 connector check to look at a letters-run neighbour that
@@ -388,17 +477,22 @@ def decode_spans(
       field (mean over the span of the max BIO prob per char) is computed, and
       spans with confidence < 0.5 are dropped.
 
-    Before spans are found, the raw BIO sequence itself is repaired in two
+    Before spans are found, the raw BIO sequence itself is repaired in three
     passes (see their docstrings): `bridge_bio` closes single-char O gaps
-    inside a span, then `extend_digit_spans` extends a span forward through
-    a trailing digit run it was cut short of.
+    inside a span, `extend_digit_spans` extends a span forward through a
+    trailing digit run it was cut short of, and `extend_word_integrity_bio`
+    extends (and merges) a span across its whole letter word when every
+    char in that word's raw class prediction unanimously agrees.
 
     Returns list of dicts: {start, end, text, tokens: [(cls_id, substr), ...], confidence}
     """
+    n = len(text)
+    letter_runs = _letter_runs(text)
+
     bio_ids = bridge_bio(text, bio_ids)
     bio_ids = extend_digit_spans(text, bio_ids)
+    bio_ids = extend_word_integrity_bio(text, bio_ids, cls_ids, letter_runs)
 
-    n = len(text)
     spans = []
     start = None
     i = 0
@@ -419,7 +513,6 @@ def decode_spans(
         spans.append((start, n))
 
     work_cls = list(cls_ids)
-    letter_runs = _letter_runs(text)
 
     out = []
     for s, e in spans:

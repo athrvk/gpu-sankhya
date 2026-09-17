@@ -338,6 +338,98 @@ function extendDigitRun(text: string, s: number, e: number): number {
   return ee;
 }
 
+const MAX_WORD_RUN_LEN = 24;
+
+/** Like `repairLetterRun`'s sub-run smoothing, but returns a class id ONLY
+ * when every sub-run resolves from real, DIRECT evidence -- its own
+ * length >= 3, or adoption from an immediately adjacent sub-run of length
+ * >= 3 -- and all of those resolved classes agree. If any sub-run would
+ * need the whole-run majority-vote fallback (no qualifying neighbour on
+ * either side), that's diffuse/weak evidence -- this returns null rather
+ * than trust it, even if a fallback vote would happen to be unanimous
+ * (e.g. a 6-char run with 3 scattered chars of one class and 3 O's:
+ * majority-vote alone would call that unanimous, but no sub-run of it
+ * ever reaches 3 in a row on its own or via a qualifying neighbour, so it
+ * must stay untrusted). */
+function runUnanimousClass(clsIds: number[] | Int32Array, rs: number, re: number): number | null {
+  const subRuns: SubRun[] = [];
+  let i = rs;
+  while (i < re) {
+    let j = i + 1;
+    while (j < re && clsIds[j] === clsIds[i]) j++;
+    subRuns.push({ start: i, end: j, cls: clsIds[i] as number });
+    i = j;
+  }
+
+  const resolved: number[] = [];
+  for (let si = 0; si < subRuns.length; si++) {
+    const sr = subRuns[si];
+    if (sr.end - sr.start >= 3) {
+      resolved.push(sr.cls);
+      continue;
+    }
+    const left = si > 0 ? subRuns[si - 1] : null;
+    const right = si < subRuns.length - 1 ? subRuns[si + 1] : null;
+    const leftQualifies = left !== null && left.end - left.start >= 3;
+    const rightQualifies = right !== null && right.end - right.start >= 3;
+    if (leftQualifies && rightQualifies) {
+      const leftLen = left!.end - left!.start;
+      const rightLen = right!.end - right!.start;
+      resolved.push(rightLen > leftLen ? right!.cls : left!.cls); // tie -> left
+    } else if (leftQualifies) {
+      resolved.push(left!.cls);
+    } else if (rightQualifies) {
+      resolved.push(right!.cls);
+    } else {
+      return null; // would need the whole-run fallback -- untrusted
+    }
+  }
+  const uniq = new Set(resolved);
+  return uniq.size === 1 ? resolved[0] : null;
+}
+
+/** BIO repair (c): a word-class (UNIT_/PFX_/CARD_) token whose predicted
+ * span only PARTIALLY covers its letter word is not necessarily a bad
+ * match -- if the whole run's RAW per-char classes unanimously resolve
+ * (via `runUnanimousClass`, direct-evidence-only sub-run smoothing) to a
+ * SINGLE word class, the partial coverage is just low-confidence BIO
+ * dropout on an otherwise-agreed word, not a genuinely mixed/ambiguous
+ * run. Extend the span's BIO to cover the whole run (I for every char, B
+ * at the run start) instead of leaving it for R2 to drop -- this also
+ * merges spans that were split by an internal O gap inside that run back
+ * into a single span (e.g. "unnasi" B I I O I O -> B I I I I I).
+ *
+ * A run whose raw classes do NOT resolve to one unanimous word class this
+ * way (e.g. only part of the run predicts a word class, or the agreement
+ * is only visible via `repairLetterRun`'s diffuse whole-run majority-vote
+ * fallback rather than direct evidence) is left alone, so R2's drop still
+ * applies to it. Runs longer than 24 chars are skipped. */
+export function extendWordIntegrityBio(
+  bioIds: number[] | Int32Array,
+  clsIds: number[] | Int32Array,
+  runs: Array<[number, number]>,
+): number[] {
+  const n = bioIds.length;
+  const out = Array.from({ length: n }, (_, i) => bioIds[i] as number);
+  for (const [rs, re] of runs) {
+    const length = re - rs;
+    if (length === 0 || length > MAX_WORD_RUN_LEN) continue;
+    let anyCovered = false;
+    let allCovered = true;
+    for (let k = rs; k < re; k++) {
+      const covered = bioIds[k] === 1 || bioIds[k] === 2;
+      if (covered) anyCovered = true;
+      else allCovered = false;
+    }
+    if (!anyCovered || allCovered) continue; // nothing to extend
+    const unanimous = runUnanimousClass(clsIds, rs, re);
+    if (unanimous === null || !isWordClass(CLASSES[unanimous])) continue;
+    for (let k = rs; k < re; k++) out[k] = 2;
+    out[rs] = 1;
+  }
+  return out;
+}
+
 /** [start, end) maximal letter/mark runs over the WHOLE text (not just one
  * span) -- word integrity needs the true word boundaries, which can extend
  * outside a span that was cut short mid-word. */
@@ -427,7 +519,9 @@ export function decodeSpans(
   bioProbs?: Float32Array[] | number[][] | null,
 ): DecodedSpan[] {
   const n = text.length;
-  const bridged = bridgeBio(bioIds, n);
+  const allLetterRuns = letterRuns(text);
+  let bridged = bridgeBio(bioIds, n);
+  bridged = extendWordIntegrityBio(bridged, clsIds, allLetterRuns);
   const spans: Array<[number, number]> = [];
   let start: number | null = null;
   for (let i = 0; i < n; i++) {
@@ -449,7 +543,6 @@ export function decodeSpans(
     spans[k] = [spans[k][0], extendDigitRun(text, spans[k][0], spans[k][1])];
   }
 
-  const allLetterRuns = letterRuns(text);
   let workCls = Array.from({ length: n }, (_, i) => clsIds[i] as number);
 
   const out: DecodedSpan[] = [];

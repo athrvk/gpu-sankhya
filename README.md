@@ -212,18 +212,18 @@ training): 0.925 value accuracy. This number is optimistic — it's testing
 the model on its own distribution.
 
 On two hand-written gold sets, written independently of the generator —
-`python/tests/gold.jsonl` (romanised Hindi, 214 sentences / 188 spans)
+`python/tests/gold.jsonl` (romanised Hindi, 220 sentences / 194 spans)
 and `python/tests/gold_deva.jsonl` (Devanagari Hindi, 182 sentences / 151
 spans) — evaluated against the shipped int8-quantized weights:
 
 | gold set | examples | spans | value accuracy | span precision | span recall | span F1 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| gold.jsonl (romanised) | 214 | 188 | 0.9255 | 0.9167 | 0.9362 | 0.9263 |
-| gold_deva.jsonl (Devanagari) | 182 | 151 | 0.9735 | 0.9737 | 0.9801 | 0.9769 |
-| combined | 396 | 339 | 0.9469 | 0.9419 | 0.9558 | 0.9488 |
+| gold.jsonl (romanised) | 220 | 194 | 0.9381 | 0.9293 | 0.9485 | 0.9388 |
+| gold_deva.jsonl (Devanagari) | 182 | 151 | 0.9735 | 0.9867 | 0.9801 | 0.9834 |
+| combined | 402 | 345 | 0.9536 | 0.9540 | 0.9623 | 0.9582 |
 
 Negatives (zero-gold-span examples, 73 total): 0 false positives.
-Miss summary: missed 2, spurious 7, wrong value 3, wrong boundary 13.
+Miss summary: missed 0, spurious 4, wrong value 3, wrong boundary 13.
 Per-category value accuracy: digits 0.967, words 0.940, prefix 0.926,
 range 0.917, currency 1.0, multi_unit 0.952, symbol_unit 0.970,
 mixed_script 1.0, long 0.80.
@@ -303,6 +303,15 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   `UNIT_LAKH`). A one-character symbol unit (`k`/`K`/`l`/`L`) is additionally
   only valid when the next character isn't a letter, so `"20k logon"`
   keeps its `k` but `"10 km"`'s `k` doesn't survive alone either.
+  Before that drop check runs, a BIO repair pass looks at the letter-word's
+  *raw* per-character classes: if they unambiguously agree on one word
+  class (trusting only direct evidence — a same-class run of 3+ characters,
+  or a short stray adopting a qualifying neighbour's class, never a diffuse
+  whole-run majority vote alone), the span's BIO is extended to cover the
+  whole word instead of being left partial — this also re-merges a span
+  that a low-confidence internal `O` gap had split in two (e.g. `"unnasi"`
+  raw-tagged `B I I O I O`, all six characters `CARD_79`, becomes one span
+  `"unnasi"` = 79 instead of dropping).
 - **Bare-digits gate**: a span whose only meaningful tokens are digits (no
   unit/prefix/cardinal word at all) with no detected currency marker is
   dropped only when it's short and ungrouped (≤4 digits, no comma — route

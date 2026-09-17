@@ -301,6 +301,44 @@ def test_word_integrity_symbol_unit_at_word_end_kept():
     assert cnames(out, 2, 3) == ["UNIT_HAZAAR"]
 
 
+def test_extend_word_integrity_bio_merges_unanimous_run():
+    # synthetic 6-char word, all raw chars CARD_79, BIO B I I O I O (two
+    # low-confidence O's split what should be one span mid-word) -- since
+    # every char in the run raw-predicts the SAME word class, the whole
+    # run's BIO is extended/merged into a single span.
+    from sankhya.decode import extend_word_integrity_bio, _letter_runs
+    text = "unnasi"
+    CARD_79 = C.CLASS_TO_ID["CARD_79"]
+    bio = [1, 2, 2, 0, 2, 0]
+    cls = [CARD_79] * 6
+    out = extend_word_integrity_bio(text, bio, cls, _letter_runs(text))
+    assert out == [1, 2, 2, 2, 2, 2]
+
+    spans = decode_spans(text, bio, cls)
+    assert len(spans) == 1
+    assert spans[0]["start"] == 0 and spans[0]["end"] == 6
+    assert spans[0]["text"] == "unnasi"
+    tok_classes = [C.CLASSES[cid] for cid, _ in spans[0]["tokens"]]
+    assert tok_classes == ["CARD_79"]
+
+
+def test_extend_word_integrity_bio_disagreeing_classes_not_extended():
+    # counter-case: same shape (6-char run, partial BIO coverage) but the
+    # run's RAW classes disagree -- first 3 chars CARD_79, rest O -- so no
+    # unanimous word class exists and the run is left alone; the existing
+    # R2 drop behaviour still applies (span drops entirely).
+    from sankhya.decode import extend_word_integrity_bio, _letter_runs
+    text = "unnasi"
+    CARD_79 = C.CLASS_TO_ID["CARD_79"]
+    bio = [1, 2, 2, 0, 2, 0]
+    cls = [CARD_79, CARD_79, CARD_79, O, O, O]
+    out = extend_word_integrity_bio(text, bio, cls, _letter_runs(text))
+    assert out == bio  # unchanged
+
+    spans = decode_spans(text, bio, cls)
+    assert spans == []
+
+
 def test_range_connector_unit_then_digits_is_range():
     # "2 lakh/3 lakh" -- connector between a closed UNIT_LAKH amount and a
     # fresh DIGITS amount is a real range.
