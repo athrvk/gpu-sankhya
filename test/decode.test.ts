@@ -400,3 +400,68 @@ test("R5: possessive with no space before the apostrophe", () => {
   assert.equal(spans.length, 1);
   assert.equal(spans[0].text, "2lakh");
 });
+
+test("R4b: whole-word RANGE connector (Devanagari) merges two BIO-split spans into one", () => {
+  // "दो लाख से तीन लाख" -- the class head tags "से" RANGE, but the BIO
+  // head splits it into two spans (its own B mid-word). The two spans must
+  // be merged into one RANGE span, value 200000, range (200000, 300000).
+  const text = "दो लाख से तीन लाख";
+  const bio = [1, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2];
+  const cls = [
+    cid("CARD_2"), cid("CARD_2"), cid("O"), cid("UNIT_LAKH"), cid("UNIT_LAKH"), cid("UNIT_LAKH"),
+    cid("O"), cid("RANGE"), cid("RANGE"), cid("O"),
+    cid("CARD_3"), cid("CARD_3"), cid("CARD_3"), cid("O"), cid("UNIT_LAKH"), cid("UNIT_LAKH"), cid("UNIT_LAKH"),
+  ];
+  const spans = decodeSpans(text, bio, cls);
+  assert.equal(spans.length, 1);
+  assert.equal(spans[0].text, text);
+  const tokClasses = spans[0].tokens.map(([c]) => CLASSES[c]);
+  assert.deepEqual(tokClasses, [
+    "CARD_2", "SEP", "UNIT_LAKH", "SEP", "RANGE", "SEP", "CARD_3", "SEP", "UNIT_LAKH",
+  ]);
+  const result = evaluate(spans[0].tokens.map(([c, t]): [string, string] => [CLASSES[c], t]));
+  assert.equal(result.value, 200000);
+  assert.deepEqual(result.range, [200000, 300000]);
+});
+
+test("R4b: whole-word RANGE connector (Latin) merges two BIO-split spans into one", () => {
+  // "5 hazaar se 8 hazaar tak" -- Latin analogue; trailing "tak" is not
+  // part of either span or the connector run.
+  const text = "5 hazaar se 8 hazaar tak";
+  const bio = [
+    1, 2, 2, 2, 2, 2, 2, 2,
+    0, 0, 0, 0,
+    1, 2, 2, 2, 2, 2, 2, 2,
+    0, 0, 0, 0,
+  ];
+  const cls = [
+    cid("DIGITS"), cid("SEP"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"),
+    cid("O"), cid("RANGE"), cid("RANGE"), cid("O"),
+    cid("DIGITS"), cid("SEP"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"),
+    cid("O"), cid("O"), cid("O"), cid("O"),
+  ];
+  const spans = decodeSpans(text, bio, cls);
+  assert.equal(spans.length, 1);
+  assert.equal(spans[0].text, "5 hazaar se 8 hazaar");
+  const result = evaluate(spans[0].tokens.map(([c, t]): [string, string] => [CLASSES[c], t]));
+  assert.equal(result.value, 5000);
+  assert.deepEqual(result.range, [5000, 8000]);
+});
+
+test("R4b: class-O connector word ('aur') between two spans stays two spans", () => {
+  const text = "5 hazaar aur 8 hazaar";
+  const bio = [
+    1, 2, 2, 2, 2, 2, 2, 2,
+    0, 0, 0, 0, 0,
+    1, 2, 2, 2, 2, 2, 2, 2,
+  ];
+  const cls = [
+    cid("DIGITS"), cid("SEP"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"),
+    cid("O"), cid("O"), cid("O"), cid("O"), cid("O"),
+    cid("DIGITS"), cid("SEP"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"),
+  ];
+  const spans = decodeSpans(text, bio, cls);
+  assert.equal(spans.length, 2);
+  assert.equal(spans[0].text, "5 hazaar");
+  assert.equal(spans[1].text, "8 hazaar");
+});

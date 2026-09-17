@@ -477,6 +477,7 @@ PACK = base.LanguagePack(
     filler_words=FILLER_WORDS,
     duration_nouns=DURATION_NOUNS,
     conj_connectors=CONJ_CONNECTORS,
+    ambiguous_units=["kharab", "mil"],
 )
 
 # drop any filler word that collides with a real vocabulary surface form

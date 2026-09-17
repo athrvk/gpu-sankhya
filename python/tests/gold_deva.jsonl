@@ -180,3 +180,6 @@
 {"text": "सवा घंटा लग गया", "lang": "hi_deva", "spans": []}
 {"text": "साढ़े तीन बजे मिलते हैं", "lang": "hi_deva", "spans": []}
 {"text": "मोबाइल 98765 43210 है मेरा", "lang": "hi_deva", "spans": []}
+{"text": "दो लाख से तीन लाख के बीच", "lang": "hi_deva", "spans": [{"start": 0, "end": 17, "value": 200000, "range": [200000, 300000]}]}
+{"text": "नौ हज़ार से बारह हज़ार के बीच कुछ भी चलेगा", "lang": "hi_deva", "spans": [{"start": 0, "end": 22, "value": 9000, "range": [9000, 12000]}]}
+{"text": "दाम अठाईस हज़ार है", "lang": "hi_deva", "spans": [{"start": 4, "end": 15, "value": 28000}]}

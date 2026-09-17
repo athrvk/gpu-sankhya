@@ -33,6 +33,13 @@ class LanguagePack:
     # O, each side is its own span. Do not confuse with range_connectors
     # ("se lekar ... tak" etc): a range is ONE span, this is several.
     conj_connectors: List[str] = field(default_factory=list)
+    # spelled-out UNIT_* words that also have a common non-numeric meaning
+    # in this language ("kharab" = 10^11 unit word but also "broken";
+    # "mil" = million but also "meet"). A lone occurrence of one of these
+    # in negative-quantity scanning only counts as a quantity marker when
+    # immediately preceded by a number-ish token (CARD_*/DIGITS/PFX_* or a
+    # digit run) - see _negative_has_quantity in llm_corpus.py.
+    ambiguous_units: List[str] = field(default_factory=list)
 
     def noise(self, word: str, rng) -> str:
         if self.noise_fn is not None:

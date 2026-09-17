@@ -212,21 +212,21 @@ training): 0.925 value accuracy. This number is optimistic — it's testing
 the model on its own distribution.
 
 On two hand-written gold sets, written independently of the generator —
-`python/tests/gold.jsonl` (romanised Hindi, 220 sentences / 194 spans)
-and `python/tests/gold_deva.jsonl` (Devanagari Hindi, 182 sentences / 151
+`python/tests/gold.jsonl` (romanised Hindi, 225 sentences / 197 spans)
+and `python/tests/gold_deva.jsonl` (Devanagari Hindi, 185 sentences / 154
 spans) — evaluated against the shipped int8-quantized weights:
 
 | gold set | examples | spans | value accuracy | span precision | span recall | span F1 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| gold.jsonl (romanised) | 220 | 194 | 0.9536 | 0.9585 | 0.9536 | 0.9561 |
-| gold_deva.jsonl (Devanagari) | 182 | 151 | 0.9801 | 0.9867 | 0.9801 | 0.9834 |
-| combined | 402 | 345 | 0.9652 | 0.9708 | 0.9652 | 0.9680 |
+| gold.jsonl (romanised) | 225 | 197 | 0.9543 | 0.9497 | 0.9594 | 0.9545 |
+| gold_deva.jsonl (Devanagari) | 185 | 154 | 0.9740 | 0.9805 | 0.9805 | 0.9805 |
+| combined | 410 | 351 | 0.9632 | 0.9632 | 0.9687 | 0.9659 |
 
-Negatives (zero-gold-span examples, 73 total): 0 false positives.
-Miss summary: missed 3, spurious 0, wrong value 0, wrong boundary 9.
-Per-category value accuracy: digits 0.967, words 0.940, prefix 0.926,
-range 0.917, currency 1.0, multi_unit 0.952, symbol_unit 0.970,
-mixed_script 1.0, long 0.80.
+Negatives (zero-gold-span examples, 75 total): 0 false positives.
+Miss summary: missed 1, spurious 1, wrong value 2, wrong boundary 10.
+Per-category value accuracy: digits 0.967, words 0.961, prefix 0.963,
+range 0.889, currency 1.0, multi_unit 0.917, symbol_unit 1.0,
+mixed_script 1.0, long 0.667.
 
 For comparison, the previous shipped weights scored, on this same
 enlarged gold set: 0.9096 (romanised) / 0.9603 (Devanagari) / 0.9322
@@ -323,12 +323,28 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   scans 8 characters past the amount for a trailing marker word (up from
   a shorter window that missed `"1200 rupees"` — `"rupees"` alone runs to
   6 characters plus the leading space).
+- **Lone-ambiguous-unit gate**: a span whose only meaningful token is a
+  single `UNIT_KHARAB` or `UNIT_MILLION` word, with no preceding
+  number/prefix and no detected currency marker, is dropped — `"kharab"`
+  (Hindi: usually "broken") and `"mil"`/`"million"` (often just an
+  English loanword/fragment) are only genuine amount units when a number
+  precedes them. `"unka washing machine kharab ho gaya hai"` no longer
+  parses; `"das kharab"`, `"2 mil"`, and `"kharab rupaye"` (currency
+  marker present) still parse. Other unit words (`"lakh"`, `"hazaar"`)
+  are unaffected.
 - **Range-connector repair**: a bare `-`/`–`/`—`/`/` between two amounts
   becomes a `RANGE` tag (spaces around it stay `SEP`) when the left side
   can end an amount by itself and the right side can start a fresh one
   (`"2 lakh/3 lakh"`, `"दो-तीन लाख"`) — but not when it's really one
   compound number, e.g. a prefix glued straight to a unit (`"dedh-lakh"`
   stays one span, not a range).
+- **Word-connector span merge**: when a whole connector WORD (e.g.
+  `"se"`/`"से"`) between two separately BIO-decoded spans is itself tagged
+  `RANGE` by the class head, the two spans are merged into one `RANGE`
+  span (connector letters → `RANGE`, its flanking spaces → `SEP`) — fixes
+  the BIO head splitting a range like `"दो लाख से तीन लाख"` or `"5 hazaar
+  se 8 hazaar"` into two separate amounts even though the class head
+  correctly tagged the connector word.
 - **Possessive trim**: a trailing `'s`/`’s` (1-2 letters) is stripped from
   the end of a word and excluded from the span (`"2 lakh's"` → `"2 lakh"`).
 - **Confidence filter**: a span's confidence is the mean of the max BIO

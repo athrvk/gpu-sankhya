@@ -275,6 +275,45 @@ def test_should_drop_bare_digits_not_bare_digits_at_all():
     assert core.should_drop_bare_digits([("DIGITS", "2"), ("SEP", " "), ("UNIT_LAKH", "lakh")]) is False
 
 
+def test_should_drop_lone_ambiguous_unit_kharab_alone_dropped():
+    assert core.should_drop_lone_ambiguous_unit([("UNIT_KHARAB", "kharab")]) is True
+
+
+def test_should_drop_lone_ambiguous_unit_million_alone_dropped():
+    assert core.should_drop_lone_ambiguous_unit([("UNIT_MILLION", "mil")]) is True
+    assert core.should_drop_lone_ambiguous_unit([("UNIT_MILLION", "million")]) is True
+
+
+def test_should_drop_lone_ambiguous_unit_ignores_glue_tokens():
+    # "kharab" surrounded by SEP/RANGE/DOT/COMMA/O glue is still "lone".
+    toks = [("SEP", " "), ("UNIT_KHARAB", "kharab"), ("O", "")]
+    assert core.should_drop_lone_ambiguous_unit(toks) is True
+
+
+def test_should_drop_lone_ambiguous_unit_with_preceding_digits_kept():
+    # "das kharab" / "2 mil" -- a number precedes the unit, so it's kept.
+    assert core.should_drop_lone_ambiguous_unit([("DIGITS", "2"), ("SEP", " "), ("UNIT_MILLION", "mil")]) is False
+    assert core.should_drop_lone_ambiguous_unit([("CARD_10", "das"), ("SEP", " "), ("UNIT_KHARAB", "kharab")]) is False
+
+
+def test_should_drop_lone_ambiguous_unit_with_preceding_prefix_kept():
+    assert core.should_drop_lone_ambiguous_unit([("PFX_DHAI", "dhai"), ("SEP", " "), ("UNIT_MILLION", "mil")]) is False
+
+
+def test_should_drop_lone_ambiguous_unit_other_units_unaffected():
+    # "lakh" / "hazaar" alone are NOT ambiguous in this sense -- only
+    # UNIT_KHARAB/UNIT_MILLION are gated.
+    assert core.should_drop_lone_ambiguous_unit([("UNIT_LAKH", "lakh")]) is False
+    assert core.should_drop_lone_ambiguous_unit([("UNIT_HAZAAR", "hazaar")]) is False
+
+
+def test_should_drop_lone_ambiguous_unit_multi_token_span_kept():
+    # more than one meaningful token -- e.g. a unit plus another unit -- is
+    # not a "lone" ambiguous unit.
+    toks = [("UNIT_KHARAB", "kharab"), ("SEP", " "), ("UNIT_LAKH", "lakh")]
+    assert core.should_drop_lone_ambiguous_unit(toks) is False
+
+
 def test_detect_currency_window_wide_enough_for_rupees_after_a_short_number():
     # "1200 rupees" -- the "rupees" (6-char) marker sits right after a
     # single-space gap past the span end; the scan window must be wide

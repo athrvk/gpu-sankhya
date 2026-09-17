@@ -25,6 +25,7 @@ _EXTRA_VARIANTS = {
     5: ["पांच"],
     6: ["छः", "छे"],
     15: ["पन्द्रह"],
+    28: ["अठाईस", "अठ्ठाईस"],
 }
 for n, variants in _EXTRA_VARIANTS.items():
     CARD_WORDS[n] = list(dict.fromkeys(CARD_WORDS[n] + variants))

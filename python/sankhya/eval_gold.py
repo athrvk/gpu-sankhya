@@ -50,12 +50,15 @@ def _both_packs():
 
 
 def _apply_bare_digits_gate(text, decoded, classes):
-    """R3: drop a decoded span whose meaningful tokens are digits-only
-    unless a currency marker is present for it."""
+    """R3/R4: drop a decoded span whose meaningful tokens are digits-only
+    (R3), or a lone ambiguous unit word with no preceding number (R4:
+    "kharab"/"mil"), unless a currency marker is present for it."""
     kept = []
     for d in decoded:
         toks = [(classes[cid], sub) for cid, sub in d["tokens"]]
         if core.should_drop_bare_digits(toks) and core.detect_currency_multi(text, d["start"], d["end"], _both_packs()) is None:
+            continue
+        if core.should_drop_lone_ambiguous_unit(toks) and core.detect_currency_multi(text, d["start"], d["end"], _both_packs()) is None:
             continue
         kept.append(d)
     return kept

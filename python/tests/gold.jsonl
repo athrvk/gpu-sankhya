@@ -218,3 +218,8 @@
 {"text": "cheh sau rupaye bache", "lang": "hi_latn", "spans": [{"start": 0, "end": 8, "value": 600}]}
 {"text": "chihttr hazaar salary hai", "lang": "hi_latn", "spans": [{"start": 0, "end": 14, "value": 76000}]}
 {"text": "chanchatt hazaar ka phone liya", "lang": "hi_latn", "spans": [{"start": 0, "end": 16, "value": 66000}]}
+{"text": "unka washing machine kharab ho gaya hai", "lang": "hi_latn", "spans": []}
+{"text": "hardware store mein sab kuch mil jaata hai", "lang": "hi_latn", "spans": []}
+{"text": "das kharab ka budget hai sarkar ka", "lang": "hi_latn", "spans": [{"start": 0, "end": 10, "value": 1000000000000}]}
+{"text": "sawalakh ka scooter le liya", "lang": "hi_latn", "spans": [{"start": 0, "end": 8, "value": 125000}]}
+{"text": "5 hazaar se 8 hazaar tak lagenge", "lang": "hi_latn", "spans": [{"start": 0, "end": 20, "value": 5000, "range": [5000, 8000]}]}

@@ -265,6 +265,31 @@ export function shouldDropBareDigits(tokens: Tok[]): boolean {
   return false;
 }
 
+const IGNORED_GLUE_CLASSES = new Set(["SEP", "RANGE", "DOT", "COMMA", "O"]);
+
+/** R4: whether a span consisting of a single ambiguous unit word (with no
+ * preceding number) should be dropped. "kharab" (Hindi: usually "broken")
+ * and "mil"/"million" (often just an English loanword/fragment) are only
+ * genuine amount units when a number precedes them ("das kharab", "2 mil");
+ * alone they are almost always false positives ("washing machine kharab ho
+ * gaya", "mil ke rehna").
+ *
+ * True when the span's meaningful tokens (ignoring SEP/RANGE/DOT/COMMA/O
+ * glue) consist of exactly one token whose class is UNIT_KHARAB or
+ * UNIT_MILLION, and there is no CARD_-prefixed/DIGITS/PFX_-prefixed token
+ * anywhere in the span. This is class-level (not surface-level), so it
+ * needs no lexicon. */
+export function shouldDropLoneAmbiguousUnit(tokens: Tok[]): boolean {
+  const meaningful = tokens.filter(([cls]) => !IGNORED_GLUE_CLASSES.has(cls));
+  if (meaningful.length !== 1) return false;
+  const [cls] = meaningful[0];
+  if (cls !== "UNIT_KHARAB" && cls !== "UNIT_MILLION") return false;
+  for (const [c] of tokens) {
+    if (c === "DIGITS" || c.startsWith("CARD_") || c.startsWith("PFX_")) return false;
+  }
+  return true;
+}
+
 export function mergeLangPacks(...packs: LangPack[]): LangPack {
   const byLenDesc = (a: string, b: string) => b.length - a.length;
   const dedupe = (lists: string[][]) => [...new Set(lists.flat())].sort(byLenDesc);

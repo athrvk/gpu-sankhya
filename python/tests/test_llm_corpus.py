@@ -242,3 +242,60 @@ def test_lang_mismatch_rejected():
         assert False, "expected RejectError"
     except LC.RejectError as e:
         assert e.args[0] == "lang_mismatch", e.args[0]
+
+
+deva_pack = base.get_pack("hi_deva")
+
+
+def _verify_deva(obj, gold_texts=frozenset(), seen_texts=None):
+    if seen_texts is None:
+        seen_texts = set()
+    return LC.verify_line(deva_pack, obj, gold_texts, seen_texts)
+
+
+def test_deva_se_range_connector_resolves():
+    """"से" (S + combining vowel sign) must classify as RANGE, not be
+    rejected as unknown_token: the connector's isalpha() filter used to
+    exclude it because a bare combining mark is not alpha."""
+    obj = {
+        "text": "5 से 10 लाख के बीच",
+        "lang": "hi_deva",
+        "phrases": [{"phrase": "5 से 10 लाख", "value": 500000, "range": [500000, 1000000]}],
+    }
+    ex = _verify_deva(obj)
+    assert len(ex["spans"]) == 1
+    sp = ex["spans"][0]
+    assert sp["range"] == [500000, 1000000]
+    assert sp["value"] == 500000
+
+
+def test_deva_athais_28000():
+    obj = {
+        "text": "अठाईस हज़ार रुपए दे दो",
+        "lang": "hi_deva",
+        "phrases": [{"phrase": "अठाईस हज़ार", "value": 28000}],
+    }
+    ex = _verify_deva(obj)
+    assert len(ex["spans"]) == 1
+    assert ex["spans"][0]["value"] == 28000
+
+
+def test_kharab_negative_accepted():
+    obj = {
+        "text": "unka washing machine kharab ho gaya hai",
+        "lang": "hi_latn",
+        "phrases": [],
+    }
+    ex = _verify(obj)
+    assert ex["spans"] == []
+
+
+def test_das_kharab_positive_still_labelled():
+    obj = {
+        "text": "das kharab ka fund hai",
+        "lang": "hi_latn",
+        "phrases": [{"phrase": "das kharab", "value": 10 * 10**11}],
+    }
+    ex = _verify(obj)
+    assert len(ex["spans"]) == 1
+    assert ex["spans"][0]["value"] == 10 * 10**11

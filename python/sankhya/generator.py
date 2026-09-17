@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 import re
 import sys
@@ -363,6 +364,44 @@ def _maybe_possessive(rng, toks, p=0.02):
     return toks + [("O", suffix)]
 
 
+def _maybe_join_words(pack, rng, toks, p=None):
+    """No-space word-form noise: "sawalakh" (PFX_SAVA+UNIT_LAKH), "paanchlakh"
+    (CARD_5+UNIT_LAKH), "dashazaar" (CARD_10+CARD_1000 in an additive chain).
+    `p` defaults to env SANKHYA_JOIN_WORDS_P (0.04); set it to 0 for ablations.
+
+    Removes a single SEP (" ") token that sits between two adjacent WORD
+    tokens (PFX_*/CARD_*, or CARD_*/UNIT_*), gluing the two surface forms
+    with no space. Each glued token keeps its own class id, so BIO/cls
+    labels stay correct - this only deletes one O/I-ranged SEP character,
+    never touches a DIGITS/DOT/COMMA token (so "2lakh" style glue, which
+    already exists elsewhere, is untouched), and joins at most one pair per
+    phrase.
+    """
+    if p is None:
+        p = float(os.environ.get("SANKHYA_JOIN_WORDS_P", "0.04"))
+    if not toks or rng.random() >= p:
+        return toks
+    candidates = []
+    for i in range(1, len(toks) - 1):
+        sep_cls, sep_text = toks[i]
+        if sep_cls != "SEP" or sep_text != " ":
+            continue
+        left_cls, _ = toks[i - 1]
+        right_cls, _ = toks[i + 1]
+        pair_ok = (
+            (C.is_prefix(left_cls) and C.is_unit(right_cls)) or
+            (C.is_prefix(left_cls) and C.is_card(right_cls)) or
+            (C.is_card(left_cls) and C.is_unit(right_cls)) or
+            (C.is_card(left_cls) and C.is_card(right_cls))
+        )
+        if pair_ok:
+            candidates.append(i)
+    if not candidates:
+        return toks
+    i = rng.choice(candidates)
+    return toks[:i] + toks[i + 1:]
+
+
 def build_phrase(pack, rng, structure=None, exclude_currency_bare=False):
     if structure is None:
         pool = _STRUCTURE_WEIGHTS
@@ -375,6 +414,7 @@ def build_phrase(pack, rng, structure=None, exclude_currency_bare=False):
         structure = rng.choices(names, weights=weights)[0]
     toks = build_term_tokens(pack, rng, structure)
     toks = _maybe_possessive(rng, toks)
+    toks = _maybe_join_words(pack, rng, toks)
     return toks, structure
 
 

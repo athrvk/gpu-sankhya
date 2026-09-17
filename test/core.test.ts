@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { evaluate, detectCurrency, mergeLangPacks, isBareDigits, shouldDropBareDigits } from "../src/core.ts";
+import { evaluate, detectCurrency, mergeLangPacks, isBareDigits, shouldDropBareDigits, shouldDropLoneAmbiguousUnit } from "../src/core.ts";
 import { HI_LATN } from "../src/lang-hi-latn.ts";
 import { HI_DEVA } from "../src/lang-hi-deva.ts";
 
@@ -296,6 +296,36 @@ test("R3 (narrowed): should_drop_bare_digits keeps a grouped 8-digit amount ('2,
 
 test("R3 (narrowed): should_drop_bare_digits is false when not bare digits at all", () => {
   assert.equal(shouldDropBareDigits([["DIGITS", "2"], ["SEP", " "], ["UNIT_LAKH", "lakh"]]), false);
+});
+
+test("R4: should_drop_lone_ambiguous_unit drops kharab/mil alone", () => {
+  assert.equal(shouldDropLoneAmbiguousUnit([["UNIT_KHARAB", "kharab"]]), true);
+  assert.equal(shouldDropLoneAmbiguousUnit([["UNIT_MILLION", "mil"]]), true);
+  assert.equal(shouldDropLoneAmbiguousUnit([["UNIT_MILLION", "million"]]), true);
+});
+
+test("R4: should_drop_lone_ambiguous_unit ignores glue tokens", () => {
+  const toks: Tok[] = [["SEP", " "], ["UNIT_KHARAB", "kharab"], ["O", ""]];
+  assert.equal(shouldDropLoneAmbiguousUnit(toks), true);
+});
+
+test("R4: should_drop_lone_ambiguous_unit keeps a unit preceded by a number", () => {
+  assert.equal(shouldDropLoneAmbiguousUnit([["DIGITS", "2"], ["SEP", " "], ["UNIT_MILLION", "mil"]]), false);
+  assert.equal(shouldDropLoneAmbiguousUnit([["CARD_10", "das"], ["SEP", " "], ["UNIT_KHARAB", "kharab"]]), false);
+});
+
+test("R4: should_drop_lone_ambiguous_unit keeps a unit preceded by a prefix", () => {
+  assert.equal(shouldDropLoneAmbiguousUnit([["PFX_DHAI", "dhai"], ["SEP", " "], ["UNIT_MILLION", "mil"]]), false);
+});
+
+test("R4: should_drop_lone_ambiguous_unit does not affect other unit classes", () => {
+  assert.equal(shouldDropLoneAmbiguousUnit([["UNIT_LAKH", "lakh"]]), false);
+  assert.equal(shouldDropLoneAmbiguousUnit([["UNIT_HAZAAR", "hazaar"]]), false);
+});
+
+test("R4: should_drop_lone_ambiguous_unit keeps multi-token spans", () => {
+  const toks: Tok[] = [["UNIT_KHARAB", "kharab"], ["SEP", " "], ["UNIT_LAKH", "lakh"]];
+  assert.equal(shouldDropLoneAmbiguousUnit(toks), false);
 });
 
 test("detectCurrency: window wide enough for 'rupees' after a short number", () => {

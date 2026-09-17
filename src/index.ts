@@ -3,7 +3,7 @@ import { loadWeights, type LoadedWeights } from "./weights.ts";
 import { buildCharToId, encodeChars, makeWindows, normalizeText, MAX_LEN, PADDED_MAX, paddedLength } from "./charset.ts";
 import { forward, softmaxRow, argmaxRow, viterbi, Scratch } from "./infer-cpu.ts";
 import { decodeSpans } from "./decode.ts";
-import { evaluate, detectCurrency, mergeLangPacks, shouldDropBareDigits } from "./core.ts";
+import { evaluate, detectCurrency, mergeLangPacks, shouldDropBareDigits, shouldDropLoneAmbiguousUnit } from "./core.ts";
 import { HI_LATN } from "./lang-hi-latn.ts";
 import { HI_DEVA } from "./lang-hi-deva.ts";
 import { CLASSES } from "./classes.ts";
@@ -126,6 +126,10 @@ export class Parser {
       // (<=4 digits, no comma) or very-long (>=10 digits) spans -- see
       // shouldDropBareDigits().
       if (shouldDropBareDigits(tokens) && currency === null) continue;
+      // R4: drop a lone ambiguous unit span ("kharab"/"mil" with no
+      // preceding number) unless a currency marker was found for it -- see
+      // shouldDropLoneAmbiguousUnit().
+      if (shouldDropLoneAmbiguousUnit(tokens) && currency === null) continue;
       const res = evaluate(tokens);
       out.push({
         span: span.text,
