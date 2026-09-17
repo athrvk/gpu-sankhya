@@ -9,7 +9,7 @@
 // output position, which lets V8 keep the whole accumulation in registers
 // and roughly triples throughput over the naive "for tap { for t }" form.
 
-import type { ConvLayer, HeadLayer, LoadedWeights, Tensor } from "./weights.ts";
+import type { ConvLayer, CrfParams, HeadLayer, LoadedWeights, Tensor } from "./weights.ts";
 import { PADDED_MAX } from "./charset.ts";
 
 export interface ForwardResult {
@@ -222,4 +222,66 @@ export function argmaxRow(logits: Float32Array, rowStart: number, n: number): nu
     }
   }
   return best;
+}
+
+// Preallocated Viterbi scratch (delta/back), sized to PADDED_MAX * 3 so
+// viterbi() never allocates on the hot path -- L <= MAX_LEN (128) <=
+// PADDED_MAX always. Module-level singleton mirrors Scratch's approach for
+// forward()'s buffers.
+const vDelta = new Float32Array(PADDED_MAX * 3);
+const vBack = new Int32Array(PADDED_MAX * 3);
+
+/** Viterbi-decode the BIO path (labels 0=O,1=B,2=I) over `L` real positions
+ * of `bioLogits` (row-major (L,3), only the first L rows are read), writing
+ * the best label sequence into `out` (length >= L). Float32 arithmetic in
+ * the exact accumulation order of CRF_CONTRACT.md so results match the
+ * numpy reference bit-for-bit; ties (equal score) keep the FIRST (lowest
+ * index) candidate -- iterate i/j = 0,1,2 and only replace on strictly
+ * greater. L === 0 is a no-op (empty path). */
+export function viterbi(bioLogits: Float32Array, L: number, crf: CrfParams, out: Int32Array): void {
+  if (L === 0) return;
+  const { trans, start, end } = crf;
+  const delta = vDelta;
+  const back = vBack;
+
+  // t = 0: delta[0][j] = start[j] + emis[0][j]
+  for (let j = 0; j < 3; j++) {
+    delta[j] = Math.fround(start[j] + bioLogits[j]);
+  }
+
+  for (let t = 1; t < L; t++) {
+    const prevBase = (t - 1) * 3;
+    const curBase = t * 3;
+    const emisBase = t * 3;
+    for (let j = 0; j < 3; j++) {
+      let bestV = -Infinity;
+      let bestI = 0;
+      for (let i = 0; i < 3; i++) {
+        const v = Math.fround(delta[prevBase + i] + trans[i * 3 + j]);
+        if (v > bestV) {
+          bestV = v;
+          bestI = i;
+        }
+      }
+      delta[curBase + j] = Math.fround(bestV + bioLogits[emisBase + j]);
+      back[curBase + j] = bestI;
+    }
+  }
+
+  const lastBase = (L - 1) * 3;
+  let bestV = -Infinity;
+  let bestJ = 0;
+  for (let j = 0; j < 3; j++) {
+    const v = Math.fround(delta[lastBase + j] + end[j]);
+    if (v > bestV) {
+      bestV = v;
+      bestJ = j;
+    }
+  }
+
+  out[L - 1] = bestJ;
+  for (let t = L - 1; t > 0; t--) {
+    bestJ = back[t * 3 + bestJ];
+    out[t - 1] = bestJ;
+  }
 }

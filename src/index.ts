@@ -1,7 +1,7 @@
 import type { Sankhya, ParseOptions, WeightsJson, CharTag, Inspection, ModelInfo } from "./types.ts";
 import { loadWeights, type LoadedWeights } from "./weights.ts";
 import { buildCharToId, encodeChars, makeWindows, normalizeText, MAX_LEN, PADDED_MAX, paddedLength } from "./charset.ts";
-import { forward, softmaxRow, argmaxRow, Scratch } from "./infer-cpu.ts";
+import { forward, softmaxRow, argmaxRow, viterbi, Scratch } from "./infer-cpu.ts";
 import { decodeSpans } from "./decode.ts";
 import { evaluate, detectCurrency, mergeLangPacks, shouldDropBareDigits } from "./core.ts";
 import { HI_LATN } from "./lang-hi-latn.ts";
@@ -108,8 +108,11 @@ export class Parser {
     const bioIds = useScratchBufs ? this.bioIdsScratch : new Int32Array(L);
     const clsIds = useScratchBufs ? this.clsIdsScratch : new Int32Array(L);
     const bioProbs: Float32Array[] = useScratchBufs ? this.bioProbsScratch : Array.from({ length: L }, () => new Float32Array(3));
+    if (this.weights.crf) {
+      viterbi(fw.bioLogits, L, this.weights.crf, bioIds);
+    }
     for (let t = 0; t < L; t++) {
-      bioIds[t] = argmaxRow(fw.bioLogits, t * 3, 3);
+      if (!this.weights.crf) bioIds[t] = argmaxRow(fw.bioLogits, t * 3, 3);
       clsIds[t] = argmaxRow(fw.clsLogits, t * fw.nCls, fw.nCls);
       softmaxRow(fw.bioLogits, t * 3, 3, bioProbs[t]);
     }
@@ -156,11 +159,15 @@ export class Parser {
       const padLen = paddedLength(sub.length);
       const ids = encodeChars(sub, this.charToId, this.idsScratch, padLen);
       const fw = forward(this.weights, ids, this.scratch);
+      // `bio` reflects the Viterbi path (not per-position argmax) when the
+      // loaded weights have a CRF head -- decoded once per window over its
+      // real length, matching decodeForward()'s behaviour for parse().
+      if (this.weights.crf) viterbi(fw.bioLogits, sub.length, this.weights.crf, this.bioIdsScratch);
       for (let t = 0; t < sub.length; t++) {
         const gi = win.offset + t;
         if (filled[gi]) continue;
         filled[gi] = true;
-        const bioId = argmaxRow(fw.bioLogits, t * 3, 3) as 0 | 1 | 2;
+        const bioId = (this.weights.crf ? this.bioIdsScratch[t] : argmaxRow(fw.bioLogits, t * 3, 3)) as 0 | 1 | 2;
         const probs = new Float32Array(3);
         softmaxRow(fw.bioLogits, t * 3, 3, probs);
         const clsId = argmaxRow(fw.clsLogits, t * fw.nCls, fw.nCls);
@@ -186,6 +193,7 @@ export class Parser {
     for (const l of w.conv) params += l.w.data.length + l.b.length;
     params += w.bio.w.data.length + w.bio.b.length;
     params += w.cls.w.data.length + w.cls.b.length;
+    if (w.crf) params += w.crf.trans.length + w.crf.start.length + w.crf.end.length; // 9 + 3 + 3 = 15
     const channels = w.conv.length ? Math.max(...w.conv.map((l) => l.w.shape[0])) : w.embed.shape[1];
     return {
       version: w.version,
@@ -195,6 +203,7 @@ export class Parser {
       vocab: w.embed.shape[0],
       classes: w.classes.length,
       layers: w.conv.map((l) => ({ k: l.k, dilation: l.dilation, residual: l.residual })),
+      crf: !!w.crf,
     };
   }
 

@@ -165,6 +165,70 @@ not from export flags) and writes to `models/`:
 `export.py` also runs a val-set sanity check (numpy reference forward pass
 vs. the torch model) before writing, so a broken export fails loudly.
 
+## CRF head for BIO decoding (optional, not used by shipped weights)
+
+Pass `--crf` to `sankhya.train` to add a linear-chain CRF over the BIO
+emissions (`O`/`B`/`I`), in addition to the per-character class head:
+
+```bash
+python -m sankhya.train --train data/train.jsonl --val data/val.jsonl --crf --out models/
+```
+
+- Training loss is `crf_nll + label-smoothed class-weighted BIO CE + 1e-3
+  L2 on trans/start/end` (the class head is unchanged).
+- The checkpoint gets `ckpt["use_crf"] = True` and `ckpt["crf"] =
+  {"trans", "start", "end"}` (3x3 / 3 / 3 lists); `export.py` writes the
+  same tensors, in float (never quantized — it's only 15 numbers), as a
+  top-level `"crf"` block into *both* `sankhya.weights.json` and
+  `sankhya.weights.int8.json`. The ONNX graph is unaffected — `forward()`
+  always returns raw emissions; the CRF only changes how those emissions
+  get decoded into a BIO path (Viterbi, `sankhya/crf.py`).
+- Weights files without a `crf` block (every file exported before this,
+  or trained without `--crf`) keep decoding BIO via plain per-position
+  argmax — this is fully backward compatible. `np_infer.bio_path(...)`
+  is the single choke point that picks Viterbi vs. argmax based on
+  whether `weights["crf"]` is present, and is used by `eval_gold.py`,
+  `make_fixtures.py`, and `export.py`'s int8 value-accuracy check.
+- The Kaggle `MATRIX` env var accepts an optional 4th `arch:channels:seed:crf`
+  field (`crf` ∈ {0,1}, default 0) — see `python/kaggle_train/train_kernel.py`.
+- End-to-end parity is tested: Python train/export/`np_infer`, the JS
+  runtime, and the WebGPU results path all handle a `crf` block
+  identically to a weights file without one.
+
+### Findings (T4, v2 arch, 48ch, 20 epochs, generator + verified LLM
+corpora at 20%, deterministic seeds)
+
+| run | combined value acc | Hinglish | Devanagari | F1 | spurious | FP/73 neg | s/epoch |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| plain (no CRF), 3 seeds | 0.959 / 0.957 / 0.962 | — | — | — | — | — | 17 |
+| plain, shipped 0.3.3 | 0.965 | 0.954 | 0.980 | 0.968 | 0 | 0/73 | 17 |
+| CRF, pure NLL objective | 0.968 (best epoch; diverged to NaN by ep 20) | — | — | — | — | — | 118 |
+| CRF, fixed objective (above) | 0.957 (best ckpt; loss still exploded to 1.4e6 by ep 20) | 0.949 | 0.967 | — | 0 | 0/73 | 118 |
+
+Both CRF runs used a single seed. Neither beat the plain model's combined
+value accuracy, and the CRF's sequential 128-step forward/Viterbi loop is
+launch-bound on the T4 — ~7x slower per epoch (118 s vs 17 s, ~41 min vs
+~6 min per run) — and truncating to the batch's max length doesn't help,
+since almost every batch has a near-128-character example. Emissions were
+verified bounded on a local repro of the fixed objective (max|emissions|
+plateaus around 13, vs. unbounded growth under the pure-NLL objective),
+but training loss still blew up late under the fixed objective too, with
+OneCycle LR already near zero by then — not reproduced in a 6-epoch local
+run, so the cause is still open (suspects: Adam optimizer state on the
+tiny 15-parameter CRF head, or float32 forward-algorithm (alpha)
+accumulation over long sequences).
+
+The likely reason the CRF doesn't help here: the structural decoding
+rules above (single-`O` bridging, word integrity, connector repair,
+unanimous-class extension) already give the label sequence most of the
+label-sequence coherence a CRF would add, leaving little for a learned
+transition structure to win. `--crf` is kept as a tested, parity-verified,
+opt-in flag for further experimentation, but the shipped weights do not
+use it. If revisited: try a lower learning rate for the CRF parameters,
+float64 alpha accumulation, or — simplest — a fixed (non-learned)
+transition constraint matrix, which needs no training at all and would
+remove both the instability and the extra training cost.
+
 ## Evaluate on gold
 
 The hand-written gold sets (`tests/gold.jsonl`, 220 sentences / 194 spans,

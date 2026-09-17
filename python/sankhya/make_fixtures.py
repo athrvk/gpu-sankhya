@@ -3,10 +3,14 @@
 Writes two fixture files consumed by test/parity.test.ts and
 test/e2e-parity.test.ts at the repo root:
 
-  parity.jsonl  -- {text, bio, cls}: raw per-character argmax ids from the
-                   int8 numpy forward pass (padding-corrected per np_infer's
+  parity.jsonl  -- {text, bio, cls}: raw per-character ids from the int8
+                   numpy forward pass (padding-corrected per np_infer's
                    PAD_TAIL scheme), for pinning the JS forward pass's
-                   arithmetic to this reference bit-for-bit.
+                   arithmetic to this reference bit-for-bit. `bio` is plain
+                   argmax when the weights have no `crf` block (legacy), or
+                   the Viterbi-decoded path (np_infer.bio_path) when they
+                   do -- so these fixtures pin whichever BIO decode the
+                   weights actually use in production, not raw argmax.
 
   decoded.jsonl -- {text, spans}: decode_spans() + core.evaluate() output,
                    normalised to {start, end, value, range, unit, currency,
@@ -58,7 +62,7 @@ def run(weights_path: str, examples: list, lang: str = "hi_latn"):
         ids = np_infer.pad_ids(np.array([char_to_id.get(c, unk) for c in text], dtype=np.int64))
         bio_logits, cls_logits = np_infer.forward(weights, ids)
         bio_logits, cls_logits = bio_logits[:L], cls_logits[:L]
-        bio_pred = bio_logits.argmax(-1).tolist()
+        bio_pred = np_infer.bio_path(bio_logits, weights)
         cls_pred = cls_logits.argmax(-1).tolist()
         bio_probs = np_infer.softmax(bio_logits, axis=-1).tolist()
 

@@ -146,12 +146,15 @@ def run_torch(ckpt_path, examples):
     channels = ckpt.get("channels", 32)
     embed_dim = ckpt.get("embed_dim", 16)
     arch = ckpt.get("arch")
+    use_crf = ckpt.get("use_crf", False)
     if arch is not None:
-        model = SankhyaCNN(vocab_size=len(vocab), n_cls=len(classes), arch=arch, channels=channels, embed_dim=embed_dim)
+        model = SankhyaCNN(vocab_size=len(vocab), n_cls=len(classes), arch=arch, channels=channels,
+                            embed_dim=embed_dim, crf=use_crf)
     else:
         dilation = ckpt.get("dilation", 1)
         layers = ckpt.get("layers", 3)
-        model = SankhyaCNN(vocab_size=len(vocab), n_cls=len(classes), dilation=dilation, channels=channels, layers=layers)
+        model = SankhyaCNN(vocab_size=len(vocab), n_cls=len(classes), dilation=dilation, channels=channels,
+                            layers=layers, crf=use_crf)
     model.load_state_dict(ckpt["state_dict"])
     model.eval()
     char_to_id = build_char_to_id(vocab)
@@ -166,7 +169,10 @@ def run_torch(ckpt_path, examples):
             t = torch.tensor([ids], dtype=torch.int64)
             bio_logits, cls_logits = model(t)
             bio_logits, cls_logits = bio_logits[0, :L], cls_logits[0, :L]
-            bio_pred = bio_logits.argmax(-1).tolist()
+            if model.crf is not None:
+                bio_pred = model.crf.viterbi(bio_logits) if L else []
+            else:
+                bio_pred = bio_logits.argmax(-1).tolist()
             cls_pred = cls_logits.argmax(-1).tolist()
             bio_probs = torch.softmax(bio_logits, dim=-1).tolist()
             preds.append((ex["text"], bio_pred, cls_pred, bio_probs))
@@ -189,7 +195,7 @@ def run_json_weights(weights_path, examples, int8=False):
         ids = np_infer.pad_ids(np.array([char_to_id.get(c, unk) for c in text], dtype=np.int64))
         bio_logits, cls_logits = np_infer.forward(weights, ids)
         bio_logits, cls_logits = bio_logits[:L], cls_logits[:L]
-        bio_pred = bio_logits.argmax(-1).tolist()
+        bio_pred = np_infer.bio_path(bio_logits, weights)
         cls_pred = cls_logits.argmax(-1).tolist()
         bio_probs = np_infer.softmax(bio_logits, axis=-1).tolist()
         preds.append((ex["text"], bio_pred, cls_pred, bio_probs))

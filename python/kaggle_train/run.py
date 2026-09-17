@@ -25,11 +25,14 @@ paths under `python/` (e.g. a verified LLM corpus from `sankhya.llm_corpus
 verify`) mixed into every matrix entry's training run at EXTRA_RATIO
 (default 0.2) via `sankhya.train --extra ... --extra-ratio ...`; leaving
 EXTRA empty (the default) disables mixing entirely.
-MATRIX is a comma-separated `arch:channels:seed` list (default "v1:32:0")
-that runs a whole matrix of training configs in one kernel invocation --
-e.g. `--set MATRIX=v1:32:0,v2:32:0,v2:32:1` -- and stages the winning
-run's models/metrics the same way a single-config run would (plus
-`output/matrix.json` / `output/matrix.md` with every entry's numbers).
+MATRIX is a comma-separated `arch:channels:seed` (or `arch:channels:seed:crf`,
+crf in {0,1}, default 0) list (default "v1:32:0") that runs a whole matrix
+of training configs in one kernel invocation -- e.g. `--set
+MATRIX=v1:32:0,v2:32:0,v2:32:1,v2:48:0:1` -- and stages the winning run's
+models/metrics the same way a single-config run would (plus
+`output/matrix.json` / `output/matrix.md`, now with a `crf` column, with
+every entry's numbers). An entry's run dir gets a `_crf` suffix when its
+crf field is 1.
 CHANNELS/LAYERS/DILATION are still accepted but only matter if MATRIX is
 left at a single legacy-shaped entry. Kaggle
 "script" kernels allow exactly one code_file, so there's nowhere to ship a

@@ -19,6 +19,12 @@ export interface HeadLayer {
   b: Float32Array;
 }
 
+export interface CrfParams {
+  trans: Float32Array; // (3,3) row-major, trans[i*3+j] = score(i -> j)
+  start: Float32Array; // (3,)
+  end: Float32Array; // (3,)
+}
+
 export interface LoadedWeights {
   version: number;
   charset: string[];
@@ -27,6 +33,18 @@ export interface LoadedWeights {
   conv: ConvLayer[];
   bio: HeadLayer;
   cls: HeadLayer;
+  /** Optional CRF params over the BIO head; undefined when the weights
+   * JSON has no `crf` block (legacy argmax BIO decoding). */
+  crf?: CrfParams;
+}
+
+function loadCrf(json: { crf?: { trans: { data: number[] }; start: { data: number[] }; end: { data: number[] } } }): CrfParams | undefined {
+  if (!json.crf) return undefined;
+  return {
+    trans: Float32Array.from(json.crf.trans.data),
+    start: Float32Array.from(json.crf.start.data),
+    end: Float32Array.from(json.crf.end.data),
+  };
 }
 
 function isV2(obj: WeightsJson): obj is WeightsJsonV2Float | WeightsJsonV2Int8 {
@@ -91,6 +109,7 @@ export function loadWeights(json: WeightsJson): LoadedWeights {
       conv,
       bio: int8 ? headFromInt8((json as WeightsJsonV2Int8).bio) : headFromFloat((json as WeightsJsonV2Float).bio),
       cls: int8 ? headFromInt8((json as WeightsJsonV2Int8).cls) : headFromFloat((json as WeightsJsonV2Float).cls),
+      crf: loadCrf(json as WeightsJsonV2Float | WeightsJsonV2Int8),
     };
   }
 

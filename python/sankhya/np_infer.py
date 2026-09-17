@@ -30,6 +30,8 @@ import base64
 
 import numpy as np
 
+from .crf import viterbi_np
+
 PAD_TAIL = 24
 
 
@@ -110,10 +112,34 @@ def _v1_conv_specs(obj):
     return specs
 
 
+def _load_crf_block(obj, arr):
+    """Returns {"trans","start","end"} numpy float32 arrays, or None if the
+    weights JSON has no `crf` block (legacy file -> argmax BIO)."""
+    crf_obj = obj.get("crf")
+    if crf_obj is None:
+        return None
+    return {
+        "trans": arr(crf_obj["trans"]),
+        "start": arr(crf_obj["start"]),
+        "end": arr(crf_obj["end"]),
+    }
+
+
+def bio_path(bio_logits: np.ndarray, weights: dict) -> list:
+    """BIO decode for one example's (L, 3) logits: Viterbi when `weights`
+    has a `crf` block, else plain per-position argmax (legacy behaviour).
+    """
+    crf = weights.get("crf")
+    if crf is None:
+        return bio_logits.argmax(-1).tolist()
+    return viterbi_np(bio_logits.astype(np.float32), crf["trans"], crf["start"], crf["end"])
+
+
 def load_weights_json(obj: dict) -> dict:
     """Load a float weights JSON (as written by export.py) into numpy arrays.
     Accepts both v1 (conv1..conv4 top-level keys) and v2 (weights["conv"]
-    list) files and normalises to {"embed", "conv": [...], "bio", "cls"}."""
+    list) files and normalises to {"embed", "conv": [...], "bio", "cls",
+    "crf" (optional)}."""
     def arr(t):
         return np.array(t["data"], dtype=np.float32).reshape(t["shape"])
 
@@ -133,13 +159,16 @@ def load_weights_json(obj: dict) -> dict:
         out["conv"] = conv
     out["bio"] = {"w": arr(obj["bio"]["w"]), "b": arr(obj["bio"]["b"])}
     out["cls"] = {"w": arr(obj["cls"]["w"]), "b": arr(obj["cls"]["b"])}
+    out["crf"] = _load_crf_block(obj, arr)
     return out
 
 
 def load_weights_int8_json(obj: dict) -> dict:
     """Load an int8-quantized weights JSON and dequantize to float32 numpy
     arrays. Accepts both v1 and v2 files, same normalisation as
-    load_weights_json."""
+    load_weights_json. The optional `crf` block is stored as plain float
+    (not quantised) in the JSON, so it's loaded the same way as the float
+    file."""
     def dequant(t):
         raw = base64.b64decode(t["data_b64"])
         arr = np.frombuffer(raw, dtype=np.int8).astype(np.float32).reshape(t["shape"])
@@ -164,4 +193,9 @@ def load_weights_int8_json(obj: dict) -> dict:
         out["conv"] = conv
     out["bio"] = {"w": dequant(obj["bio"]["w"]), "b": bias(obj["bio"]["b"])}
     out["cls"] = {"w": dequant(obj["cls"]["w"]), "b": bias(obj["cls"]["b"])}
+
+    def arr(t):
+        return np.array(t["data"], dtype=np.float32).reshape(t["shape"])
+
+    out["crf"] = _load_crf_block(obj, arr)
     return out

@@ -15,13 +15,16 @@ push` rewrites the literals inside the "CONFIG" marker block (only) when a
 code_file Kaggle kernels allow while still being overridable from the CLI
 wrapper without an out-of-band config file.
 
-MATRIX (new): a comma-separated list of `arch:channels:seed` entries, e.g.
-`v1:32:0,v2:32:0,v2:32:1`. For each entry the kernel runs
-`sankhya.train --arch A --channels C --seed S --device auto --out
-models_<A>_<C>_s<S>/`, exports, and evaluates on gold (float32 + int8 JSON
-weights, each with --json-out). CHANNELS/LAYERS/DILATION still exist for
-the legacy (non-MATRIX) single-run path, but a matrix entry's own channels
-value always wins for that entry's run. Output:
+MATRIX: a comma-separated list of `arch:channels:seed` or
+`arch:channels:seed:crf` entries, e.g. `v1:32:0,v2:32:0,v2:32:1,v2:48:0:1`.
+The optional 4th field `crf` (0/1, default 0) passes `--crf` to
+`sankhya.train` for that entry and suffixes its run dir with `_crf`. For
+each entry the kernel runs `sankhya.train --arch A --channels C --seed S
+[--crf] --device auto --out models_<A>_<C>_s<S>[_crf]/`, exports, and
+evaluates on gold (float32 + int8 JSON weights, each with --json-out).
+CHANNELS/LAYERS/DILATION still exist for the legacy (non-MATRIX) single-run
+path, but a matrix entry's own channels value always wins for that entry's
+run. Output:
   - `output/matrix.json` -- every entry's val + gold metrics
   - `output/matrix.md`   -- a markdown table of the same, printed at the end
   - `output/models/` + `output/metrics.json` -- the WINNING run's model dir
@@ -171,28 +174,31 @@ def step_generate(pydir):
 
 
 def parse_matrix(spec):
-    """Parse MATRIX="v1:32:0,v2:32:0,..." into a list of dicts."""
+    """Parse MATRIX="v1:32:0,v2:32:0,...,v2:48:0:1" into a list of dicts.
+    4th field `crf` (0/1) is optional, defaults to 0."""
     entries = []
     for item in spec.split(","):
         item = item.strip()
         if not item:
             continue
         parts = item.split(":")
-        if len(parts) != 3:
-            raise SystemExit(f"bad MATRIX entry {item!r}; expected arch:channels:seed")
-        arch, channels, seed = parts
-        entries.append({"arch": arch, "channels": int(channels), "seed": int(seed)})
+        if len(parts) not in (3, 4):
+            raise SystemExit(f"bad MATRIX entry {item!r}; expected arch:channels:seed[:crf]")
+        arch, channels, seed = parts[0], parts[1], parts[2]
+        crf = bool(int(parts[3])) if len(parts) == 4 else False
+        entries.append({"arch": arch, "channels": int(channels), "seed": int(seed), "crf": crf})
     if not entries:
         raise SystemExit(f"MATRIX produced no entries: {spec!r}")
     return entries
 
 
 def entry_dir_name(entry):
-    return f"models_{entry['arch']}_{entry['channels']}_s{entry['seed']}"
+    suffix = "_crf" if entry.get("crf") else ""
+    return f"models_{entry['arch']}_{entry['channels']}_s{entry['seed']}{suffix}"
 
 
 def step_train_one(pydir, entry, out_dir):
-    banner(f"train {entry['arch']}:{entry['channels']}:{entry['seed']} "
+    banner(f"train {entry['arch']}:{entry['channels']}:{entry['seed']}:{int(entry.get('crf', False))} "
            f"(epochs={EPOCHS} out={out_dir})")
     os.makedirs(os.path.join(pydir, out_dir), exist_ok=True)
     t0 = time.time()
@@ -204,6 +210,8 @@ def step_train_one(pydir, entry, out_dir):
         "--seed", str(entry["seed"]),
         "--lang", LANGS, "--out", out_dir + "/", "--device", "auto",
     ]
+    if entry.get("crf"):
+        cmd += ["--crf"]
     extra_paths = [p.strip() for p in EXTRA.split(",") if p.strip()]
     if extra_paths:
         cmd += ["--extra"] + extra_paths + ["--extra-ratio", str(EXTRA_RATIO)]
@@ -271,7 +279,7 @@ def select_winner(results, pydir):
     def simplify(r):
         gold_int8 = r["gold"].get("json_int8", {}).get("combined", {})
         return {
-            "arch": r["arch"], "channels": r["channels"], "seed": r["seed"],
+            "arch": r["arch"], "channels": r["channels"], "seed": r["seed"], "crf": r.get("crf", False),
             "val_value_acc": r["val_metrics"].get("value_acc", 0.0),
             "gold_int8_value_acc": gold_int8.get("value_acc", 0.0),
             "gold_int8_f1": gold_int8.get("f1", 0.0),
@@ -283,13 +291,13 @@ def select_winner(results, pydir):
     winner = next(
         r for r in results
         if r["arch"] == winner_simple["arch"] and r["channels"] == winner_simple["channels"]
-        and r["seed"] == winner_simple["seed"]
+        and r["seed"] == winner_simple["seed"] and r.get("crf", False) == winner_simple.get("crf", False)
     )
     return winner, config_label
 
 
 def render_matrix_md(results, winner_label):
-    header = ["arch", "channels", "seed", "val_value_acc", "gold_torch_value_acc",
+    header = ["arch", "channels", "seed", "crf", "val_value_acc", "gold_torch_value_acc",
               "gold_json_float32_value_acc", "gold_int8_value_acc", "gold_int8_f1", "winner"]
     lines = ["| " + " | ".join(header) + " |",
              "|" + "|".join(["---"] * len(header)) + "|"]
@@ -297,7 +305,7 @@ def render_matrix_md(results, winner_label):
         config_label = f"{r['arch']}:{r['channels']}"
         is_winner = (r is results_winner_entry.get("entry"))
         row = [
-            r["arch"], str(r["channels"]), str(r["seed"]),
+            r["arch"], str(r["channels"]), str(r["seed"]), str(int(r.get("crf", False))),
             f"{r['val_metrics'].get('value_acc', 0.0):.4f}",
             f"{r['gold'].get('torch', {}).get('combined', {}).get('value_acc', 0.0):.4f}",
             f"{r['gold'].get('json_float32', {}).get('combined', {}).get('value_acc', 0.0):.4f}",
@@ -360,6 +368,7 @@ def step_matrix(pydir):
               f"total wall time: {dt:.1f}s", flush=True)
         results.append({
             "arch": entry["arch"], "channels": entry["channels"], "seed": entry["seed"],
+            "crf": entry.get("crf", False),
             "out_dir": out_dir, "val_metrics": val_metrics, "gold": gold_metrics,
             "wall_time_s": dt,
         })

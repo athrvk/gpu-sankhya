@@ -12,6 +12,8 @@ import argparse
 import torch
 import torch.nn as nn
 
+from .crf import CRF
+
 # Named arch presets shared with np_infer.py / export.py / train.py / JS.
 # "v1" is the shipped model's exact numerics (no residuals); legacy
 # `dilation`/`layers` kwargs below build this same list.
@@ -45,10 +47,12 @@ def _legacy_arch(dilation: int, layers: int):
 
 class SankhyaCNN(nn.Module):
     def __init__(self, vocab_size: int, n_cls: int, arch=None, channels: int = 32,
-                 embed_dim: int = 16, dilation: int = 1, layers: int = 3):
+                 embed_dim: int = 16, dilation: int = 1, layers: int = 3, crf: bool = False):
         """`arch` (list of {k, dilation, residual} dicts) takes priority when
         given. Otherwise the legacy `dilation`/`layers` kwargs reconstruct
-        the exact v1 arch, for old checkpoints/call sites."""
+        the exact v1 arch, for old checkpoints/call sites. `crf=True` adds
+        an optional CRF head over the BIO emissions (see crf.py); forward()
+        itself is unchanged either way -- it always returns raw emissions."""
         super().__init__()
         self.arch = [dict(layer) for layer in arch] if arch is not None else _legacy_arch(dilation, layers)
         # kept for backward compat with code that still reads model.layers
@@ -73,6 +77,7 @@ class SankhyaCNN(nn.Module):
         self.act = nn.ReLU()
         self.bio_head = nn.Linear(channels, 3)
         self.cls_head = nn.Linear(channels, n_cls)
+        self.crf = CRF() if crf else None
 
     def forward(self, chars: torch.Tensor):
         # chars: (B, L) int64

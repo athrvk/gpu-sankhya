@@ -117,15 +117,26 @@ def evaluate_model(model, chars, bio, cls, mask, examples, batch=256, device="cp
     all_bio_probs = []
     bio_correct = bio_total = 0
     cls_correct = cls_total = 0
+    use_crf = model.crf is not None
     for i in range(0, n, batch):
         cb = chars[i:i + batch].to(device)
         mb = mask[i:i + batch].to(device)
         bb = bio[i:i + batch].to(device)
         clb = cls[i:i + batch].to(device)
         bio_logits, cls_logits = model(cb)
-        bio_pred = bio_logits.argmax(-1)
         cls_pred = cls_logits.argmax(-1)
         bio_probs = torch.softmax(bio_logits, dim=-1)
+        if use_crf:
+            lengths = mb.sum(dim=1).long()
+            bio_pred = torch.zeros_like(bb)
+            paths = model.crf.viterbi_batch(bio_logits, mb)
+            for j, path in enumerate(paths):
+                Lj = int(lengths[j].item())
+                if Lj == 0:
+                    continue
+                bio_pred[j, :Lj] = torch.tensor(path, dtype=bio_pred.dtype, device=bio_pred.device)
+        else:
+            bio_pred = bio_logits.argmax(-1)
         m = mb.bool()
         bio_correct += ((bio_pred == bb) & m).sum().item()
         bio_total += m.sum().item()
@@ -179,12 +190,18 @@ def main(argv=None):
     ap.add_argument("--num-train", type=int, default=None, help="subsample training set to this many examples")
     ap.add_argument("--device", default="cpu", choices=["cpu", "auto"],
                      help="'cpu' (default, unchanged behaviour) or 'auto' to use CUDA when available")
+    ap.add_argument("--crf", action="store_true",
+                     help="add a linear-chain CRF head over BIO emissions (see crf.py); "
+                          "loss becomes crf_nll + masked cls CE, and BIO decoding uses Viterbi")
     ap.add_argument("--extra", nargs="+", default=None,
                      help="extra jsonl file(s) (e.g. verified LLM corpus) mixed into training at --extra-ratio")
     ap.add_argument("--extra-ratio", type=float, default=0.2,
                      help="target share of each epoch's examples drawn from --extra (0 disables mixing); "
                           "--extra is oversampled (with replacement) or subsampled each epoch to hit it")
     args = ap.parse_args(argv)
+
+    if os.environ.get("SANKHYA_ANOMALY"):
+        torch.autograd.set_detect_anomaly(True)
 
     import random
     torch.manual_seed(args.seed)
@@ -250,7 +267,7 @@ def main(argv=None):
     arch = ARCHS[args.arch] if args.arch else None
     model = SankhyaCNN(
         vocab_size=len(vocab), n_cls=len(C.CLASSES), arch=arch, dilation=args.dilation,
-        channels=args.channels, layers=args.layers, embed_dim=args.embed_dim,
+        channels=args.channels, layers=args.layers, embed_dim=args.embed_dim, crf=args.crf,
     ).to(device)
     n_params = count_params(model)
     print(f"param count: {n_params} (arch={args.arch or 'legacy'} channels={args.channels} layers={len(model.arch)})")
@@ -282,9 +299,23 @@ def main(argv=None):
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=args.lr, total_steps=total_steps)
 
     # B (class 1) is rare relative to O/I; upweight it 2x in the bio loss.
+    # With --crf, this SAME masked/label-smoothed/class-weighted CE is added
+    # on top of the CRF NLL rather than replaced by it (see the loss branch
+    # below) -- the CRF NLL alone is scale-free (it only compares path
+    # scores relatively) and gives the emission head no pressure to keep its
+    # logits bounded, so during a long/aggressive run (high OneCycle lr,
+    # many epochs) emissions grow without bound and eventually blow up the
+    # forward algorithm's logsumexp in float32, producing NaN losses/grads.
+    # Label-smoothed CE has a finite optimum (matching the smoothed target
+    # distribution, not a one-hot), so adding it back bounds the emissions
+    # while the CRF's transition/start/end params still learn the sequence
+    # structure on top. CRF_FIX: see also the L2 penalty on trans/start/end
+    # below, which keeps those (unbounded, unregularized-by-anything-else)
+    # params from drifting either.
     bio_class_weight = torch.tensor([1.0, 2.0, 1.0], dtype=torch.float32, device=device)
     ce_bio = nn.CrossEntropyLoss(reduction="none", weight=bio_class_weight, label_smoothing=args.label_smoothing)
     ce_cls = nn.CrossEntropyLoss(reduction="none", label_smoothing=args.label_smoothing)
+    CRF_TRANS_L2 = 1e-3
 
     best_vacc = -1.0
     best_state = None
@@ -305,6 +336,8 @@ def main(argv=None):
         perm = torch.randperm(n)
         epoch_loss = 0.0
         nb = 0
+        debug_crf = args.crf and os.environ.get("SANKHYA_CRF_DEBUG")
+        max_emis = max_trans = max_logz = 0.0
         for i in range(0, n, args.batch):
             idx = perm[i:i + args.batch]
             cb = ep_chars[idx].to(device)
@@ -314,10 +347,30 @@ def main(argv=None):
 
             bio_logits, cls_logits = model(cb)
             B, L, _ = bio_logits.shape
-            loss_bio = ce_bio(bio_logits.reshape(B * L, -1), bb.reshape(B * L))
             loss_cls = ce_cls(cls_logits.reshape(B * L, -1), clb.reshape(B * L))
             m = mb.reshape(B * L)
-            loss = ((loss_bio + loss_cls) * m).sum() / m.sum().clamp_min(1)
+            if args.crf:
+                crf_nll, batch_logz = model.crf.nll(bio_logits, bb, mb, return_logz=True)
+                loss_bio = ce_bio(bio_logits.reshape(B * L, -1), bb.reshape(B * L))
+                bio_ce_term = (loss_bio * m).sum() / m.sum().clamp_min(1)
+                trans_l2 = (model.crf.trans ** 2).sum() + (model.crf.start ** 2).sum() + (model.crf.end ** 2).sum()
+                loss = (
+                    crf_nll
+                    + bio_ce_term
+                    + (loss_cls * m).sum() / m.sum().clamp_min(1)
+                    + CRF_TRANS_L2 * trans_l2
+                )
+                if debug_crf:
+                    max_emis = max(max_emis, bio_logits.detach().abs().max().item())
+                    max_trans = max(max_trans, model.crf.trans.detach().abs().max().item(),
+                                     model.crf.start.detach().abs().max().item(),
+                                     model.crf.end.detach().abs().max().item())
+                    finite_logz = batch_logz.detach()[batch_logz.detach().isfinite()]
+                    if finite_logz.numel():
+                        max_logz = max(max_logz, finite_logz.abs().max().item())
+            else:
+                loss_bio = ce_bio(bio_logits.reshape(B * L, -1), bb.reshape(B * L))
+                loss = ((loss_bio + loss_cls) * m).sum() / m.sum().clamp_min(1)
 
             opt.zero_grad()
             loss.backward()
@@ -326,6 +379,8 @@ def main(argv=None):
             sched.step()
             epoch_loss += loss.item()
             nb += 1
+        if debug_crf:
+            print(f"  [crf debug] epoch {epoch+1}: max|emis|={max_emis:.2f} max|trans/start/end|={max_trans:.2f} max|logZ|={max_logz:.2f}")
 
         metrics = evaluate_model(model, va_chars, va_bio, va_cls, va_mask, val_ex, device=device)
         print(
@@ -345,8 +400,7 @@ def main(argv=None):
     print(f"best val value_acc={best_vacc:.4f} span_f1={best_metrics['span_f1']:.4f}")
 
     model.load_state_dict(best_state)
-    ckpt_path = os.path.join(args.out, "sankhya.pt")
-    torch.save({
+    ckpt = {
         "state_dict": model.state_dict(),
         "vocab": vocab,
         "classes": C.CLASSES,
@@ -357,7 +411,16 @@ def main(argv=None):
         "embed_dim": args.embed_dim,
         "seed": args.seed,
         "val_metrics": {k: v for k, v in best_metrics.items() if k != "misses"},
-    }, ckpt_path)
+        "use_crf": args.crf,
+    }
+    if model.crf is not None:
+        ckpt["crf"] = {
+            "trans": model.crf.trans.detach().cpu().tolist(),
+            "start": model.crf.start.detach().cpu().tolist(),
+            "end": model.crf.end.detach().cpu().tolist(),
+        }
+    ckpt_path = os.path.join(args.out, "sankhya.pt")
+    torch.save(ckpt, ckpt_path)
     print(f"saved checkpoint to {ckpt_path}")
 
     with open(os.path.join(args.out, "charset.json"), "w", encoding="utf-8") as f:
