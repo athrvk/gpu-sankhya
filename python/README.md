@@ -239,8 +239,8 @@ python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl \
 
 | gold set          | examples | spans | precision | recall | F1     | value_acc |
 |--------------------|---------:|------:|----------:|-------:|-------:|----------:|
-| gold.jsonl          |      214 |   188 |    0.9293 | 0.9485 | 0.9388 |    0.9381 |
-| gold_deva.jsonl      |      182 |   151 |    0.9867 | 0.9801 | 0.9834 |    0.9735 |
+| gold.jsonl          |      214 |   188 |    0.9585 | 0.9536 | 0.9561 |    0.9536 |
+| gold_deva.jsonl      |      182 |   151 |    0.9867 | 0.9801 | 0.9834 |    0.9801 |
 | combined             |      396 |   339 |    0.9540 | 0.9623 | 0.9582 |    0.9536 |
 
 Negatives: 73 examples, 0 false positives. Miss summary: missed 2,
