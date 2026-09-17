@@ -151,6 +151,85 @@ def test_train_export_np_infer_with_crf(tmp_path):
         assert not (path[t] == 0 and path[t + 1] == 2)
 
 
+def test_nll_vectorised_matches_reference():
+    """50 random batches (B=8, L=20, random lengths incl. a zero-length
+    row, random emissions/params): vectorised nll must equal the
+    reference implementation within 1e-5, and gradients w.r.t.
+    trans/start/end must also match within 1e-5."""
+    torch.manual_seed(42)
+    B, L = 8, 20
+    for trial in range(50):
+        crf = CRF()
+        with torch.no_grad():
+            crf.trans.copy_(torch.randn(3, 3))
+            crf.start.copy_(torch.randn(3))
+            crf.end.copy_(torch.randn(3))
+
+        emissions = torch.randn(B, L, 3)
+        tags = torch.randint(0, 3, (B, L))
+        lengths = torch.randint(0, L + 1, (B,))
+        lengths[0] = 0  # guarantee a zero-length row
+        mask = (torch.arange(L).unsqueeze(0) < lengths.unsqueeze(1)).float()
+
+        e1 = emissions.clone().requires_grad_(True)
+        e2 = emissions.clone().requires_grad_(True)
+
+        nll_vec = crf.nll(e1, tags, mask)
+        loss_vec = nll_vec + 0.0
+        loss_vec.backward()
+        grad_trans_vec = crf.trans.grad.clone()
+        grad_start_vec = crf.start.grad.clone()
+        grad_end_vec = crf.end.grad.clone()
+        crf.zero_grad()
+
+        nll_ref = crf._nll_reference(e2, tags, mask)
+        nll_ref.backward()
+        grad_trans_ref = crf.trans.grad.clone()
+        grad_start_ref = crf.start.grad.clone()
+        grad_end_ref = crf.end.grad.clone()
+        crf.zero_grad()
+
+        assert torch.allclose(nll_vec, nll_ref, atol=1e-5), (trial, nll_vec.item(), nll_ref.item())
+        assert torch.allclose(grad_trans_vec, grad_trans_ref, atol=1e-5), trial
+        assert torch.allclose(grad_start_vec, grad_start_ref, atol=1e-5), trial
+        assert torch.allclose(grad_end_vec, grad_end_ref, atol=1e-5), trial
+
+
+def test_viterbi_batch_matches_viterbi_np():
+    """Batched torch Viterbi must return exactly the same paths as
+    `viterbi_np` on 200 random examples (varying lengths, params)."""
+    torch.manual_seed(7)
+    rng = np.random.RandomState(7)
+    B, L = 8, 20
+    n_batches = 200 // B + 1
+    checked = 0
+    for _ in range(n_batches):
+        crf = CRF()
+        with torch.no_grad():
+            crf.trans.copy_(torch.randn(3, 3))
+            crf.start.copy_(torch.randn(3))
+            crf.end.copy_(torch.randn(3))
+        emissions = torch.randn(B, L, 3)
+        lengths = torch.randint(0, L + 1, (B,))
+        mask = (torch.arange(L).unsqueeze(0) < lengths.unsqueeze(1)).float()
+
+        batch_paths = crf.viterbi_batch(emissions, mask)
+
+        trans_np = crf.trans.detach().numpy().astype(np.float32)
+        start_np = crf.start.detach().numpy().astype(np.float32)
+        end_np = crf.end.detach().numpy().astype(np.float32)
+        for b in range(B):
+            if checked >= 200:
+                break
+            Lb = int(lengths[b].item())
+            emis_np = emissions[b, :Lb].detach().numpy().astype(np.float32)
+            expected = viterbi_np(emis_np, trans_np, start_np, end_np)
+            assert batch_paths[b] == expected, (checked, Lb)
+            checked += 1
+        if checked >= 200:
+            break
+
+
 def test_legacy_weights_bio_path_is_argmax():
     """A legacy weights JSON (no crf block) must decode via plain argmax."""
     here = os.path.dirname(os.path.abspath(__file__))

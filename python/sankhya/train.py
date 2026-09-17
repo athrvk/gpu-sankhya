@@ -129,11 +129,11 @@ def evaluate_model(model, chars, bio, cls, mask, examples, batch=256, device="cp
         if use_crf:
             lengths = mb.sum(dim=1).long()
             bio_pred = torch.zeros_like(bb)
-            for j in range(cb.shape[0]):
+            paths = model.crf.viterbi_batch(bio_logits, mb)
+            for j, path in enumerate(paths):
                 Lj = int(lengths[j].item())
                 if Lj == 0:
                     continue
-                path = model.crf.viterbi(bio_logits[j, :Lj])
                 bio_pred[j, :Lj] = torch.tensor(path, dtype=bio_pred.dtype, device=bio_pred.device)
         else:
             bio_pred = bio_logits.argmax(-1)
