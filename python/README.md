@@ -38,8 +38,19 @@ python -m sankhya.generator --n 6000 --seed 6 --out data/val.jsonl \
 ```
 
 Paths are relative to `python/`. `--lang` takes a comma-separated list of
-registered `LanguagePack` ids (`hi_latn` Latin-script/romanised Hindi,
-`hi_deva` Devanagari Hindi). `--mix` gives per-pack sampling weights
+registered `LanguagePack` ids; the shipped packs are
+
+| id | language / script | in the bundled weights? |
+| --- | --- | --- |
+| `hi_latn` | romanised Hindi / Hinglish | yes |
+| `hi_deva` | Devanagari Hindi | yes |
+| `mr_deva` | Devanagari Marathi | not yet — needs a retrain |
+
+(`sankhya.langs.base.KNOWN_PACKS` is the authoritative list; every tool
+that needs "all packs" iterates `base.all_packs()` rather than hard-coding
+ids). To include Marathi, add it to `--lang` and give it a share of
+`--mix`, e.g. `--lang hi_latn,hi_deva,mr_deva --mix 0.40,0.33,0.27
+--cross 0.10`. `--mix` gives per-pack sampling weights
 (defaults to uniform); `--cross` is the share of examples that mix a
 template/phrase across packs (0 disables cross-mixing).
 
@@ -704,9 +715,13 @@ full example) with:
 - `noise_fn(word, rng) -> str` — typo/spelling-variance injection for that
   script/language
 
+plus, if the language needs them, the morphology hooks
+`glue_unit_forms` / `fused_prefix_forms` / `word_suffixes` +
+`word_oblique_endings` (see the Marathi notes in the checklist below).
+
 then `sankhya.langs.base.register(pack)` it and give it a unique `id`
-(register in `sankhya/langs/__init__.py` alongside the existing packs so
-`--lang <id>` resolves it). Regenerate the charset for the new pack
+(add that id to `sankhya/langs/base.py`'s `KNOWN_PACKS` so `--lang <id>`,
+`base.all_packs()` and every tool built on them resolve it). Regenerate the charset for the new pack
 (`python -m sankhya.charset --lang <id> --out data/charset.json`) — the
 model's char vocab is per-language. `sankhya/classes.py`'s class inventory
 (the BIO/semantic token classes) is shared across all languages and should
@@ -719,3 +734,64 @@ A Devanagari pack (e.g. Hindi in Devanagari script, डेढ़ लाख) addi
 needs a new noise module for script-specific variance (matra/nukta
 elision or substitution) since `noise_latn.py`'s typo model is
 Latin-script-specific; the class inventory and core still don't change.
+(A second Devanagari language can reuse `noise_deva.py`, as `mr_deva`
+does.)
+
+### Checklist: what adding `mr_deva` (Marathi) actually took
+
+In order, with the commands used:
+
+1. **Write the pack** — `sankhya/langs/mr_deva.py`, mirroring
+   `hi_deva.py`: cardinals 1-99 with the spelling variants people
+   actually type (तेहेतीस/तेहतीस, शहात्तर/सहात्तर, ऐंशी/अंशी,
+   चौऱ्याऐंशी/चौर्याऐंशी), units (शंभर/शे, हजार, लाख, कोटी + करोड, अब्ज),
+   prefixes (सव्वा, दीड, अडीच, साडे, पावणे, अर्धा, पाव), currency markers,
+   `" ते "`/`" किंवा "` range connectors, `" आणि "` conjunctions,
+   approximators, duration nouns, filler words, ~25 templates per register
+   and ~50 negatives, `deva_digit_prob = 0.25`.
+2. **Register it** in `base.KNOWN_PACKS`.
+3. **Model the language's morphology through the generic hooks**, never
+   with per-language code in the generator/tokenizer:
+   - `glue_unit_forms = ["शे"]` — a BOUND unit form that only ever appears
+     glued to the number before it (दोनशे = `CARD_2 UNIT_SAU`). The
+     generator glues it (and swaps in शंभर when the shape doesn't allow
+     gluing); `llm_corpus._word_tokens` splits such a word back into two
+     tokens; `decode._is_bound_unit_tail` keeps the 2-char unit tail from
+     being smoothed into the cardinal at decode time.
+   - `fused_prefix_forms = {"PFX_SAADHE": 0.75, "PFX_PAUNE": 0.45}` —
+     prefixes usually typed as one word with their cardinal (साडेतीन), keyed
+     by class so noised spellings fuse too. Both spellings parse.
+   - `word_suffixes` + `word_oblique_endings` — case endings that attach
+     to a unit/cardinal (हजारात, लाखांचा, कोटींची, तीसच). The whole word
+     keeps the head word's class.
+4. **Check cross-pack collisions.** A surface shared by two packs must map
+   to the same class (the charset/training data unions every pack).
+   `tests/test_mr.py::test_no_cross_pack_conflicts` enforces this; adding
+   Marathi turned up exactly one — Hindi's O-labelled filler "तेरा" is
+   CARD_13 in Marathi — resolved by dropping it from `hi_deva`'s fillers.
+5. **Verify the LLM corpus**:
+
+   ```bash
+   python -m sankhya.llm_corpus verify --lang mr_deva \
+     --in data_llm/raw/mr_deva.sonnet.jsonl --out data_llm/mr_deva.jsonl \
+     --rejects data_llm/rejects/mr_deva.jsonl --manifest data_llm/manifest.json
+   ```
+
+   Iterate on the lexicon until the rejects are only genuine LLM
+   arithmetic errors or truly unusual phrasing (Marathi landed at 591/600
+   accepted: 4 wrong values, 5 "negatives" that really do contain a unit
+   word). Rejects that reveal real spellings belong in the lexicon.
+6. **Write a gold set by hand** — `tests/gold_mr.jsonl`, same schema as
+   `gold_deva.jsonl`, ~150+ examples, ~30% negatives, covering every
+   prefix, the fused hundreds, ranges, currency, Latin-mixed lines and
+   digits. Check every positive value with `core.evaluate` on the tokens
+   your lexicon implies, and keep it disjoint from the corpus.
+7. **Mirror the currency markers on the JS side** — `src/lang-<id>.ts`,
+   merged into `CURRENCY_PACK` in `src/index.ts`.
+8. **Tests** — `tests/test_mr.py` (lexicon sanity, cross-pack collisions,
+   generator round-trips at n=2000, fused-hundreds label boundaries,
+   corpus verification, gold re-evaluation) and a JS currency-pack test.
+9. **Retrain** with the new pack in `--lang`/`--mix` and regenerate the
+   charset; only then do the bundled weights understand the language.
+   `test/fixtures/*.jsonl` and `models/default` stay untouched until that
+   retrain happens.
