@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Try it in the demo first
+    url: https://athrvk.github.io/gpu-sankhya/demo/
+    about: Paste your text into the live demo to see what the parser returns before filing a report. Each result card has a "Report" link that opens the wrong-parse template prefilled.
