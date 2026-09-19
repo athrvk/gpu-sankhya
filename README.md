@@ -437,10 +437,14 @@ outputs are discarded; only the real characters' predictions are used.
   | `hi_latn` | Romanised Hindi / Hinglish (`sava lakh`) | shipped, in the bundled weights |
   | `hi_deva` | Devanagari Hindi (`डेढ़ लाख`, `सवा करोड़`) | shipped, in the bundled weights |
   | `mr_deva` | Devanagari Marathi (`दीड लाख`, `साडेतीनशे`) | shipped, in the bundled weights |
+  | `gu_gujr` | Gujarati (`દોઢ લાખ`, `બસો`) | pack + data + gold landed; **not yet in the bundled weights** |
 
   A pack's accuracy depends on the bundled weights having been trained on
-  it. Gujarati, Bengali and Tamil/Telugu/Kannada are planned the same
-  way — see Roadmap.
+  it. `gu_gujr` is complete on the data side — lexicon, verified corpus,
+  gold set, verifier and charset support — but the shipped weights were
+  trained before it existed, so Gujarati input is not recognised at
+  inference time until the next retrain. Bengali and Tamil/Telugu/Kannada
+  are planned the same way — see Roadmap.
 - **Offsets are into the normalized string.** `parse()`'s `start`/`end`
   index `normalizeText(text)`, not the raw input, in the rare case NFC
   normalization changes the string's length (see `normalizeText` in the
@@ -512,10 +516,16 @@ support non-Indian numbering/currency shorthand.
    `दोनशे`, prefixes सव्वा/दीड/अडीच/साडे/पावणे/अर्धा/पाव, case endings), a
    verified 591-line LLM corpus and a 173-example gold set
    (`python/tests/gold_mr.jsonl`) are in the shipped weights. Gujarati
-   (સવા, દોઢ), Bengali (দেড়, আড়াই) and Tamil/Telugu/Kannada number words
-   are next. Same shape each time — a new pack, currency markers, a
-   charset rebuild and a retrain; see the "adding a language" checklist
-   in `python/README.md`.
+   (`gu_gujr`) has since landed on the data side: the pack (cardinals
+   1-99 with phone-typed variants, the glued hundreds બારસો/ત્રણસો
+   and the two irregular ones બસો/છસ્સો, prefixes
+   સવા/દોઢ/અઢી/સાડા/પોણા/અડધો/પા, case endings), a verified
+   583-line LLM corpus and a 162-example gold set
+   (`python/tests/gold_gu.jsonl`) are all in — but **not** the weights,
+   which still need the retrain. Bengali (দেড়, আড়াই) and
+   Tamil/Telugu/Kannada number words are next. Same shape each time — a
+   new pack, currency markers, a charset rebuild and a retrain; see the
+   "adding a language" checklist in `python/README.md`.
 3. **A WASM SIMD kernel**, if sub-millisecond latency is ever needed
    beyond what the plain-JS CPU path already gives.
 

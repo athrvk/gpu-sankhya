@@ -45,6 +45,7 @@ registered `LanguagePack` ids; the shipped packs are
 | `hi_latn` | romanised Hindi / Hinglish | yes |
 | `hi_deva` | Devanagari Hindi | yes |
 | `mr_deva` | Devanagari Marathi | yes |
+| `gu_gujr` | Gujarati | **no** — pack, corpus and gold landed; needs a retrain |
 
 (`sankhya.langs.base.KNOWN_PACKS` is the authoritative list; every tool
 that needs "all packs" iterates `base.all_packs()` rather than hard-coding
@@ -870,3 +871,47 @@ In order, with the commands used:
    charset; only then do the bundled weights understand the language.
    `test/fixtures/*.jsonl` and `models/default` stay untouched until that
    retrain happens.
+
+### What adding `gu_gujr` (Gujarati) added on top
+
+Gujarati followed the same nine steps (583/600 corpus accepted, a
+162-example gold set, `tests/test_gu.py`). Four things were new, and all
+four were done as *generic* hooks so the next pack inherits them:
+
+- **A non-Devanagari script.** Gujarati needed its own `noise_gujr.py`
+  (anusvara drop, ળ/સ and ડ/ઢ confusions, matra swaps, geminate
+  simplification) — `noise_deva.py`'s transforms are Devanagari code
+  points. It also needed its digits (U+0AE6-U+0AEF) added to the
+  normalization map in `charset.py` / `src/charset.ts` and to the DIGITS
+  predicate in `verify.py` / `src/verify.ts`; `core.py` already had them.
+  The charset itself needs nothing: `build_charset()` derives the vocab
+  from the pack's own forms, templates and fillers, so registering the
+  pack is what puts the Gujarati block in.
+- **Per-pack native digits.** `deva_digit_prob` became
+  `native_digits` (a ten-glyph table) + `native_digit_prob`, so the
+  generator renders DIGITS tokens in whatever script a pack declares.
+  hi_deva/mr_deva keep identical behaviour.
+- **A glue unit that is also a free word.** Marathi's `शे` is purely
+  bound; Gujarati's `સો` glues (બારસો) *and* stands alone
+  (`સો રૂપિયા` = 100). `glue_unit_forms_standalone` names that
+  subset; `pack.bound_units()` is what the tokenizer and the negative
+  scanner now consult.
+- **Bound number forms.** Gujarati's 200 is `બસો`, never *`બેસો`: in
+  the glued position CARD_2 is `બ`, which is not a word at all on its
+  own (600 is likewise `છસો`/`છસ્સો`). `bound_number_forms` maps
+  such a surface to its class *and the unit it must precede*. These
+  forms are kept out of `all_forms()`, so they never enter the
+  cross-pack collision map; `export_lexicon` writes them to a separate
+  `bound_forms` section, and both verifiers accept one only when the
+  next token is that unit — a standalone `("CARD_2", "બ")` never
+  verifies. Modelling it this way (rather than as extra UNIT_SAU
+  surfaces) is what keeps બ and છસ્ from leaking into any other
+  position.
+
+  One decode-time caveat is deliberately left open:
+  `decode._is_bound_unit_tail` needs >= 2 characters of CARD evidence
+  before a unit tail, and `બ` is one character, so `બસો` may smooth to
+  a single UNIT_SAU run (100, not 200) once weights exist. Loosening
+  that bound also changes how the three shipped languages smooth stray
+  one-char mispredictions, so it belongs with the Gujarati retrain, not
+  before it.
