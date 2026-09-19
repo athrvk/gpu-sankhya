@@ -12,6 +12,11 @@ interface FixtureSpan {
   unit: string | null;
   currency: string | null;
   classes: string; // space-joined
+  // Added alongside the verified tier; may be absent in fixtures generated
+  // before make_fixtures.py started writing them -- checked only when
+  // present (see VERIFY_CONTRACT.md).
+  verified?: boolean;
+  tokens?: Array<[string, string]>;
 }
 
 interface FixtureRow {
@@ -22,16 +27,21 @@ interface FixtureRow {
 const fixturePath = fileURLToPath(new URL("./fixtures/decoded.jsonl", import.meta.url));
 const lines = readFileSync(fixturePath, "utf-8").trim().split("\n").filter(Boolean);
 
-function normalize(span: {
-  start: number;
-  end: number;
-  value: number;
-  range?: [number, number];
-  unit: string | null;
-  currency: string | null;
-  classes: string[];
-}) {
-  return {
+function normalize(
+  span: {
+    start: number;
+    end: number;
+    value: number;
+    range?: [number, number];
+    unit: string | null;
+    currency: string | null;
+    classes: string[];
+    verified: boolean;
+    tokens: Array<[string, string]>;
+  },
+  includeVerified: boolean,
+) {
+  const base: Record<string, unknown> = {
     start: span.start,
     end: span.end,
     value: span.value,
@@ -40,6 +50,11 @@ function normalize(span: {
     currency: span.currency,
     classes: span.classes.join(" "),
   };
+  if (includeVerified) {
+    base.verified = span.verified;
+    base.tokens = span.tokens;
+  }
+  return base;
 }
 
 test("parse() matches the python end-to-end decoded fixture for all texts", () => {
@@ -53,16 +68,27 @@ test("parse() matches the python end-to-end decoded fixture for all texts", () =
     // code units (two <unk> ids) in JS, so the two sides do not see the same
     // input for such texts -- a documented limitation (see charset.test.ts).
     if (Array.from(row.text).length !== row.text.length) { skipped++; continue; }
-    const got = parse(row.text).map(normalize);
-    const want = row.spans.map((s) => ({
-      start: s.start,
-      end: s.end,
-      value: s.value,
-      range: s.range,
-      unit: s.unit,
-      currency: s.currency,
-      classes: s.classes,
-    }));
+    // Fixtures regenerated after VERIFY_CONTRACT.md carry `verified`/`tokens`
+    // per span; older fixtures do not -- only assert those fields when the
+    // fixture row actually has them.
+    const includeVerified = row.spans.length > 0 && row.spans[0].verified !== undefined;
+    const got = parse(row.text).map((s) => normalize(s, includeVerified));
+    const want = row.spans.map((s) => {
+      const base: Record<string, unknown> = {
+        start: s.start,
+        end: s.end,
+        value: s.value,
+        range: s.range,
+        unit: s.unit,
+        currency: s.currency,
+        classes: s.classes,
+      };
+      if (includeVerified) {
+        base.verified = s.verified;
+        base.tokens = s.tokens;
+      }
+      return base;
+    });
     const same = JSON.stringify(got) === JSON.stringify(want);
     if (same) identical++;
     else mismatches.push({ text: row.text, got, want });

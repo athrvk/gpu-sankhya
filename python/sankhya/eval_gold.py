@@ -12,6 +12,7 @@ import torch
 from . import classes as C
 from . import core
 from .decode import decode_spans
+from .verify import verify_tokens
 from .model import SankhyaCNN
 from .train import load_jsonl, build_char_to_id, MAX_LEN
 from . import np_infer
@@ -334,6 +335,15 @@ def _evaluate_all(gold_files, examples, preds, classes, file_bounds, quiet=False
     wrong_value = []
     spurious_spans = []
 
+    # --- strict (verified-only) tier ---
+    strict_gold_total = 0        # gold spans (positives)
+    strict_covered = 0           # gold spans with an exact, verified prediction
+    strict_value_correct = 0     # of those, value (and range) correct
+    strict_spurious = 0          # verified predictions overlapping no gold span
+    strict_neg_examples = 0
+    strict_neg_fp = 0
+    strict_wrong_value = []
+
     def overlaps(a, b):
         return a[0] < b[1] and b[0] < a[1]
 
@@ -351,8 +361,22 @@ def _evaluate_all(gold_files, examples, preds, classes, file_bounds, quiet=False
         fp += len(fp_here)
         fn += len(fn_here)
 
+        verified_by_span = {}
+        for d in decoded:
+            toks_d = [(classes[cid], sub) for cid, sub in d["tokens"]]
+            verified_by_span[(d["start"], d["end"])] = verify_tokens(toks_d)
+
+        if not ex["spans"]:
+            strict_neg_examples += 1
+            if any(verified_by_span.values()):
+                strict_neg_fp += 1
+        for (s_, e_), v_ in verified_by_span.items():
+            if v_ and not any(overlaps((s_, e_), g) for g in gold_spans):
+                strict_spurious += 1
+
         for sp in ex["spans"]:
             val_total += 1
+            strict_gold_total += 1
             key = (sp["start"], sp["end"])
             ok = False
             if key in pred_by_span:
@@ -365,6 +389,16 @@ def _evaluate_all(gold_files, examples, preds, classes, file_bounds, quiet=False
                             ok = True
                     else:
                         ok = True
+                if verified_by_span.get(key):
+                    strict_covered += 1
+                    if ok:
+                        strict_value_correct += 1
+                    else:
+                        strict_wrong_value.append({
+                            "text": text, "gold_span": sp,
+                            "gold_text": text[sp["start"]:sp["end"]],
+                            "tokens": toks, "pred": pred_desc,
+                        })
                 if ok:
                     val_correct += 1
                 else:
@@ -406,6 +440,26 @@ def _evaluate_all(gold_files, examples, preds, classes, file_bounds, quiet=False
     print(f"  {'wrong boundary':<16}{len(wrong_boundary):>6}")
     print(f"  {'total':<16}{total_misses:>6}")
 
+    strict = {
+        "gold_spans": strict_gold_total,
+        "covered": strict_covered,
+        "coverage": (strict_covered / strict_gold_total) if strict_gold_total else 0.0,
+        "value_correct": strict_value_correct,
+        "value_acc": (strict_value_correct / strict_covered) if strict_covered else 0.0,
+        "spurious": strict_spurious,
+        "negatives": {
+            "examples": strict_neg_examples,
+            "false_positives": strict_neg_fp,
+            "fp_rate": (strict_neg_fp / strict_neg_examples) if strict_neg_examples else 0.0,
+        },
+        "wrong_value_examples": strict_wrong_value,
+    }
+    print("\nstrict (verified spans only):")
+    print(f"  coverage:       {strict_covered}/{strict_gold_total} = {strict['coverage']:.4f}")
+    print(f"  value accuracy: {strict_value_correct}/{strict_covered} = {strict['value_acc']:.4f}")
+    print(f"  spurious:       {strict_spurious}")
+    print(f"  negatives FP:   {strict_neg_fp}/{strict_neg_examples} = {strict['negatives']['fp_rate']:.4f}")
+
     combined_categories, combined_negatives = _category_and_negative_metrics(examples, preds, classes)
     _print_category_table(combined_categories, combined_negatives, header="per-category metrics (combined):")
 
@@ -433,6 +487,7 @@ def _evaluate_all(gold_files, examples, preds, classes, file_bounds, quiet=False
         },
         "categories": combined_categories,
         "negatives": combined_negatives,
+        "strict": strict,
     }
     return {"per_file": per_file_metrics, "combined": combined_metrics}
 

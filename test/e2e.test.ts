@@ -13,6 +13,33 @@ test("sava lakh", () => {
   assert.equal(r[0].value, 125000);
 });
 
+test("sava lakh is verified, with its tokens", () => {
+  const r = parse("sava lakh");
+  assert.equal(r.length, 1);
+  assert.equal(r[0].verified, true);
+  assert.deepEqual(r[0].tokens, [
+    ["PFX_SAVA", "sava"],
+    ["SEP", " "],
+    ["UNIT_LAKH", "lakh"],
+  ]);
+});
+
+test("a made-up spelling the model still tags is unverified, and dropped in strict mode", () => {
+  const r = parse("savaa lakhhh");
+  assert.equal(r.length, 1);
+  assert.equal(r[0].value, 125000);
+  assert.equal(r[0].verified, false);
+  assert.ok(r[0].tokens.length > 0);
+
+  const strict = parse("savaa lakhhh", { strict: true });
+  assert.equal(strict.length, 0);
+
+  // strict mode keeps a genuinely verified span
+  const strictOk = parse("sava lakh", { strict: true });
+  assert.equal(strictOk.length, 1);
+  assert.equal(strictOk[0].verified, true);
+});
+
 test("dedh crore", () => {
   const r = parse("dedh crore");
   assert.equal(r.length, 1);

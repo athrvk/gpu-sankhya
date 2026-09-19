@@ -373,6 +373,79 @@ by a single seed); within the winning config, pick the **seed** by val
 value_acc within a 0.005 tie band, then higher int8 combined gold F1,
 then lower negatives false-positive rate.
 
+## Verified spans and strict metrics
+
+The CNN only proposes spans; the value comes from the deterministic core.
+A span is **verified** when every one of its `(class, text)` tokens is
+independently justified by the exported lexicon
+(`src/data/lexicon.json`, regenerated with `python -m sankhya.export_lexicon`):
+
+```python
+from sankhya.verify import verify_tokens
+verify_tokens([("PFX_SAVA", "sava"), ("SEP", " "), ("UNIT_LAKH", "lakh")])   # True
+verify_tokens([("PFX_SAVA", "sava"), ("SEP", " "), ("UNIT_LAKH", "lakhhz")])  # False
+```
+
+Rules (mirrored 1:1 by `src/verify.ts`): `SEP` must be whitespace, `DOT`/`COMMA`
+exact, `RANGE` is `-`/`–`/`—`/`/` or a pack range word, `DIGITS` is ASCII or
+Devanagari digits, `O` must be a lexicon `O` form, and every `PFX_*`/`CARD_*`/
+`UNIT_*` token must map to exactly that class in the union of all packs. An
+empty span, or one with no content token, is unverified. The union maps are
+cached at module level; if `src/data/lexicon.json` is missing, `load_lexicon()`
+falls back to `export_lexicon.build()`. `tests/test_verify.py` also asserts the
+committed JSON equals a fresh `build()`.
+
+Strict mode = "the right number or nothing": return only verified spans.
+`eval_gold.py` therefore prints (and writes under `"strict"` in `--json-out`,
+alongside every pre-existing key) a strict block: **coverage** (gold spans that
+got a verified prediction), **value accuracy** among those, **spurious**
+verified spans, and **false positives on negatives**. Shipped int8 weights,
+`tests/gold.jsonl tests/gold_deva.jsonl`:
+
+```
+coverage:       317/351 = 0.9031
+value accuracy: 317/317 = 1.0000
+spurious:       1
+negatives FP:   0/75 = 0.0000
+```
+
+`tests/test_gates.py` are the release gates on those shipped int8 weights:
+zero false positives on gold negatives, strict value accuracy == 1.0, and
+strict coverage >= 0.85. It runs one int8 numpy pass (~2 s).
+
+`make_fixtures.py` writes `verified` and `tokens` per span into
+`test/fixtures/decoded.jsonl`, so the JS parity test pins the same predicate.
+
+## Property test
+
+`proptest.py` runs the same pipeline over freshly generated examples instead of
+the 410 hand-written gold ones - the generator's labels are the ground truth,
+the torch checkpoint runs batched, and decoding uses exactly `eval_gold`'s gates:
+
+```bash
+python -m sankhya.proptest --n 50000 --seed 11 --ckpt ../models/default/sankhya.pt \
+    --lang hi_latn,hi_deva --mix 0.55,0.45 --cross 0.10
+```
+
+50k examples (52,495 positive spans, 5,447 negatives), ~30 s:
+
+```
+exact-value rate (all spans): 0.9703
+strict coverage:              35717/52495 = 0.6804
+strict value accuracy:        35695/35717 = 0.9994
+strict spurious spans:        0
+negatives fp_rate=0.0000 | strict fp_rate=0.0000
+```
+
+Strict coverage is much lower than on gold because the generator deliberately
+injects heavy misspelling noise ("lack", "hazzari", "lkah"): those surfaces are
+not in the lexicon, so the span is correctly left unverified. The 22 verified
+wrong values are all **juxtaposition ranges** with no connector word
+("teen hazaar paanch hazaar" = 3000-5000): the model emits no `RANGE` token, so
+the core sums the two terms. Every token is genuinely lexicon-justified, so the
+verifier cannot catch it - it is a decoder/model gap, not a lexicon gap.
+The report also lists the top 20 misses grouped by gold class pattern.
+
 ## Ship to the npm package
 
 The JS package embeds the int8 weights directly, plus a fixed set of
@@ -516,6 +589,7 @@ python tests/test_core.py
 python tests/test_decode.py
 python tests/test_generator.py
 python tests/test_llm_corpus.py
+python -m pytest tests/test_verify.py tests/test_gates.py
 # or, if you installed pytest:
 python -m pytest tests/
 ```
@@ -528,7 +602,10 @@ filtering). `test_generator.py` round-trips the synthetic generator's own
 labels through the core evaluator. `test_llm_corpus.py` covers
 `sankhya.llm_corpus.verify_line`'s accept/reject decisions (value
 mismatches, unknown tokens, bad phrase substrings, hidden-quantity
-negatives, duplicates) against inline fixtures. `tests/gold.jsonl` is the
+negatives, duplicates) against inline fixtures. `test_verify.py` covers the
+strict-tier predicate and the freshness of `src/data/lexicon.json`;
+`test_gates.py` is the release gate on the shipped int8 weights (see
+"Verified spans and strict metrics"). `tests/gold.jsonl` is the
 hand-written gold set used by `eval_gold.py`, not a generator round-trip
 test.
 

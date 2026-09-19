@@ -14,7 +14,10 @@ test/e2e-parity.test.ts at the repo root:
 
   decoded.jsonl -- {text, spans}: decode_spans() + core.evaluate() output,
                    normalised to {start, end, value, range, unit, currency,
-                   classes}, for pinning end-to-end parse() behaviour.
+                   classes, verified, tokens}, for pinning end-to-end parse()
+                   behaviour. `verified` is verify.verify_tokens() on the
+                   span's tokens (the strict-mode predicate) and `tokens` is
+                   the [[class, text], ...] list it was computed from.
 
 Deterministic given the same weights JSON and gold set -- no RNG involved.
 
@@ -35,6 +38,7 @@ import numpy as np
 from . import classes as C
 from . import core
 from .decode import decode_spans
+from .verify import verify_tokens
 from .langs.base import get_pack
 from .train import MAX_LEN, build_char_to_id, load_jsonl
 from . import np_infer
@@ -86,6 +90,8 @@ def run(weights_path: str, examples: list, lang: str = "hi_latn"):
                 "unit": res.unit,
                 "currency": currency,
                 "classes": " ".join(res.classes),
+                "verified": verify_tokens(toks),
+                "tokens": [[cls, sub] for cls, sub in toks],
             })
         decoded_rows.append({"text": ex["text"], "spans": spans})
 

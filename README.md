@@ -46,8 +46,14 @@ parse("sava lakh");
 // [{
 //   span: "sava lakh", start: 0, end: 9,
 //   value: 125000, unit: "lakh", currency: null,
-//   confidence: 0.95, classes: ["PFX_SAVA", "SEP", "UNIT_LAKH"]
+//   confidence: 0.95, classes: ["PFX_SAVA", "SEP", "UNIT_LAKH"],
+//   verified: true, tokens: [["PFX_SAVA","sava"],["SEP"," "],["UNIT_LAKH","lakh"]]
 // }]
+
+// strict mode: only verified spans come back -- "the right number or
+// nothing" (see "Correct or abstains" below).
+parse("savaa lakhhh", { strict: true }); // []
+parse("savaa lakhhh");                   // [{ value: 125000, verified: false, ... }]
 
 parse("mera budget paune do lakh tak ka hai");
 // [{ span: "paune do lakh", value: 175000, unit: "lakh", ... }]
@@ -105,8 +111,27 @@ interface Sankhya {
   currency: "INR"|null;    // adjacent marker detected outside the span
   confidence: number;      // mean of span-tag softmax probs over the span
   classes: string[];       // normalised token classes, e.g. ["PFX_DHAI","UNIT_LAKH"]
+  verified: boolean;       // true iff every token in `tokens` is independently
+                           // justified by the lexicon -- see "Correct or abstains"
+  tokens: Array<[string, string]>; // (class, text) tokens the span decoded to,
+                                    // in order -- for explainability and verification
 }
 ```
+
+### Correct or abstains
+
+The CNN's job is only to *propose* a span and its token classes; a
+deterministic core (lexicon lookups + the arithmetic in `core.ts`) computes
+the value. A span is **verified** when every one of its `tokens` is
+independently justified by the lexicon — a digit run is all digits, a
+separator is whitespace, and every other token's exact (lowercased) text
+is the surface form the lexicon lists for that class — so a verified
+span's value is a pure function of the lexicon and the arithmetic core,
+neither of which is a black box: both are unit-tested (`test/verify.test.ts`,
+`test/core.test.ts`) independent of the model. `strict: true` uses this to
+give you the guarantee "the right number or nothing": it drops every span
+the model tagged but the lexicon didn't corroborate, rather than risk
+returning a value for a spelling the model merely guessed at.
 
 ### API
 
@@ -117,6 +142,11 @@ interface Sankhya {
   `{ backend: "auto" }` to use WebGPU automatically when it's available
   *and* the batch has at least 32 texts (otherwise CPU, since GPU
   dispatch overhead dominates for small batches).
+- **`{ strict: true }`** (on `parse`/`parseBatch`/`Parser.parse`/
+  `Parser.parseBatch`, CPU and WebGPU paths alike) — drop any span that
+  isn't `verified`, so you only ever get back a span whose value is
+  provably a pure function of the lexicon + arithmetic core. Default
+  `false` (unverified spans are still returned, with `verified: false`).
 - **`createParser({ weights?, backend? })`** — build a `Parser` instance
   around a custom weights JSON (float or int8 form, as written by
   `python/sankhya/export.py`), instead of the bundled default model. See
