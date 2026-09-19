@@ -1,0 +1,70 @@
+{
+  "hi_latn": {
+    "sources": {
+      "dakshina_hi_roman": {
+        "lines_in_word_band": 8719,
+        "over_max_chars": 2318,
+        "lines_in_length_band": 6401,
+        "unique": 6375,
+        "positive_candidates": 104,
+        "negative_candidates": 5034
+      },
+      "cmu_hinglish_dog": {
+        "lines_in_word_band": 7026,
+        "over_max_chars": 586,
+        "lines_in_length_band": 6440,
+        "unique": 6151,
+        "positive_candidates": 170,
+        "negative_candidates": 5258
+      }
+    },
+    "sampled_positive_candidates": 274,
+    "sampled_negatives": 150,
+    "path": "/home/user/gpu-sankhya/.claude/worktrees/agent-a349b298d6c1d5e55/python/data_wild/samples/wild_hi_latn.jsonl"
+  },
+  "hi_deva": {
+    "sources": {
+      "dakshina_hi_wiki": {
+        "lines_in_word_band": 929032,
+        "over_max_chars": 186436,
+        "lines_in_length_band": 742596,
+        "unique": 716069,
+        "positive_candidates": 8119,
+        "negative_candidates": 578357
+      }
+    },
+    "sampled_positive_candidates": 300,
+    "sampled_negatives": 150,
+    "path": "/home/user/gpu-sankhya/.claude/worktrees/agent-a349b298d6c1d5e55/python/data_wild/samples/wild_hi_deva.jsonl"
+  },
+  "mr_deva": {
+    "sources": {
+      "dakshina_mr_wiki": {
+        "lines_in_word_band": 324393,
+        "over_max_chars": 35600,
+        "lines_in_length_band": 288793,
+        "unique": 279033,
+        "positive_candidates": 2849,
+        "negative_candidates": 241401
+      }
+    },
+    "sampled_positive_candidates": 300,
+    "sampled_negatives": 150,
+    "path": "/home/user/gpu-sankhya/.claude/worktrees/agent-a349b298d6c1d5e55/python/data_wild/samples/wild_mr_deva.jsonl"
+  },
+  "gu_gujr": {
+    "sources": {
+      "dakshina_gu_wiki": {
+        "lines_in_word_band": 133875,
+        "over_max_chars": 30506,
+        "lines_in_length_band": 103369,
+        "unique": 101974,
+        "positive_candidates": 977,
+        "negative_candidates": 42560
+      }
+    },
+    "sampled_positive_candidates": 300,
+    "sampled_negatives": 150,
+    "path": "/home/user/gpu-sankhya/.claude/worktrees/agent-a349b298d6c1d5e55/python/data_wild/samples/wild_gu_gujr.jsonl"
+  }
+}
