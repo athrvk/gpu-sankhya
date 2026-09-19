@@ -12,11 +12,12 @@ import torch
 from . import classes as C
 from . import core
 from .decode import decode_spans
+from . import verify
 from .verify import verify_tokens, is_lexicon_o_only
 from .model import SankhyaCNN
 from .train import load_jsonl, build_char_to_id, MAX_LEN
 from . import np_infer
-from .charset import normalize_text
+from .charset import normalize_text, make_windows
 from .langs import base as langs_base
 from .calibration import apply as apply_calibration, load_calibration
 
@@ -70,18 +71,43 @@ def _has_lexicon_o_token(tokens) -> bool:
 
 
 def _apply_bare_digits_gate(text, decoded, classes):
-    """R3/R4/R9: drop a decoded span whose meaningful tokens are digits-only
-    (R3), or a lone ambiguous unit word with no preceding number (R4:
-    "kharab"/"mil"), unless a currency marker is present for it; or whose
-    meaningful tokens include a lexicon-"O" word (R9)."""
+    """Every post-decode drop rule, in one place, applied identically by
+    `src/index.ts::decodeForward` (see the rule list in README.md):
+
+      R3   digits-only span (short-ungrouped / phone-length), no currency
+      R4   lone ambiguous unit word ("kharab"/"mil"), no currency
+      R9   a meaningful token whose surface is a lexicon-"O" word
+      R10  leading-zero digits coefficient ("GJ05 CD")
+      R11  lone prefix ("ढाई साल")                     -- core
+      R12  span held up only by ambiguous surfaces ("so", "अरब") -- verify
+      R13b bare cardinal that is not an exact lexicon form     -- verify
+      R14  blocked surface ("हजारे", "अरबी")                   -- verify
+      R16  1-2 char symbol unit not glued to its digits ("1996 k") -- verify
+      R17  unit word that is not a unit word, next to bare digits  -- verify
+
+    R3/R4/R11/R12 are exempted by a currency marker beside the span.
+    """
     kept = []
     for d in decoded:
         toks = [(classes[cid], sub) for cid, sub in d["tokens"]]
         if _has_lexicon_o_token(toks):
             continue
-        if core.should_drop_bare_digits(toks) and core.detect_currency_multi(text, d["start"], d["end"], _all_packs()) is None:
+        if verify.has_blocked_surface(toks):
             continue
-        if core.should_drop_lone_ambiguous_unit(toks) and core.detect_currency_multi(text, d["start"], d["end"], _all_packs()) is None:
+        currency = core.detect_currency_multi(text, d["start"], d["end"], _all_packs())
+        if core.should_drop_bare_digits(toks) and currency is None:
+            continue
+        if core.should_drop_lone_ambiguous_unit(toks) and currency is None:
+            continue
+        if core.should_drop_lone_prefix(toks) and currency is None:
+            continue
+        if verify.should_drop_ambiguous_form(toks) and currency is None:
+            continue
+        if verify.should_drop_unsupported_bare_cardinal(toks):
+            continue
+        if verify.should_drop_loose_symbol_unit(toks):
+            continue
+        if verify.should_drop_unknown_unit(toks):
             continue
         # R10: leading-zero digits coefficient (plates, PINs, dates) -- see core.has_leading_zero_coefficient.
         if core.has_leading_zero_coefficient(toks):
@@ -184,19 +210,36 @@ def run_torch(ckpt_path, examples):
     preds = []
     with torch.no_grad():
         for ex in examples:
-            text = normalize_text(ex["text"])[:MAX_LEN]
-            L = len(text)
-            ids = np_infer.pad_ids([char_to_id.get(c, unk) for c in text])
-            t = torch.tensor([ids], dtype=torch.int64)
-            bio_logits, cls_logits = model(t)
-            bio_logits, cls_logits = bio_logits[0, :L], cls_logits[0, :L]
-            if model.crf is not None:
-                bio_pred = model.crf.viterbi(bio_logits) if L else []
-            else:
-                bio_pred = bio_logits.argmax(-1).tolist()
-            cls_pred = cls_logits.argmax(-1).tolist()
-            bio_probs = torch.softmax(bio_logits, dim=-1).tolist()
-            preds.append((ex["text"], bio_pred, cls_pred, bio_probs))
+            # Same sliding window as run_json_weights / the JS runtime: a
+            # line longer than MAX_LEN is predicted window by window, each
+            # character taken from the first window covering it.
+            normalized = normalize_text(ex["text"])
+            n = len(normalized)
+            bio_pred = [0] * n
+            cls_pred = [0] * n
+            bio_probs = [None] * n
+            filled = [False] * n
+            for offset, length in make_windows(n):
+                sub = normalized[offset:offset + length]
+                ids = np_infer.pad_ids([char_to_id.get(c, unk) for c in sub])
+                t = torch.tensor([ids], dtype=torch.int64)
+                bio_logits, cls_logits = model(t)
+                bio_logits, cls_logits = bio_logits[0, :length], cls_logits[0, :length]
+                if model.crf is not None:
+                    win_bio = model.crf.viterbi(bio_logits) if length else []
+                else:
+                    win_bio = bio_logits.argmax(-1).tolist()
+                win_cls = cls_logits.argmax(-1).tolist()
+                win_probs = torch.softmax(bio_logits, dim=-1).tolist()
+                for k in range(length):
+                    gi = offset + k
+                    if filled[gi]:
+                        continue
+                    filled[gi] = True
+                    bio_pred[gi] = win_bio[k]
+                    cls_pred[gi] = win_cls[k]
+                    bio_probs[gi] = win_probs[k]
+            preds.append((decode_text_for(ex["text"]), bio_pred, cls_pred, bio_probs))
     return preds, classes
 
 
@@ -211,16 +254,58 @@ def run_json_weights(weights_path, examples, int8=False):
 
     preds = []
     for ex in examples:
-        text = normalize_text(ex["text"])[:MAX_LEN]
-        L = len(text)
-        ids = np_infer.pad_ids(np.array([char_to_id.get(c, unk) for c in text], dtype=np.int64))
-        bio_logits, cls_logits = np_infer.forward(weights, ids)
-        bio_logits, cls_logits = bio_logits[:L], cls_logits[:L]
-        bio_pred = np_infer.bio_path(bio_logits, weights)
-        cls_pred = cls_logits.argmax(-1).tolist()
-        bio_probs = np_infer.softmax(bio_logits, axis=-1).tolist()
-        preds.append((ex["text"], bio_pred, cls_pred, bio_probs))
+        preds.append(predict_example(ex["text"], weights, char_to_id, unk))
     return preds, classes
+
+
+def decode_text_for(raw_text: str) -> str:
+    """The string a prediction's offsets index into: the NORMALISED text,
+    exactly what `Parser.parse` decodes in src/index.ts.
+
+    Normalisation is 1:1 per character for everything these packs support
+    (NFC on already-composed text, the Indic-digit map, and lowercasing of
+    Latin/Devanagari/Gujarati), so every gold offset -- which is recorded
+    against the raw text -- carries over unchanged. `charset.normalize_text`
+    only ever changes a string's LENGTH for input outside those scripts
+    (e.g. "İ"), and gold contains none."""
+    return normalize_text(raw_text)
+
+
+def predict_example(raw_text: str, weights, char_to_id, unk):
+    """Per-character BIO/class/probability predictions over the WHOLE text.
+
+    Text longer than `train.MAX_LEN` is run through the same sliding window
+    the JS runtime uses (`charset.make_windows`, mirroring
+    src/charset.ts::makeWindows + Parser.parse): each character is filled
+    from the FIRST window that covers it. The previous implementation
+    predicted on `normalize_text(text)[:MAX_LEN]` but returned the original
+    text, so `decode_spans` indexed past the end of the prediction and
+    raised IndexError on any line over 128 characters (see
+    data_wild/REPORT.md failure #10).
+    """
+    normalized = normalize_text(raw_text)
+    n = len(normalized)
+    bio_pred = [0] * n
+    cls_pred = [0] * n
+    bio_probs = [None] * n
+    filled = [False] * n
+    for offset, length in make_windows(n):
+        sub = normalized[offset:offset + length]
+        ids = np_infer.pad_ids(np.array([char_to_id.get(c, unk) for c in sub], dtype=np.int64))
+        bio_logits, cls_logits = np_infer.forward(weights, ids)
+        bio_logits, cls_logits = bio_logits[:length], cls_logits[:length]
+        win_bio = np_infer.bio_path(bio_logits, weights)
+        win_cls = cls_logits.argmax(-1).tolist()
+        win_probs = np_infer.softmax(bio_logits, axis=-1).tolist()
+        for t in range(length):
+            gi = offset + t
+            if filled[gi]:
+                continue
+            filled[gi] = True
+            bio_pred[gi] = win_bio[t]
+            cls_pred[gi] = win_cls[t]
+            bio_probs[gi] = win_probs[t]
+    return (decode_text_for(raw_text), bio_pred, cls_pred, bio_probs)
 
 
 # --- confidence records / the calibrated-threshold curve ---
@@ -350,7 +435,7 @@ def _category_and_negative_metrics(examples, preds, classes):
     neg_fp = 0
 
     for ex, (text, bio_pred, cls_pred, bio_probs) in zip(examples, preds):
-        norm_text = normalize_text(ex["text"])[:MAX_LEN]
+        norm_text = normalize_text(ex["text"])
         pack = _get_pack(ex.get("lang"))
         decoded = decode_spans(text, bio_pred, cls_pred, bio_probs=bio_probs)
         decoded = _apply_bare_digits_gate(text, decoded, classes)

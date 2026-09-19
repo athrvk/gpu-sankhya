@@ -626,6 +626,60 @@ def _first_meaningful_cls(tokens) -> Optional[str]:
     return None
 
 
+def _last_meaningful(tokens):
+    for cid, txt in reversed(tokens):
+        name = C.CLASSES[cid]
+        if _is_meaningful(name):
+            return name, txt
+    return None, None
+
+
+def _first_meaningful(tokens):
+    for cid, txt in tokens:
+        name = C.CLASSES[cid]
+        if _is_meaningful(name):
+            return name, txt
+    return None, None
+
+
+_YEAR_LO, _YEAR_HI = 1900, 2099
+
+
+def _looks_like_year(text: str) -> bool:
+    """R18: a 4-digit run in 1900..2099 -- a year, not a coefficient.
+
+    Real text puts a title and a year side by side ("दस हज़ार 1987 में बनी"),
+    and the incomplete-amount merge below would otherwise read that as one
+    11,987. Mirrors src/decode.ts looksLikeYear."""
+    digits = "".join(_DIGIT_TO_ASCII.get(c, c) for c in text)
+    if len(digits) != 4 or not digits.isdigit():
+        return False
+    return _YEAR_LO <= int(digits) <= _YEAR_HI
+
+
+_DIGIT_TO_ASCII = {}
+for _b in (0x0966, 0x0AE6):
+    for _i in range(10):
+        _DIGIT_TO_ASCII[chr(_b + _i)] = str(_i)
+del _b, _i
+
+
+def _same_value_restatement(left_cls, left_txt, right_cls, right_txt) -> bool:
+    """R18: the right span merely RESTATES the left one in words --
+    "5 panch hajar" (digits 5, then the same 5 spelled out). Merging would
+    make it 5,005. True when the left span ends in a DIGITS token and the
+    right span opens with a CARD_* of exactly that value."""
+    if left_cls != "DIGITS" or right_cls is None or not right_cls.startswith("CARD_"):
+        return False
+    digits = "".join(_DIGIT_TO_ASCII.get(c, c) for c in left_txt)
+    if not digits.isdigit():
+        return False
+    try:
+        return int(digits) == C.card_value(right_cls)
+    except Exception:
+        return False
+
+
 def _merge_incomplete_amount_spans(text: str, spans_out: List[dict]) -> List[dict]:
     """R4c: merge an INCOMPLETE amount with the span right after it.
 
@@ -660,10 +714,18 @@ def _merge_incomplete_amount_spans(text: str, spans_out: List[dict]) -> List[dic
         for nxt in spans[1:]:
             prev = merged[-1]
             gap = text[prev["end"]:nxt["start"]]
-            last = _last_meaningful_cls(prev["tokens"])
-            first = _first_meaningful_cls(nxt["tokens"])
+            last, last_txt = _last_meaningful(prev["tokens"])
+            first, first_txt = _first_meaningful(nxt["tokens"])
+            # R18: two real-text shapes that are NOT one interrupted amount
+            # -- a following YEAR ("दस हज़ार 1987 में बनी") and a digits
+            # amount restated in words ("5 panch hajar").
+            blocked = (
+                (first == "DIGITS" and _looks_like_year(first_txt))
+                or _same_value_restatement(last, last_txt, first, first_txt)
+            )
             if (
-                len(gap) == 1
+                not blocked
+                and len(gap) == 1
                 and gap.isspace()
                 and last is not None
                 and (last.startswith(("CARD_", "PFX_")) or last == "DIGITS")
@@ -687,6 +749,72 @@ def _merge_incomplete_amount_spans(text: str, spans_out: List[dict]) -> List[dic
         spans = merged
         if not changed:
             return spans
+
+
+def _retrim(text: str, span: dict, toks) -> Optional[dict]:
+    """Rebuild a span dict around a new token list, re-trimming the glue
+    tokens at its edges and re-deriving start/end. None if nothing
+    meaningful is left."""
+    lo, hi = 0, len(toks)
+    while lo < hi and C.CLASSES[toks[lo][0]] in _TRIM_CLASSES_FINAL:
+        lo += 1
+    while hi > lo and C.CLASSES[toks[hi - 1][0]] in _TRIM_CLASSES_FINAL:
+        hi -= 1
+    kept = toks[lo:hi]
+    if not kept or not any(_is_meaningful(C.CLASSES[cid]) for cid, _ in kept):
+        return None
+    joined = "".join(t for _c, t in kept)
+    start = text.index(joined, span["start"], span["end"]) if joined else span["start"]
+    return {
+        "start": start,
+        "end": start + len(joined),
+        "text": joined,
+        "tokens": kept,
+        "confidence": span["confidence"],
+    }
+
+
+def _trim_boundary_artifacts(text: str, spans_out: List[dict]) -> List[dict]:
+    """R18: two real-text shapes the BIO head glues into ONE span although
+    the writer wrote two things (data_wild/REPORT.md §4 shape 8).
+
+    (a) a trailing YEAR: "इनाम दस हज़ार 1987 में बनी" is a film title plus
+        its release year, decoded as one span worth 11,987. A 4-digit
+        1900..2099 DIGITS token at the END of a span whose amount is
+        already CLOSED (the meaningful token before it is a UNIT_*) is a
+        year, and is trimmed off -- leaving "दस हज़ार" = 10,000.
+
+    (b) a leading digits RESTATEMENT: "agni 5 panch hajar kilometer" says
+        five thousand twice, decoded as 5,005. A leading DIGITS token whose
+        value equals the CARD_* value of the very next meaningful token is
+        dropped -- leaving "panch hajar" = 5,000.
+
+    Both are also refused by the incomplete-amount merge below, so a span
+    the BIO head splits at the same boundary is not re-joined."""
+    out = []
+    for span in spans_out:
+        toks = list(span["tokens"])
+        changed = True
+        while changed and toks:
+            changed = False
+            meaningful = [(i, C.CLASSES[c], t) for i, (c, t) in enumerate(toks)
+                          if _is_meaningful(C.CLASSES[c])]
+            if len(meaningful) >= 2:
+                li, lcls, ltxt = meaningful[-1]
+                _pi, pcls, _ptxt = meaningful[-2]
+                if lcls == "DIGITS" and _looks_like_year(ltxt) and pcls.startswith("UNIT_"):
+                    toks = toks[:li]
+                    changed = True
+                    continue
+                fi, fcls, ftxt = meaningful[0]
+                _ni, ncls, _ntxt = meaningful[1]
+                if _same_value_restatement(fcls, ftxt, ncls, _ntxt):
+                    toks = toks[fi + 1:]
+                    changed = True
+        rebuilt = _retrim(text, span, toks) if len(toks) != len(span["tokens"]) else span
+        if rebuilt is not None:
+            out.append(rebuilt)
+    return out
 
 
 def decode_spans(
@@ -800,4 +928,5 @@ def decode_spans(
             "confidence": confidence,
         })
     out = _merge_range_connector_spans(text, cls_ids, out)
-    return _merge_incomplete_amount_spans(text, out)
+    out = _merge_incomplete_amount_spans(text, out)
+    return _trim_boundary_artifacts(text, out)

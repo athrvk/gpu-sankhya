@@ -44,7 +44,7 @@ from . import core
 from .decode import decode_spans
 from .verify import verify_tokens
 from .calibration import calibrate_confidence
-from .eval_gold import _apply_bare_digits_gate
+from .eval_gold import _apply_bare_digits_gate, predict_example
 from .langs.base import all_packs, get_pack
 from .train import MAX_LEN, build_char_to_id, load_jsonl
 from . import np_infer
@@ -67,17 +67,28 @@ def run(weights_path: str, examples: list, lang: str = "hi_latn"):
     decoded_rows = []
 
     for ex in examples:
-        text = normalize_text(ex["text"])[:MAX_LEN]
+        # parity.jsonl pins the FORWARD PASS: one full-length pass over the
+        # normalized text, exactly what test/parity.test.ts runs on the JS
+        # side (encode + forward + argmax, no windowing). Unchanged
+        # semantics -- the only difference from before is that the text is
+        # no longer truncated at MAX_LEN.
+        text = normalize_text(ex["text"])
         L = len(text)
         ids = np_infer.pad_ids(np.array([char_to_id.get(c, unk) for c in text], dtype=np.int64))
         bio_logits, cls_logits = np_infer.forward(weights, ids)
         bio_logits, cls_logits = bio_logits[:L], cls_logits[:L]
-        bio_pred = np_infer.bio_path(bio_logits, weights)
-        cls_pred = cls_logits.argmax(-1).tolist()
-        bio_probs = np_infer.softmax(bio_logits, axis=-1).tolist()
+        parity_rows.append({
+            "text": ex["text"],
+            "bio": np_infer.bio_path(bio_logits, weights),
+            "cls": cls_logits.argmax(-1).tolist(),
+        })
 
-        parity_rows.append({"text": ex["text"], "bio": bio_pred, "cls": cls_pred})
-
+        # decoded.jsonl pins parse(): predictions come from the same
+        # sliding window Parser.parse uses, so a line longer than MAX_LEN is
+        # pinned the way the runtime actually handles it (for the shipped
+        # gold, every line fits one window and the two agree exactly).
+        text, bio_pred, cls_pred, bio_probs = predict_example(
+            ex["text"], weights, char_to_id, unk)
         decoded = decode_spans(text, bio_pred, cls_pred, bio_probs=bio_probs)
         # Apply exactly the post-decode gates the runtimes apply (R3 bare
         # digits, R4 lone ambiguous unit, R9 lexicon-O, R10 leading zero) so

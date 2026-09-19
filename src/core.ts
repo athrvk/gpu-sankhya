@@ -477,6 +477,19 @@ export function shouldDropLoneAmbiguousUnit(tokens: Tok[]): boolean {
   return true;
 }
 
+/** R11: a span whose ONLY meaningful token is a PFX_* is not an amount.
+ *
+ * A prefix scales something: "ढाई लाख" is 250,000, but "ढाई साल" is two and
+ * a half YEARS and "आधा दिन" is half a day -- a quantity of a noun, not of
+ * money or of a scale unit. Real text is full of these ("दीड तास",
+ * "અડધો કલાક", "sade hue tamatar"), and the hand-written gold has no
+ * bare-prefix span at all. Structural and class-level, like R3/R4/R10.
+ * Mirrors python/sankhya/core.py::should_drop_lone_prefix. */
+export function shouldDropLonePrefix(tokens: Tok[]): boolean {
+  const meaningful = tokens.filter(([cls]) => !IGNORED_GLUE_CLASSES.has(cls));
+  return meaningful.length === 1 && meaningful[0][0].startsWith("PFX_");
+}
+
 export function mergeLangPacks(...packs: LangPack[]): LangPack {
   const byLenDesc = (a: string, b: string) => b.length - a.length;
   const dedupe = (lists: string[][]) => [...new Set(lists.flat())].sort(byLenDesc);

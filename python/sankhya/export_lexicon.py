@@ -21,6 +21,14 @@ Both verifiers strip ONE declared ending from a PFX_*/CARD_*/UNIT_* token
 whose exact surface is unknown, and accept the token when the remaining
 head is a lexicon form of the token's own class -- see verify.py.
 
+`ambiguous_forms` (optional) are lexicon surfaces that are also ordinary
+words in that language ("so", "sath", "arab", "अरब"); R12 drops a span in
+which such a surface stands with no independently justified number word
+beside it. `blocked_surfaces` (optional) are surfaces that must never
+verify or decode as a number word at all ("हजारे", "अरबी", "સવાઈ") -- R14.
+Both are SURFACE lists, not classes, and both are exported so the JS
+runtime sees exactly what the packs declare.
+
 `bound_forms` (optional, absent for packs that have none) holds surfaces
 that are ONLY valid immediately before one of the listed unit surfaces --
 Gujarati CARD_2 "બ", which exists in બસો (200) and nowhere else. They are
@@ -66,6 +74,14 @@ def build() -> dict:
         obliques = sorted({o.lower() for o in (pack.word_oblique_endings or [])})
         if obliques:
             entry["word_oblique_endings"] = obliques
+        ambiguous = sorted({unicodedata.normalize("NFC", a).lower()
+                            for a in (pack.ambiguous_forms or [])})
+        if ambiguous:
+            entry["ambiguous_forms"] = ambiguous
+        blocked = sorted({unicodedata.normalize("NFC", b).lower()
+                          for b in (pack.blocked_surfaces or [])})
+        if blocked:
+            entry["blocked_surfaces"] = blocked
         packs[pid] = entry
     return {"version": 1, "packs": packs}
 

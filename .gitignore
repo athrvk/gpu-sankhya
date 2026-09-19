@@ -12,3 +12,9 @@ __pycache__/
 isolate-*.log
 *.egg-info/
 .claude/worktrees/
+# wild-text corpora and samples: share-alike sources, re-fetchable with
+# `python -m sankhya.wild`. The aggregate metrics JSONs next to them (no
+# corpus text in them) are tracked.
+/python/data_wild/raw/
+/python/data_wild/samples/
+/python/data_wild/wild_preds.jsonl

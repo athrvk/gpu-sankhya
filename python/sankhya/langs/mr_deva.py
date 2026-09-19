@@ -493,7 +493,19 @@ def _mr_deva_noise(word: str, rng) -> str:
     return ND.apply_noise(word, rng)
 
 
-BLOCKED_SURFACES = ["लातूर", "सातारा"]
+BLOCKED_SURFACES = [
+    "लातूर", "सातारा",
+    # real-text proper nouns built on number words (data_wild/REPORT.md §4.1)
+    "हजारे", "हज़ारे", "सवाई", "अरबी",
+]
+
+# Lexicon surfaces that are also ordinary words -- see
+# LanguagePack.ambiguous_forms / R12.
+AMBIGUOUS_FORMS = [
+    "एक",       # CARD_1, but also the indefinite article
+    "अरब",
+    "k", "l", "m", "lac",
+]
 
 PACK = base.LanguagePack(
     id="mr_deva",
@@ -509,6 +521,7 @@ PACK = base.LanguagePack(
     templates=TEMPLATES,
     noise_fn=_mr_deva_noise,
     blocked_surfaces=BLOCKED_SURFACES,
+    ambiguous_forms=AMBIGUOUS_FORMS,
     filler_words=FILLER_WORDS,
     duration_nouns=DURATION_NOUNS,
     conj_connectors=CONJ_CONNECTORS,
