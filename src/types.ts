@@ -15,7 +15,15 @@ export interface Sankhya {
     | "kharab"
     | null;
   currency: "INR" | null;
+  /** Calibrated confidence: the empirical precision of spans scoring this
+   * much on held-out synthetic data (see src/data/calibration.json and
+   * `python -m sankhya.calibrate`). Threshold it with
+   * `ParseOptions.minConfidence`. */
   confidence: number;
+  /** The model's uncalibrated score -- the mean over the span's characters
+   * of max(p_B, p_I). This is what `confidence` used to be, and what the
+   * fixed 0.5 internal drop gate still applies to. */
+  rawConfidence: number;
   classes: string[];
   /** True when every decoded token is independently justified by the
    * lexicon (or a structural rule for SEP/DOT/COMMA/RANGE/DIGITS) -- see
@@ -32,6 +40,11 @@ export interface ParseOptions {
   /** When true, spans that are not verified() are dropped from the
    * result. Default false. */
   strict?: boolean;
+  /** Drop spans whose CALIBRATED `confidence` is below this, applied after
+   * every other gate (including `strict`). Default 0 (keep everything the
+   * decoder emitted). The decoder's own fixed 0.5 gate on the RAW score is
+   * unaffected by this. */
+  minConfidence?: number;
 }
 
 /** Raw float weights JSON, as written by python/sankhya/export.py (float form). */

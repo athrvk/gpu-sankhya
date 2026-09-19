@@ -47,7 +47,8 @@ parse("sava lakh");
 // [{
 //   span: "sava lakh", start: 0, end: 9,
 //   value: 125000, unit: "lakh", currency: null,
-//   confidence: 0.95, classes: ["PFX_SAVA", "SEP", "UNIT_LAKH"],
+//   confidence: 0.97, rawConfidence: 0.95,
+//   classes: ["PFX_SAVA", "SEP", "UNIT_LAKH"],
 //   verified: true, tokens: [["PFX_SAVA","sava"],["SEP"," "],["UNIT_LAKH","lakh"]]
 // }]
 
@@ -110,7 +111,10 @@ interface Sankhya {
   range?: [number, number];// present only for ranges
   unit: "sau"|"hazaar"|"lakh"|"crore"|"million"|"billion"|"arab"|"kharab"|null;
   currency: "INR"|null;    // adjacent marker detected outside the span
-  confidence: number;      // mean of span-tag softmax probs over the span
+  confidence: number;      // CALIBRATED confidence: read it as a precision --
+                           // see "Calibrated confidence" below
+  rawConfidence: number;   // the model's uncalibrated score: mean of the max
+                           // span-tag softmax prob over the span's characters
   classes: string[];       // normalised token classes, e.g. ["PFX_DHAI","UNIT_LAKH"]
   verified: boolean;       // true iff every token in `tokens` is independently
                            // justified by the lexicon -- see "Correct or abstains"
@@ -118,6 +122,36 @@ interface Sankhya {
                                     // in order -- for explainability and verification
 }
 ```
+
+### Calibrated confidence
+
+`confidence` is calibrated, not a raw softmax number. The model's own score
+(`rawConfidence`, the mean over the span's characters of the larger of the
+B/I tag probabilities) orders spans sensibly but is squashed into a narrow
+band — 99% of predicted spans score above 0.9 — so thresholding it directly
+tells you very little. `python -m sankhya.calibrate` runs the shipped
+checkpoint over 100,000 freshly generated examples (seed 13, never used for
+training; 104,805 predicted spans), records for each predicted span whether
+its value was actually right, and fits a monotone isotonic
+(pool-adjacent-violators) map from raw score to empirical precision. The 24
+fitted breakpoints ship as `src/data/calibration.json` and are applied
+identically by the JS and Python runtimes, so **among spans the model
+reports at 0.8, about 80% have the right value** on held-out synthetic
+data, and 0.95 means about 95%. The full raw score is still there as
+`rawConfidence`, and the decoder's internal 0.5 drop gate still runs on the
+raw score, unchanged.
+
+On the four hand-written gold sets (748 examples, 607 spans) — never fitted
+on — the reliability broadly holds but is a little optimistic in the middle
+of the range: of the 556 gold spans reported between 0.95 and 0.98, 97.5%
+had the right value; of the 36 reported between 0.90 and 0.95, 83% did; of
+the 11 reported below 0.90, 82% did. In practice the useful lever is
+`minConfidence` around 0.9, which on gold trades 1.5 points of coverage
+(0.962 → 0.949) for a small gain in value accuracy (0.967 → 0.968).
+Because the top of the fitted map only reaches about 0.98 for typical
+spans, a threshold of 0.99 rejects essentially everything — treat 0.9-0.97
+as the working range, and `strict: true` (the verified tier) as the
+stronger guarantee when you want "the right number or nothing".
 
 ### Correct or abstains
 
@@ -151,6 +185,12 @@ returning a value for a spelling the model merely guessed at.
   isn't `verified`, so you only ever get back a span whose value is
   provably a pure function of the lexicon + arithmetic core. Default
   `false` (unverified spans are still returned, with `verified: false`).
+- **`{ minConfidence: number }`** (on `parse`/`parseBatch`/`Parser.parse`/
+  `Parser.parseBatch`) — drop spans whose **calibrated** `confidence` is
+  below this, applied after every other gate including `strict`. Default
+  `0` (keep everything). See "Calibrated confidence" above for what the
+  number means and what thresholds are worth setting; the decoder's own
+  fixed 0.5 gate on `rawConfidence` is separate and always applies.
 - **`createParser({ weights?, backend? })`** — build a `Parser` instance
   around a custom weights JSON (float or int8 form, as written by
   `python/sankhya/export.py`), instead of the bundled default model. See
@@ -416,8 +456,12 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   cross-pack conflict and is left alone.
 - **Possessive trim**: a trailing `'s`/`’s` (1-2 letters) is stripped from
   the end of a word and excluded from the span (`"2 lakh's"` → `"2 lakh"`).
-- **Confidence filter**: a span's confidence is the mean of the max BIO
-  softmax probability per character; spans below 0.5 are dropped.
+- **Confidence filter**: a span's RAW confidence is the mean of the max BIO
+  softmax probability per character; spans below 0.5 are dropped. This gate
+  is on the raw score and is unaffected by calibration — the reported
+  `confidence` is that same raw score mapped through
+  `src/data/calibration.json` (see "Calibrated confidence"), and
+  `ParseOptions.minConfidence` thresholds the calibrated value afterwards.
 - Only after all of the above does the deterministic arithmetic core run
   on the resulting token sequence, which also treats a `RANGE` connector
   between two amounts that BOTH already carry a unit and are strictly
@@ -515,7 +559,8 @@ outputs are discarded; only the real characters' predictions are used.
 
 - `src/` — the JS/TS runtime: char encoding, CPU forward pass
   (`infer-cpu.ts`), WebGPU forward pass, decode, the arithmetic core
-  (`core.ts`), the public API (`index.ts`), and the bundled default
+  (`core.ts`), the public API (`index.ts`), the confidence calibration map
+  (`calibration.ts` + `src/data/calibration.json`), and the bundled default
   weights (`src/data/default-weights.json`).
 - `test/` — Node test files (`node --test`), including parity fixtures
   generated from the Python reference implementation

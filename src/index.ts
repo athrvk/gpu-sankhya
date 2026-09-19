@@ -5,6 +5,7 @@ import { forward, softmaxRow, argmaxRow, viterbi, Scratch } from "./infer-cpu.ts
 import { decodeSpans } from "./decode.ts";
 import { evaluate, detectCurrency, mergeLangPacks, shouldDropBareDigits, shouldDropLoneAmbiguousUnit, hasLeadingZeroCoefficient } from "./core.ts";
 import { verifyTokens, isLexiconOOnly } from "./verify.ts";
+import { calibrateConfidence } from "./calibration.ts";
 import { HI_LATN } from "./lang-hi-latn.ts";
 import { HI_DEVA } from "./lang-hi-deva.ts";
 import { MR_DEVA } from "./lang-mr-deva.ts";
@@ -17,6 +18,7 @@ export type { Sankhya, ParseOptions, CharTag, Inspection, ModelInfo } from "./ty
 export { isWebGPUAvailable, probeWebGPU } from "./infer-webgpu.ts";
 export { normalizeText } from "./charset.ts";
 export { CLASSES } from "./classes.ts";
+export { calibrateConfidence } from "./calibration.ts";
 
 export interface CreateParserOptions {
   weights?: WeightsJson;
@@ -78,7 +80,7 @@ export class Parser {
       const padLen = paddedLength(text.length);
       const ids = encodeChars(text, this.charToId, this.idsScratch, padLen);
       const fw = forward(this.weights, ids, this.scratch);
-      results = this.decodeForward(text, fw, 0, text.length, opts.strict ?? false);
+      results = this.decodeForward(text, fw, 0, text.length, opts);
     } else {
       const merged: Sankhya[] = [];
       const seen = new Set<string>();
@@ -87,7 +89,7 @@ export class Parser {
         const padLen = paddedLength(sub.length);
         const ids = encodeChars(sub, this.charToId, this.idsScratch, padLen);
         const fw = forward(this.weights, ids, this.scratch);
-        const winResults = this.decodeForward(sub, fw, win.offset, sub.length, opts.strict ?? false);
+        const winResults = this.decodeForward(sub, fw, win.offset, sub.length, opts);
         for (const r of winResults) {
           const key = `${r.start}:${r.end}`;
           if (!seen.has(key)) {
@@ -116,7 +118,9 @@ export class Parser {
    * `realLen` (defaults to fw.length, i.e. no padding) bounds decoding to the
    * actual text -- the padded tail's logits are only used to give the real
    * tokens correct right-context during the conv stack, never decoded. */
-  private decodeForward(sub: string, fw: ReturnType<typeof forward>, offset: number, realLen: number = fw.length, strict: boolean = false): Sankhya[] {
+  private decodeForward(sub: string, fw: ReturnType<typeof forward>, offset: number, realLen: number = fw.length, opts: ParseOptions = {}): Sankhya[] {
+    const strict = opts.strict ?? false;
+    const minConfidence = opts.minConfidence ?? 0;
     const L = realLen;
     const useScratchBufs = L <= MAX_LEN;
     const bioIds = useScratchBufs ? this.bioIdsScratch : new Int32Array(L);
@@ -153,6 +157,12 @@ export class Parser {
       if (hasLexiconOToken(tokens)) continue;
       const verified = verifyTokens(tokens);
       if (strict && !verified) continue;
+      // The decoder already dropped anything below 0.5 on the RAW score;
+      // `minConfidence` is a separate, caller-chosen gate on the CALIBRATED
+      // score, applied last so it composes with every gate above.
+      const rawConfidence = span.confidence ?? 0;
+      const confidence = calibrateConfidence(rawConfidence);
+      if (confidence < minConfidence) continue;
       const res = evaluate(tokens);
       out.push({
         span: span.text,
@@ -162,7 +172,8 @@ export class Parser {
         ...(res.range ? { range: res.range as [number, number] } : {}),
         unit: (res.unit as Sankhya["unit"]) ?? null,
         currency,
-        confidence: span.confidence ?? 0,
+        confidence,
+        rawConfidence,
         classes: res.classes,
         verified,
         tokens,
@@ -248,7 +259,7 @@ export class Parser {
       (backend === "auto" && texts.length >= 32 && (await probeWebGPU()));
 
     if (!useGpu) {
-      return texts.map((t) => this.parse(t, { backend: "cpu", strict: opts.strict }));
+      return texts.map((t) => this.parse(t, { backend: "cpu", strict: opts.strict, minConfidence: opts.minConfidence }));
     }
 
     const originals = texts;
@@ -263,7 +274,7 @@ export class Parser {
       if (norm[i].length <= 128) gpuIdx.push(i);
       else cpuIdx.push(i);
     }
-    for (const i of cpuIdx) results[i] = this.parse(originals[i], { backend: "cpu", strict: opts.strict });
+    for (const i of cpuIdx) results[i] = this.parse(originals[i], { backend: "cpu", strict: opts.strict, minConfidence: opts.minConfidence });
 
     if (gpuIdx.length > 0) {
       if (!this.gpu) this.gpu = new WebGPUBackend(this.weights);
@@ -297,7 +308,7 @@ export class Parser {
           clsLogits.set(cls.subarray((bi * rowLen + t) * nCls, (bi * rowLen + t) * nCls + nCls), t * nCls);
         }
         const fw = { bioLogits, clsLogits, length: L, nCls };
-        const decoded = this.decodeForward(text, fw, 0, L, opts.strict ?? false);
+        const decoded = this.decodeForward(text, fw, 0, L, opts);
         if (useOriginalSpan) {
           for (const r of decoded) r.span = original.slice(r.start, r.end);
         }

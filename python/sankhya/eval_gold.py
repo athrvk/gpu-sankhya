@@ -18,6 +18,7 @@ from .train import load_jsonl, build_char_to_id, MAX_LEN
 from . import np_infer
 from .charset import normalize_text
 from .langs import base as langs_base
+from .calibration import apply as apply_calibration, load_calibration
 
 _DEVA_RE = re.compile(r"[ऀ-ॿ]")
 _LATIN_RE = re.compile(r"[A-Za-z]")
@@ -235,6 +236,88 @@ def run_json_weights(weights_path, examples, int8=False):
         bio_probs = np_infer.softmax(bio_logits, axis=-1).tolist()
         preds.append((ex["text"], bio_pred, cls_pred, bio_probs))
     return preds, classes
+
+
+# --- confidence records / the calibrated-threshold curve ---
+
+# the `minConfidence` thresholds eval_gold reports a coverage/accuracy row for
+CONFIDENCE_THRESHOLDS = (0.0, 0.5, 0.7, 0.9)
+
+
+def _spans_overlap(a, b):
+    return a[0] < b[1] and b[0] < a[1]
+
+
+def collect_confidence_records(examples, preds, classes):
+    """One record per PREDICTED span: {raw, verified, correct, spurious}.
+
+    `correct` means this prediction has the right value: it matches a gold
+    span exactly (start/end) and `core.evaluate` reproduces its value (and
+    range). A boundary miss, a wrong value and a spurious span all count as
+    not correct -- which is what a precision threshold has to be honest
+    about. Shared by `eval_gold`'s confidence curve and
+    `sankhya.calibrate`'s reliability tables, so both measure the same
+    thing.
+    """
+    rows = []
+    for ex, (text, bio_pred, cls_pred, bio_probs) in zip(examples, preds):
+        decoded = decode_spans(text, bio_pred, cls_pred, bio_probs=bio_probs)
+        decoded = _apply_bare_digits_gate(text, decoded, classes)
+        gold_spans = [(s["start"], s["end"]) for s in ex["spans"]]
+        gold_by_key = {(s["start"], s["end"]): s for s in ex["spans"]}
+        for d in decoded:
+            toks = [(classes[cid], sub) for cid, sub in d["tokens"]]
+            key = (d["start"], d["end"])
+            sp = gold_by_key.get(key)
+            correct = False
+            if sp is not None:
+                res = core.evaluate(toks)
+                if res.value == sp["value"]:
+                    if sp.get("range"):
+                        correct = bool(res.range) and list(res.range) == list(sp["range"])
+                    else:
+                        correct = True
+            rows.append({
+                "raw": float(d["confidence"]) if d["confidence"] is not None else 0.0,
+                "verified": bool(verify_tokens(toks)),
+                "correct": bool(correct),
+                "spurious": not any(_spans_overlap(key, g) for g in gold_spans),
+            })
+    return rows
+
+
+def confidence_curve(rows, n_gold_spans, thresholds=CONFIDENCE_THRESHOLDS,
+                     knots_x=None, knots_y=None):
+    """For each `minConfidence`, what survives and how often it is right.
+
+    `coverage` is correct predictions over GOLD spans (so it can only fall
+    as the threshold rises) and `value_acc` is correct predictions over
+    KEPT predictions -- the precision a caller who sets that threshold
+    actually gets. Thresholds are on the CALIBRATED confidence, exactly as
+    `ParseOptions.minConfidence` applies it at runtime.
+    """
+    if knots_x is None or knots_y is None:
+        calib = load_calibration()
+        knots_x = calib["raw"] if calib else []
+        knots_y = calib["calibrated"] if calib else []
+    out = []
+    for t in thresholds:
+        kept = [r for r in rows if apply_calibration(r["raw"], knots_x, knots_y) >= t]
+        correct = sum(r["correct"] for r in kept)
+        out.append({
+            "min_confidence": t,
+            "kept": len(kept),
+            "coverage": (correct / n_gold_spans) if n_gold_spans else 0.0,
+            "value_acc": (correct / len(kept)) if kept else 0.0,
+        })
+    return out
+
+
+def _print_confidence_curve(curve):
+    print("\nconfidence curve (calibrated minConfidence -> coverage / value accuracy):")
+    print(f"  {'minConfidence':<15}{'kept':>7}{'coverage':>11}{'value_acc':>11}")
+    for c in curve:
+        print(f"  {c['min_confidence']:<15.2f}{c['kept']:>7}{c['coverage']:>11.4f}{c['value_acc']:>11.4f}")
 
 
 def _print_metrics(examples, preds, classes, header=""):
@@ -491,6 +574,10 @@ def _evaluate_all(gold_files, examples, preds, classes, file_bounds, quiet=False
     print(f"  spurious:       {strict_spurious}")
     print(f"  negatives FP:   {strict_neg_fp}/{strict_neg_examples} = {strict['negatives']['fp_rate']:.4f}")
 
+    conf_rows = collect_confidence_records(examples, preds, classes)
+    curve = confidence_curve(conf_rows, val_total)
+    _print_confidence_curve(curve)
+
     combined_categories, combined_negatives = _category_and_negative_metrics(examples, preds, classes)
     _print_category_table(combined_categories, combined_negatives, header="per-category metrics (combined):")
 
@@ -519,6 +606,7 @@ def _evaluate_all(gold_files, examples, preds, classes, file_bounds, quiet=False
         "categories": combined_categories,
         "negatives": combined_negatives,
         "strict": strict,
+        "confidence_curve": curve,
     }
     return {"per_file": per_file_metrics, "combined": combined_metrics}
 

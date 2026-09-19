@@ -17,6 +17,11 @@ interface FixtureSpan {
   // present (see VERIFY_CONTRACT.md).
   verified?: boolean;
   tokens?: Array<[string, string]>;
+  // Added alongside calibrated confidence; compared within 1e-6 (floats
+  // crossing a JSON round-trip) rather than by exact equality, and only
+  // when the fixture row carries them.
+  confidence?: number;
+  rawConfidence?: number;
 }
 
 interface FixtureRow {
@@ -60,6 +65,7 @@ function normalize(
 test("parse() matches the python end-to-end decoded fixture for all texts", () => {
   let identical = 0;
   const mismatches: Array<{ text: string; got: unknown; want: unknown }> = [];
+  let confChecked = 0;
 
   let skipped = 0;
   for (const line of lines) {
@@ -72,7 +78,8 @@ test("parse() matches the python end-to-end decoded fixture for all texts", () =
     // per span; older fixtures do not -- only assert those fields when the
     // fixture row actually has them.
     const includeVerified = row.spans.length > 0 && row.spans[0].verified !== undefined;
-    const got = parse(row.text).map((s) => normalize(s, includeVerified));
+    const live = parse(row.text);
+    const got = live.map((s) => normalize(s, includeVerified));
     const want = row.spans.map((s) => {
       const base: Record<string, unknown> = {
         start: s.start,
@@ -92,7 +99,24 @@ test("parse() matches the python end-to-end decoded fixture for all texts", () =
     const same = JSON.stringify(got) === JSON.stringify(want);
     if (same) identical++;
     else mismatches.push({ text: row.text, got, want });
+
+    // Confidences are floats, so they are compared with a tolerance
+    // instead of going through the JSON.stringify equality above.
+    if (same && row.spans.length && row.spans[0].confidence !== undefined) {
+      for (let i = 0; i < row.spans.length; i++) {
+        assert.ok(
+          Math.abs(live[i].confidence - (row.spans[i].confidence as number)) < 1e-6,
+          `confidence mismatch on ${JSON.stringify(row.text)}: ${live[i].confidence} vs ${row.spans[i].confidence}`,
+        );
+        assert.ok(
+          Math.abs(live[i].rawConfidence - (row.spans[i].rawConfidence as number)) < 1e-6,
+          `rawConfidence mismatch on ${JSON.stringify(row.text)}: ${live[i].rawConfidence} vs ${row.spans[i].rawConfidence}`,
+        );
+        confChecked++;
+      }
+    }
   }
+  console.log(`e2e parity: ${confChecked} span confidences compared within 1e-6`);
 
   console.log(`e2e parity: ${identical}/${lines.length - skipped} texts identical to python end-to-end decode (${skipped} astral-char rows skipped)`);
   if (mismatches.length) {

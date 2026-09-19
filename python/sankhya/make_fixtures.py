@@ -14,8 +14,12 @@ test/e2e-parity.test.ts at the repo root:
 
   decoded.jsonl -- {text, spans}: decode_spans() + core.evaluate() output,
                    normalised to {start, end, value, range, unit, currency,
-                   classes, verified, tokens}, for pinning end-to-end parse()
-                   behaviour. `verified` is verify.verify_tokens() on the
+                   confidence, rawConfidence, classes, verified, tokens}, for
+                   pinning end-to-end parse() behaviour. `rawConfidence` is
+                   the decoder's uncalibrated mean-max-BIO score and
+                   `confidence` is that score mapped through
+                   src/data/calibration.json, exactly as both runtimes
+                   report them. `verified` is verify.verify_tokens() on the
                    span's tokens (the strict-mode predicate) and `tokens` is
                    the [[class, text], ...] list it was computed from.
 
@@ -39,6 +43,7 @@ from . import classes as C
 from . import core
 from .decode import decode_spans
 from .verify import verify_tokens
+from .calibration import calibrate_confidence
 from .eval_gold import _apply_bare_digits_gate
 from .langs.base import all_packs, get_pack
 from .train import MAX_LEN, build_char_to_id, load_jsonl
@@ -90,6 +95,8 @@ def run(weights_path: str, examples: list, lang: str = "hi_latn"):
                 "range": list(res.range) if res.range else None,
                 "unit": res.unit,
                 "currency": currency,
+                "rawConfidence": d["confidence"],
+                "confidence": calibrate_confidence(d["confidence"]),
                 "classes": " ".join(res.classes),
                 "verified": verify_tokens(toks),
                 "tokens": [[cls, sub] for cls, sub in toks],
