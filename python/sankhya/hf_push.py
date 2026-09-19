@@ -339,14 +339,14 @@ def gold_sets():
     Derived from what is on disk plus the pack registry, so adding a
     language (and its gold file) needs no edit here: `gold.jsonl` is
     hi_latn for historical reasons, `gold_<suffix>.jsonl` resolves through
-    eval_gold._get_pack (which knows the suffix aliases).
+    langs.base.resolve_pack (which knows the suffix aliases).
     """
-    from . import eval_gold
+    from .langs import base as langs_base
 
     out = []
     for path in sorted(GOLD_DIR.glob("gold*.jsonl")):
         suffix = path.stem[len("gold_"):] if path.stem.startswith("gold_") else ""
-        pack = eval_gold._get_pack(suffix)
+        pack = langs_base.resolve_pack(suffix)
         lang_id = pack.id if pack is not None else (suffix or "hi_latn")
         out.append((path, f"gold_{lang_id}.jsonl", lang_id))
     # stable, human-friendly order: hi_latn, hi_deva, then the rest
