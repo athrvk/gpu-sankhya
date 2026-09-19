@@ -376,6 +376,38 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   the BIO head splitting a range like `"दो लाख से तीन लाख"` or `"5 hazaar
   se 8 hazaar"` into two separate amounts even though the class head
   correctly tagged the connector word.
+- **Incomplete-amount span merge**: when the BIO head cuts one amount in
+  two at a word boundary with no connector at all, the two spans are
+  merged back into one. The first span must be an *incomplete* amount --
+  its last meaningful token is a bare number (`CARD_*`/`PFX_*`/`DIGITS`)
+  with no unit after it -- the second must start with a `UNIT_*` (the
+  unit the first is missing) or another `CARD_*`, and exactly one
+  whitespace character may stand between them, so nothing (not even
+  punctuation) is crossed. Repeated until stable, so a chain collapses in
+  one go: `"ચોંસઠ લાખમાં"` (64 + lakh) → 6400000, `"पाव कोटीचा"` → 2500000,
+  `"दस बीस हज़ार"` → one span, which R8 below then reads as a range. Two
+  *complete* amounts are untouched (`"5 lakh 3 crore"`: the first span
+  already ends in a unit).
+- **Bound forms and fused number words**: a letters run written solid can
+  be split into two or three unanimous sub-runs in `PFX? CARD? UNIT?`
+  order (at least two present) and each part kept on its own class
+  instead of being smoothed into its neighbour — `"दोनशे"` (2 + 100),
+  `"पावणेचार"` (0.75 + 4), and the three-part `"સાડાત્રણસો"`
+  (`PFX_SAADHE` + `CARD_3` + `UNIT_SAU` = 350). Each sub-run normally
+  needs ≥ 2 characters of its own evidence; a *single*-character sub-run
+  is kept only when its surface is a **bound number form** the language
+  pack declares for exactly the surface that follows it (`bound_forms` in
+  `src/data/lexicon.json`) — Gujarati `"બ"` is `CARD_2` only in `"બસો"`,
+  so `"બસો"` = 200 while a stray 1-char sub-run anywhere else is still
+  smoothed away. The same map is what makes `verifyTokens` accept
+  `[("CARD_2", "બ"), ("UNIT_SAU", "સો")]` and reject a standalone `"બ"`.
+- **Lexicon-"O" gate**: a span is dropped when any of its meaningful
+  tokens' surface is declared an ordinary word (lexicon class `"O"`) by a
+  language pack and carries **no other class anywhere in the lexicon
+  union** — the indefinite plurals `"karodon"`/`"करोडो"` ("crores of",
+  no definite amount), which the model likes to tag `UNIT_CRORE`. A
+  surface that some other pack also declares a real number word is a
+  cross-pack conflict and is left alone.
 - **Possessive trim**: a trailing `'s`/`’s` (1-2 letters) is stripped from
   the end of a word and excluded from the span (`"2 lakh's"` → `"2 lakh"`).
 - **Confidence filter**: a span's confidence is the mean of the max BIO

@@ -12,7 +12,7 @@ import torch
 from . import classes as C
 from . import core
 from .decode import decode_spans
-from .verify import verify_tokens
+from .verify import verify_tokens, is_lexicon_o_only
 from .model import SankhyaCNN
 from .train import load_jsonl, build_char_to_id, MAX_LEN
 from . import np_infer
@@ -54,13 +54,29 @@ def _all_packs():
 _both_packs = _all_packs
 
 
+def _has_lexicon_o_token(tokens) -> bool:
+    """R9: any meaningful token whose surface a language pack declares an
+    ordinary word (lexicon class "O") -- e.g. the indefinite plurals
+    "karodon"/"करोडो", which the model likes to tag UNIT_CRORE. Only when
+    that surface has NO other class anywhere in the lexicon union, so a
+    cross-pack conflict never silences a real number word."""
+    return any(
+        (cls == "DIGITS" or cls.startswith(("UNIT_", "PFX_", "CARD_")))
+        and is_lexicon_o_only(sub)
+        for cls, sub in tokens
+    )
+
+
 def _apply_bare_digits_gate(text, decoded, classes):
-    """R3/R4: drop a decoded span whose meaningful tokens are digits-only
+    """R3/R4/R9: drop a decoded span whose meaningful tokens are digits-only
     (R3), or a lone ambiguous unit word with no preceding number (R4:
-    "kharab"/"mil"), unless a currency marker is present for it."""
+    "kharab"/"mil"), unless a currency marker is present for it; or whose
+    meaningful tokens include a lexicon-"O" word (R9)."""
     kept = []
     for d in decoded:
         toks = [(classes[cid], sub) for cid, sub in d["tokens"]]
+        if _has_lexicon_o_token(toks):
+            continue
         if core.should_drop_bare_digits(toks) and core.detect_currency_multi(text, d["start"], d["end"], _all_packs()) is None:
             continue
         if core.should_drop_lone_ambiguous_unit(toks) and core.detect_currency_multi(text, d["start"], d["end"], _all_packs()) is None:

@@ -130,3 +130,10 @@ test("R1: parseBatch() tolerates non-string entries in the batch", async () => {
   assert.equal(r[1].length, 1);
   assert.equal(r[1][0].value, 125000);
 });
+
+test("R9: indefinite plurals ('karodon'/'करोडो') are not amounts", () => {
+  // Both surfaces are declared lexicon class "O" (and nothing else), so the
+  // lexicon-"O" gate drops any span the model tags UNIT_CRORE over them.
+  assert.deepEqual(parse("usne karodon rupaye kamaye"), []);
+  assert.deepEqual(parse("त्याने करोडो रुपये कमावले"), []);
+});

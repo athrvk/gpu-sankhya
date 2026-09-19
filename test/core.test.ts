@@ -572,3 +572,23 @@ test("R7 wins over R8 precedence: 'teen hazaar paanch das lakh'", () => {
   assert.deepEqual(r.range, [3000, 1000005]);
   assert.equal(r.unit, "hazaar");
 });
+
+// --- R2c / R9 lexicon helpers --------------------------------------------
+
+test("bound forms verify only in context", async () => {
+  const { verifyTokens, isBoundForm, isLexiconOOnly } = await import("../src/verify.ts");
+  assert.equal(verifyTokens([["CARD_2", "બ"], ["UNIT_SAU", "સો"]]), true);
+  assert.equal(verifyTokens([["CARD_2", "બ"]]), false);
+  assert.equal(isBoundForm("CARD_2", "બ", "સો"), true);
+  assert.equal(isBoundForm("CARD_6", "છ", "સો"), false);
+  assert.equal(isBoundForm("CARD_2", "બ", null), false);
+});
+
+test("R9: isLexiconOOnly recognises lexicon-declared ordinary words", async () => {
+  const { isLexiconOOnly } = await import("../src/verify.ts");
+  assert.equal(isLexiconOOnly("karodon"), true);
+  assert.equal(isLexiconOOnly("करोडो"), true);
+  assert.equal(isLexiconOOnly("KARODON"), true); // NFC-lowercased
+  assert.equal(isLexiconOOnly("lakh"), false);
+  assert.equal(isLexiconOOnly("zzzz-not-a-word"), false);
+});

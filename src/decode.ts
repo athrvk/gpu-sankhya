@@ -1,6 +1,7 @@
 // Port of python/sankhya/decode.py — strict BIO decoding + filtering + confidence.
 
 import { CLASSES, CLASS_TO_ID } from "./classes.ts";
+import { isBoundForm } from "./verify.ts";
 
 const TRIM_CLASSES = new Set(["SEP", "RANGE", "DOT", "COMMA"]);
 // R2/R5: after word-integrity/possessive repair a partially-retagged word
@@ -135,38 +136,73 @@ interface SubRun {
  * still fixing a short mistagged run like "d|as" (neither sub-run reaches
  * length 3, so both fall back to majority -> CARD_10). Returns
  * [start, end, classId) triples covering the whole run. */
-/** R2c: a word-final sub-run of length >= 2 that directly follows a
- * CARD_ or PFX_ sub-run of length >= 2 is kept as its own class instead of
- * being smoothed into the sub-run before it, when the two-sub-run split is
- * one of:
- *
- *   - tail UNIT_, head CARD_ or PFX_ -- a BOUND unit suffix written with no
- *     space -- Marathi's fused hundreds ("दोनशे" = CARD_2 + UNIT_SAU,
- *     "अठराशे", "दीडशे"), and equally "दोसौ" in Devanagari Hindi.
- *   - tail CARD_, head PFX_ -- a fused prefix+cardinal word -- Marathi
- *     "पावणेचार" (PFX_PAUNE + CARD_4 = 3.75), "साडेआठ" (PFX_SAADHE + CARD_8
- *     = 8.5).
- *
- * Without this the sub-run smoothing would absorb the tail sub-run into
- * the head and evaluate e.g. "दोनशे" as 2 instead of 200, or "पावणेचार" as
- * just PFX_PAUNE (0.75) instead of 3.75. Deliberately narrow: only the
- * LAST sub-run of the run, only these two head/tail class-pair shapes, and
- * only when both sub-runs stand on their own evidence (length >= 2).
- * Mirrors python/sankhya/decode.py::_is_bound_unit_tail. */
-function isBoundUnitTail(subRuns: SubRun[], idx: number): boolean {
-  if (idx !== subRuns.length - 1 || idx === 0) return false;
-  const sr = subRuns[idx];
-  if (sr.end - sr.start < 2) return false;
-  const cname = CLASSES[sr.cls];
-  const prev = subRuns[idx - 1];
-  if (prev.end - prev.start < 2) return false;
-  const pname = CLASSES[prev.cls];
-  if (cname.startsWith("UNIT_") && (pname.startsWith("CARD_") || pname.startsWith("PFX_"))) return true;
-  if (cname.startsWith("CARD_") && pname.startsWith("PFX_")) return true;
-  return false;
+const BOUND_PARTITION_KINDS = ["PFX_", "CARD_", "UNIT_"];
+
+/** Position of `cname` in the PFX -> CARD -> UNIT fused-word order, or -1
+ * for anything else (O/SEP/DIGITS/...). */
+function kindIndex(cname: string): number {
+  for (let i = 0; i < BOUND_PARTITION_KINDS.length; i++) {
+    if (cname.startsWith(BOUND_PARTITION_KINDS[i])) return i;
+  }
+  return -1;
 }
 
-function repairLetterRun(ids: number[] | Int32Array, start: number, end: number): Array<[number, number, number]> {
+/** R2c: which sub-runs of ONE letters run are kept on their own class
+ * instead of being smoothed into a neighbour.
+ *
+ * A fused (written-solid) number word splits the letters run into two or
+ * three unanimous sub-runs following the order PFX? CARD? UNIT? -- at least
+ * two of the three present, each kind at most once, in that order:
+ *
+ *   - CARD + UNIT  -- a bound unit suffix, Marathi "दोनशे" (2 + 100),
+ *     Gujarati "બસો" (2 + 100), Hindi "दोसौ".
+ *   - PFX + UNIT   -- "dedhlakh" (1.5 * 100000).
+ *   - PFX + CARD   -- Marathi "पावणेचार" (0.75 + 4 = 3.75), "साडेआठ".
+ *   - PFX + CARD + UNIT -- Gujarati "સાડાત્રણસો" (PFX_SAADHE + CARD_3 +
+ *     UNIT_SAU = 350), the three-part case.
+ *
+ * Every sub-run must stand on its own evidence: length >= 2 (unanimous, not
+ * a stray 1-char misprediction). The ONE exception is a 1-char sub-run
+ * whose surface is a BOUND number form declared by a language pack for
+ * exactly the surface that follows it (`bound_forms` in the exported
+ * lexicon, the same map verifyTokens consults) -- Gujarati "બ" is CARD_2
+ * only in "બસો", so "બસો" resolves to CARD_2 + UNIT_SAU = 200 while a stray
+ * 1-char sub-run anywhere else is still smoothed away. `text` is the string
+ * the sub-run offsets index into; without it no 1-char sub-run is justified.
+ *
+ * Anything that does not match this shape returns an empty set, i.e. today's
+ * majority-vote / neighbour-adoption smoothing applies as before. Mirrors
+ * python/sankhya/decode.py::_bound_keep_indices. */
+function boundKeepIndices(subRuns: SubRun[], text: string | null): Set<number> {
+  const empty = new Set<number>();
+  const n = subRuns.length;
+  if (n < 2 || n > 3) return empty;
+  const kinds: number[] = [];
+  for (const sr of subRuns) {
+    const k = kindIndex(CLASSES[sr.cls]);
+    if (k < 0) return empty;
+    kinds.push(k);
+  }
+  for (let i = 0; i < n - 1; i++) {
+    if (kinds[i] >= kinds[i + 1]) return empty; // strictly PFX < CARD < UNIT
+  }
+  for (let idx = 0; idx < n; idx++) {
+    const sr = subRuns[idx];
+    if (sr.end - sr.start >= 2) continue;
+    if (sr.end - sr.start === 1 && text !== null && idx + 1 < n) {
+      const nxt = subRuns[idx + 1];
+      if (isBoundForm(CLASSES[sr.cls], text.slice(sr.start, sr.end), text.slice(nxt.start, nxt.end))) {
+        continue;
+      }
+    }
+    return empty;
+  }
+  const keep = new Set<number>();
+  for (let i = 0; i < n; i++) keep.add(i);
+  return keep;
+}
+
+function repairLetterRun(ids: number[] | Int32Array, start: number, end: number, text: string | null = null): Array<[number, number, number]> {
   const subRuns: SubRun[] = [];
   let i = start;
   while (i < end) {
@@ -177,11 +213,12 @@ function repairLetterRun(ids: number[] | Int32Array, start: number, end: number)
   }
 
   const fallback = runMajority(ids, start, end);
+  const keep = boundKeepIndices(subRuns, text);
   const out: Array<[number, number, number]> = [];
   for (let si = 0; si < subRuns.length; si++) {
     const sr = subRuns[si];
     const len = sr.end - sr.start;
-    if (len >= 3 || isBoundUnitTail(subRuns, si)) {
+    if (len >= 3 || keep.has(si)) {
       out.push([sr.start, sr.end, sr.cls]);
       continue;
     }
@@ -214,10 +251,10 @@ function isMeaningfulName(clsName: string): boolean {
  * class array. Used by the R4 connector check to look at a letters-run
  * neighbour that has not been processed yet (it comes after the connector
  * in scan order). */
-function runReprClass(runType: CharType, rs: number, re: number, ids: number[] | Int32Array): string | null {
+function runReprClass(runType: CharType, rs: number, re: number, ids: number[] | Int32Array, text: string | null = null): string | null {
   if (runType === "digit") return "DIGITS";
   if (runType === "letter") {
-    const winners = repairLetterRun(ids, rs, re);
+    const winners = repairLetterRun(ids, rs, re, text);
     const counts = new Map<number, number>();
     for (const [i, j, cls] of winners) {
       counts.set(cls, (counts.get(cls) ?? 0) + (j - i));
@@ -259,12 +296,12 @@ function effectiveNeighbor(runs: Run[], idx: number, direction: 1 | -1): Run | n
  * it, so "dedh-lakh" (PFX_DHAI - UNIT_LAKH, one compound number "1.5
  * lakh") must stay SEP, while "2 lakh/3 lakh" (UNIT_LAKH - DIGITS, two
  * separate amounts) becomes RANGE. */
-function connectorIsRange(runs: Run[], idx: number, ids: number[] | Int32Array): boolean {
+function connectorIsRange(runs: Run[], idx: number, ids: number[] | Int32Array, text: string | null = null): boolean {
   const left = effectiveNeighbor(runs, idx, -1);
   const right = effectiveNeighbor(runs, idx, 1);
   if (!left || !right) return false;
-  const leftCls = runReprClass(left.type, left.start, left.end, ids);
-  const rightCls = runReprClass(right.type, right.start, right.end, ids);
+  const leftCls = runReprClass(left.type, left.start, left.end, ids, text);
+  const rightCls = runReprClass(right.type, right.start, right.end, ids, text);
   if (!leftCls || !rightCls || !isMeaningfulName(leftCls)) return false;
   return rightCls === "DIGITS" || rightCls.startsWith("CARD_") || rightCls.startsWith("PFX_");
 }
@@ -303,7 +340,7 @@ export function repairClasses(spanText: string, ids: number[] | Int32Array): num
     }
 
     if (type === "letter") {
-      for (const [i, j, winner] of repairLetterRun(ids, start, end)) {
+      for (const [i, j, winner] of repairLetterRun(ids, start, end, spanText)) {
         for (let p = i; p < j; p++) out[p] = winner;
       }
       continue;
@@ -317,7 +354,7 @@ export function repairClasses(spanText: string, ids: number[] | Int32Array): num
       const ch = spanText[start];
       if ((ch === "." || ch === ",") && prevType === "digit" && nextType === "digit") {
         id = ch === "." ? ID_DOT : ID_COMMA;
-      } else if (RANGE_CONNECTORS.has(ch) && connectorIsRange(runs, ri, ids)) {
+      } else if (RANGE_CONNECTORS.has(ch) && connectorIsRange(runs, ri, ids, spanText)) {
         id = ID_RANGE;
       } else if (ch === "-" && prevType === "letter" && nextType === "letter") {
         id = ID_SEP;
@@ -382,7 +419,7 @@ const MAX_WORD_RUN_LEN = 24;
  * majority-vote alone would call that unanimous, but no sub-run of it
  * ever reaches 3 in a row on its own or via a qualifying neighbour, so it
  * must stay untrusted). */
-function runUnanimousClass(clsIds: number[] | Int32Array, rs: number, re: number): number | null {
+function runUnanimousClass(clsIds: number[] | Int32Array, rs: number, re: number, text: string | null = null): number | null {
   const subRuns: SubRun[] = [];
   let i = rs;
   while (i < re) {
@@ -393,9 +430,10 @@ function runUnanimousClass(clsIds: number[] | Int32Array, rs: number, re: number
   }
 
   const resolved: number[] = [];
+  const keep = boundKeepIndices(subRuns, text);
   for (let si = 0; si < subRuns.length; si++) {
     const sr = subRuns[si];
-    if (sr.end - sr.start >= 3 || isBoundUnitTail(subRuns, si)) {
+    if (sr.end - sr.start >= 3 || keep.has(si)) {
       resolved.push(sr.cls);
       continue;
     }
@@ -439,6 +477,7 @@ export function extendWordIntegrityBio(
   bioIds: number[] | Int32Array,
   clsIds: number[] | Int32Array,
   runs: Array<[number, number]>,
+  text: string | null = null,
 ): number[] {
   const n = bioIds.length;
   const out = Array.from({ length: n }, (_, i) => bioIds[i] as number);
@@ -453,7 +492,7 @@ export function extendWordIntegrityBio(
       else allCovered = false;
     }
     if (!anyCovered || allCovered) continue; // nothing to extend
-    const unanimous = runUnanimousClass(clsIds, rs, re);
+    const unanimous = runUnanimousClass(clsIds, rs, re, text);
     if (unanimous === null || !isWordClass(CLASSES[unanimous])) continue;
     for (let k = rs; k < re; k++) out[k] = 2;
     out[rs] = 1;
@@ -642,6 +681,81 @@ function mergeRangeConnectorSpans(text: string, clsIds: number[] | Int32Array, s
   return merged;
 }
 
+function lastMeaningfulCls(tokens: Array<[number, string]>): string | null {
+  for (let i = tokens.length - 1; i >= 0; i--) {
+    const name = CLASSES[tokens[i][0]];
+    if (isMeaningful(name)) return name;
+  }
+  return null;
+}
+
+function firstMeaningfulCls(tokens: Array<[number, string]>): string | null {
+  for (const [cid] of tokens) {
+    const name = CLASSES[cid];
+    if (isMeaningful(name)) return name;
+  }
+  return null;
+}
+
+/** R4c: merge an INCOMPLETE amount with the span right after it.
+ *
+ * The BIO head sometimes cuts a single amount in two at a word boundary
+ * even with no connector between them: "ચોંસઠ લાખમાં" decodes as "ચોંસઠ"
+ * (64) + "લાખમાં" (100000) instead of 6400000, "पाव कोटीचा" as "पाव" +
+ * "कोटीचा", "दस बीस हज़ार" as "दस" + "बीस हज़ार".
+ *
+ * Span A is INCOMPLETE when its last meaningful token is a bare number
+ * (CARD_/PFX_/DIGITS) -- it has no UNIT_ token after it, so it cannot have
+ * closed an amount. Span B can CONTINUE it when its first meaningful token
+ * is a UNIT_ (the unit A is missing) or a CARD_ (a further number word of
+ * the same amount). When the two spans are separated by exactly one
+ * whitespace character -- so nothing, not even punctuation, stands between
+ * them -- they are one amount and get merged with a SEP token in between.
+ * Repeated until stable, so a chain ("दस" + "बीस" + "हज़ार") collapses into
+ * one span.
+ *
+ * Two COMPLETE amounts are untouched: "5 lakh 3 crore" has A ending in
+ * UNIT_LAKH, so A is not incomplete and the two stay separate spans. After
+ * merging, core's R7/R8 juxtaposition rules apply to the merged token list
+ * as usual, so "दस बीस हज़ार" becomes a range. Mirrors
+ * python/sankhya/decode.py::_merge_incomplete_amount_spans. */
+function mergeIncompleteAmountSpans(text: string, spansOut: DecodedSpan[]): DecodedSpan[] {
+  if (spansOut.length < 2) return spansOut;
+  let spans = spansOut;
+  for (;;) {
+    const merged: DecodedSpan[] = [spans[0]];
+    let changed = false;
+    for (const nxt of spans.slice(1)) {
+      const prev = merged[merged.length - 1];
+      const gap = text.slice(prev.end, nxt.start);
+      const last = lastMeaningfulCls(prev.tokens);
+      const first = firstMeaningfulCls(nxt.tokens);
+      const gapIsOneSpace = gap.length === 1 && /\s/.test(gap);
+      const aIncomplete =
+        last !== null && (last.startsWith("CARD_") || last.startsWith("PFX_") || last === "DIGITS");
+      const bContinues = first !== null && (first.startsWith("UNIT_") || first.startsWith("CARD_"));
+      if (gapIsOneSpace && aIncomplete && bContinues) {
+        const confidence =
+          prev.confidence === null || nxt.confidence === null
+            ? null
+            : (prev.confidence + nxt.confidence) / 2;
+        merged[merged.length - 1] = {
+          start: prev.start,
+          end: nxt.end,
+          text: text.slice(prev.start, nxt.end),
+          tokens: [...prev.tokens, [ID_SEP, gap] as [number, string], ...nxt.tokens],
+          confidence: confidence as number,
+        };
+        changed = true;
+      } else {
+        merged.push(nxt);
+      }
+    }
+    spans = merged;
+    if (!changed) return spans;
+  }
+}
+
 export function decodeSpans(
   text: string,
   bioIds: number[] | Int32Array,
@@ -651,7 +765,7 @@ export function decodeSpans(
   const n = text.length;
   const allLetterRuns = letterRuns(text);
   let bridged = bridgeBio(bioIds, n);
-  bridged = extendWordIntegrityBio(bridged, clsIds, allLetterRuns);
+  bridged = extendWordIntegrityBio(bridged, clsIds, allLetterRuns, text);
   const spans: Array<[number, number]> = [];
   let start: number | null = null;
   for (let i = 0; i < n; i++) {
@@ -726,5 +840,6 @@ export function decodeSpans(
       confidence: confidence as number,
     });
   }
-  return mergeRangeConnectorSpans(text, clsIds, out);
+  const rangeMerged = mergeRangeConnectorSpans(text, clsIds, out);
+  return mergeIncompleteAmountSpans(text, rangeMerged);
 }

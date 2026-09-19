@@ -24,14 +24,28 @@ interface LexiconJson {
 
 const lexicon = lexiconJson as unknown as LexiconJson;
 
+/** NFC + lowercase, the single normalisation every lexicon lookup uses --
+ * mirrors python/sankhya/verify.py::_norm. */
+function norm(s: string): string {
+  return s.normalize("NFC").toLowerCase();
+}
+
 // Union of all packs' forms (surface -> class) and range_words.
 const FORMS: Map<string, string> = new Map();
+// surface -> EVERY class any pack gives it (FORMS keeps only the first, which
+// is enough for verification but not for "is this surface O and nothing
+// else?" -- see isLexiconOOnly).
+const ALL_CLASSES: Map<string, Set<string>> = new Map();
 const RANGE_WORDS: Set<string> = new Set();
 // surface -> class -> the unit surfaces that surface may precede.
 const BOUND_FORMS: Map<string, Map<string, Set<string>>> = new Map();
 for (const pack of Object.values(lexicon.packs)) {
   for (const [surface, cls] of Object.entries(pack.forms)) {
     if (!FORMS.has(surface)) FORMS.set(surface, cls);
+    const key = norm(surface);
+    let set = ALL_CLASSES.get(key);
+    if (!set) ALL_CLASSES.set(key, (set = new Set()));
+    set.add(cls);
   }
   for (const w of pack.range_words) RANGE_WORDS.add(w.toLowerCase());
   for (const [surface, spec] of Object.entries(pack.bound_forms ?? {})) {
@@ -49,8 +63,28 @@ for (const pack of Object.values(lexicon.packs)) {
  * python/sankhya/verify.py _verify_token. */
 function isBoundFormInContext(cls: string, text: string, nextText: string | null): boolean {
   if (nextText === null) return false;
-  const units = BOUND_FORMS.get(text.toLowerCase())?.get(cls);
-  return units !== undefined && units.has(nextText.toLowerCase());
+  const units = BOUND_FORMS.get(norm(text))?.get(cls);
+  return units !== undefined && units.has(norm(nextText));
+}
+
+/** True when `text` is a declared BOUND number form of class `cls` that may
+ * attach to `nextText`. Exported for the decoder's fused-word partition
+ * (decode.ts boundKeepIndices), so both the verifier and the decoder agree
+ * on which 1-character sub-runs stand on lexicon evidence. Mirrors
+ * python/sankhya/verify.py::is_bound_form. */
+export function isBoundForm(cls: string, text: string, nextText: string | null): boolean {
+  return isBoundFormInContext(cls, text, nextText);
+}
+
+/** R9: true when `text` appears in the lexicon union with class "O" and NO
+ * other class -- an ordinary word (an indefinite plural such as
+ * "karodon"/"करोडो") a pack has explicitly declared a non-number. A surface
+ * that ALSO carries a real number class in some other pack (a cross-pack
+ * conflict) is NOT O-only and is left alone. Mirrors
+ * python/sankhya/verify.py::is_lexicon_o_only. */
+export function isLexiconOOnly(text: string): boolean {
+  const classes = ALL_CLASSES.get(norm(text));
+  return classes !== undefined && classes.size === 1 && classes.has("O");
 }
 
 const RANGE_SYMBOLS = new Set(["-", "–", "—", "/"]);

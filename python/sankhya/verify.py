@@ -19,7 +19,15 @@ import os
 import unicodedata
 from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
-__all__ = ["load_lexicon", "verify_tokens", "union_forms", "union_range_words"]
+__all__ = [
+    "load_lexicon",
+    "verify_tokens",
+    "union_forms",
+    "union_range_words",
+    "union_bound_forms",
+    "is_bound_form",
+    "is_lexicon_o_only",
+]
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 LEXICON_PATH = os.path.join(_REPO_ROOT, "src", "data", "lexicon.json")
@@ -115,6 +123,31 @@ def union_bound_forms(lex: dict = None) -> Dict[str, Dict[str, Set[str]]]:
     if _BOUND is None:
         _FORMS, _RANGE_WORDS, _BOUND = _build_union(load_lexicon())
     return _BOUND
+
+
+def is_bound_form(surface: str, cls: str, next_surface: Optional[str], lex: dict = None) -> bool:
+    """True when `surface` is a declared BOUND number form of class `cls`
+    that may attach to `next_surface` (Gujarati CARD_2 "બ" before UNIT_SAU
+    "સો" = બસો). Shared by verify_tokens and the decoder's fused-word
+    partition (decode._bound_keep_indices), so both runtimes agree on
+    which 1-character sub-runs stand on lexicon evidence.
+    """
+    if next_surface is None:
+        return False
+    bound = union_bound_forms(lex)
+    allowed = bound.get(_norm(surface), {}).get(cls)
+    return bool(allowed) and _norm(next_surface) in allowed
+
+
+def is_lexicon_o_only(surface: str, lex: dict = None) -> bool:
+    """R9: True when `surface` appears in the lexicon union with class "O"
+    and NO other class -- an ordinary word (an indefinite plural such as
+    "karodon"/"करोडो") that some pack has explicitly declared a
+    non-number. A surface that ALSO carries a real number class in some
+    other pack (a cross-pack conflict) is NOT O-only and is left alone.
+    """
+    cls = union_forms(lex).get(_norm(surface))
+    return cls is not None and cls == {"O"}
 
 
 def _norm(s: str) -> str:

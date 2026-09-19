@@ -525,6 +525,20 @@ def test_gold_spans_end_at_word_boundaries():
                 assert nxt not in combining, (r["text"], sp, repr(nxt))
 
 
+def test_gold_spans_exclude_currency_markers_and_words():
+    """Currency markers before a number and currency words after it are
+    detected separately by the runtime and must never be part of the
+    gold span itself (see gold_deva.jsonl convention)."""
+    for r in _load_gold():
+        text = r["text"]
+        for sp in r["spans"]:
+            span_text = text[sp["start"]:sp["end"]]
+            for m in pack.currency_markers_before:
+                assert not span_text.startswith(m), (r["text"], sp, m)
+            for w in pack.currency_words_after:
+                assert not span_text.endswith(w), (r["text"], sp, w)
+
+
 def test_gold_is_disjoint_from_the_raw_corpus():
     raw = os.path.join(PY_ROOT, "data_llm", "raw", "gu_gujr.sonnet.jsonl")
     if not os.path.isfile(raw):
