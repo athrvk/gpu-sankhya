@@ -10,18 +10,28 @@ from .langs import base as langbase
 
 EXTRA_PUNCT = list(" .,-/+()%:'\"!?@#₹~")
 
-# Devanagari digits U+0966-U+096F -> ASCII 0-9, 1:1, offsets preserved.
-_DEVA_DIGIT_MAP = {chr(0x0966 + i): str(i) for i in range(10)}
+# Indic decimal digits -> ASCII 0-9, 1:1, offsets preserved. Every block
+# here is a contiguous run of ten code points in 0..9 order, so the map is
+# a pure per-character substitution and every text offset is unchanged.
+# Kept in sync with core._DIGIT_MAP and src/charset.ts INDIC_DIGIT_RE.
+NATIVE_DIGIT_BLOCKS = {
+    "deva": 0x0966,  # Devanagari U+0966 '०' .. U+096F '९'
+    "gujr": 0x0AE6,  # Gujarati   U+0AE6 '૦' .. U+0AEF '૯'
+}
+_NATIVE_DIGIT_MAP = {
+    chr(base + i): str(i) for base in NATIVE_DIGIT_BLOCKS.values() for i in range(10)
+}
 
 
 def normalize_text(s: str) -> str:
     """Shared normalization spec (identical to the JS runtime):
     1) Unicode NFC normalize
-    2) Devanagari digits U+0966-U+096F -> ASCII 0-9 (1:1, offsets preserved)
+    2) Indic digits -> ASCII 0-9 (1:1, offsets preserved): Devanagari
+       U+0966-U+096F and Gujarati U+0AE6-U+0AEF
     3) lowercase
     """
     s = unicodedata.normalize("NFC", s)
-    s = "".join(_DEVA_DIGIT_MAP.get(ch, ch) for ch in s)
+    s = "".join(_NATIVE_DIGIT_MAP.get(ch, ch) for ch in s)
     s = s.lower()
     return s
 
