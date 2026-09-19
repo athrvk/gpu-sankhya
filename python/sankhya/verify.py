@@ -26,6 +26,8 @@ __all__ = [
     "union_range_words",
     "union_bound_forms",
     "is_bound_form",
+    "union_word_suffixes",
+    "union_word_oblique_endings",
     "is_lexicon_o_only",
 ]
 
@@ -47,6 +49,8 @@ _LEXICON: Optional[dict] = None
 _FORMS: Optional[Dict[str, Set[str]]] = None
 _RANGE_WORDS: Optional[Set[str]] = None
 _BOUND: Optional[Dict[str, Dict[str, Set[str]]]] = None
+_SUFFIXES: Optional[List[str]] = None
+_OBLIQUES: Optional[List[str]] = None
 
 
 def load_lexicon(path: str = None) -> dict:
@@ -56,7 +60,7 @@ def load_lexicon(path: str = None) -> dict:
     missing, builds the same object in-process from the registered language
     packs via `export_lexicon.build()`.
     """
-    global _LEXICON, _FORMS, _RANGE_WORDS, _BOUND
+    global _LEXICON, _FORMS, _RANGE_WORDS, _BOUND, _SUFFIXES, _OBLIQUES
     if path is None and _LEXICON is not None:
         return _LEXICON
     p = path or LEXICON_PATH
@@ -71,6 +75,8 @@ def load_lexicon(path: str = None) -> dict:
         _FORMS = None
         _RANGE_WORDS = None
         _BOUND = None
+        _SUFFIXES = None
+        _OBLIQUES = None
     return obj
 
 
@@ -88,6 +94,60 @@ def _build_union(lex: dict):
             slot = bound.setdefault(_norm(surface), {}).setdefault(spec["cls"], set())
             slot.update(_norm(u) for u in spec.get("before", ()))
     return forms, range_words, bound
+
+
+def _build_endings(lex: dict):
+    """(case endings, oblique stem endings) across every pack, longest first.
+
+    Mirrors the pack fields `word_suffixes` / `word_oblique_endings` that
+    llm_corpus._strip_word_suffixes uses when it resolves an inflected word
+    ("लाखांचं") to its head class.
+    """
+    suffixes: Set[str] = set()
+    obliques: Set[str] = set()
+    for pack in lex.get("packs", {}).values():
+        for s in pack.get("word_suffixes", []) or []:
+            suffixes.add(_norm(s))
+        for o in pack.get("word_oblique_endings", []) or []:
+            obliques.add(_norm(o))
+    return (sorted(suffixes, key=lambda x: (-len(x), x)),
+            sorted(obliques, key=lambda x: (-len(x), x)))
+
+
+def union_word_suffixes(lex: dict = None) -> List[str]:
+    """Every pack's declared case endings, longest first."""
+    global _SUFFIXES, _OBLIQUES
+    if lex is not None:
+        return _build_endings(lex)[0]
+    if _SUFFIXES is None:
+        _SUFFIXES, _OBLIQUES = _build_endings(load_lexicon())
+    return _SUFFIXES
+
+
+def union_word_oblique_endings(lex: dict = None) -> List[str]:
+    """Every pack's declared oblique stem endings, longest first."""
+    global _SUFFIXES, _OBLIQUES
+    if lex is not None:
+        return _build_endings(lex)[1]
+    if _OBLIQUES is None:
+        _SUFFIXES, _OBLIQUES = _build_endings(load_lexicon())
+    return _OBLIQUES
+
+
+def _strip_one_suffix_heads(surface: str, suffixes, obliques):
+    """Yield the candidate head surfaces of `surface` after removing ONE
+    declared case ending (longest first), and, under it, one declared
+    oblique stem ending -- exactly the shapes llm_corpus._strip_word_suffixes
+    yields on its first round. `surface` must already be _norm-ed.
+    """
+    for suf in suffixes:
+        if not surface.endswith(suf) or len(surface) <= len(suf):
+            continue
+        stem = surface[: -len(suf)]
+        yield stem
+        for obl in obliques:
+            if stem.endswith(obl) and len(stem) > len(obl):
+                yield stem[: -len(obl)]
 
 
 def union_forms(lex: dict = None) -> Dict[str, Set[str]]:
@@ -158,8 +218,26 @@ def _is_digit_char(c: str) -> bool:
     return ("0" <= c <= "9") or (c in _NATIVE_DIGITS)
 
 
+def _verify_suffixed(cls: str, surface: str, forms, suffixes, obliques) -> bool:
+    """A PFX_*/CARD_*/UNIT_* token whose exact surface is unknown may still
+    be an inflected form of a known head: Marathi "लाखांचं" is UNIT_LAKH
+    (लाख + oblique "ां" + ending "चं"), Gujarati "કરોડનો" is UNIT_CRORE.
+
+    Only ONE declared ending is removed, the head must carry the token's own
+    class, and a surface that is itself a full lexicon form is never stripped
+    (that is handled by the exact-match check before this is reached).
+    """
+    if not suffixes or surface in forms:
+        return False
+    for head in _strip_one_suffix_heads(surface, suffixes, obliques):
+        if cls in forms.get(head, ()):
+            return True
+    return False
+
+
 def _verify_token(cls: str, text: str, forms, range_words,
-                  bound=None, next_text: str = None) -> bool:
+                  bound=None, next_text: str = None,
+                  suffixes=(), obliques=()) -> bool:
     if cls == "SEP":
         return len(text) > 0 and text.strip() == ""
     if cls == "DOT":
@@ -177,6 +255,10 @@ def _verify_token(cls: str, text: str, forms, range_words,
         return "O" in forms.get(_norm(text), ())
     # PFX_* / CARD_* / UNIT_*
     if cls in forms.get(_norm(text), ()):
+        return True
+    # ... or the same class wearing one of the packs' declared case endings
+    # ("लाखांचं" = UNIT_LAKH, "કરોડનો" = UNIT_CRORE).
+    if _verify_suffixed(cls, _norm(text), forms, suffixes, obliques):
         return True
     # ... or a BOUND number form, justified only by what follows it: the
     # very next token must be one of the unit surfaces it attaches to
@@ -203,12 +285,15 @@ def verify_tokens(tokens: Sequence[Tuple[str, str]], lex: dict = None) -> bool:
         return False
     if lex is None:
         forms, range_words, bound = union_forms(), union_range_words(), union_bound_forms()
+        suffixes, obliques = union_word_suffixes(), union_word_oblique_endings()
     else:
         forms, range_words, bound = _build_union(lex)
+        suffixes, obliques = _build_endings(lex)
     has_content = False
     for i, (cls, text) in enumerate(tokens):
         next_text = tokens[i + 1][1] if i + 1 < len(tokens) else None
-        if not _verify_token(cls, text, forms, range_words, bound, next_text):
+        if not _verify_token(cls, text, forms, range_words, bound, next_text,
+                             suffixes, obliques):
             return False
         if _is_content(cls):
             has_content = True

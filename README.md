@@ -261,7 +261,7 @@ weights:
 | gold_mr.jsonl (Marathi) | 173 | 135 | 0.9852 | 0.9852 | 0.9852 | 0.9852 |
 | gold_gu.jsonl (Gujarati) | 162 | 118 | 0.9322 | 0.9658 | 0.9576 | 0.9617 |
 | combined | 748 | 607 | 0.9621 | 0.9719 | 0.9671 | 0.9694 |
-| strict mode (verified spans only) | 748 | 506 covered (0.8336) | 1.0000 | — | — | — |
+| strict mode (verified spans only) | 748 | 506 covered (0.9094) | 1.0000 | — | — | — |
 
 Negatives (zero-gold-span examples, 170 total): 0 false positives.
 Miss summary: missed 6, spurious 0, wrong value 3, wrong boundary 14.

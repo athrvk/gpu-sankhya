@@ -284,9 +284,9 @@
     },
     "strict": {
       "gold_spans": 607,
-      "covered": 506,
-      "coverage": 0.8336079077429983,
-      "value_correct": 506,
+      "covered": 552,
+      "coverage": 0.9093904448105437,
+      "value_correct": 552,
       "value_acc": 1.0,
       "spurious": 0,
       "negatives": {

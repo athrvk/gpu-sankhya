@@ -16,6 +16,11 @@ interface LexiconPack {
    * nowhere else). Kept out of `forms` on purpose -- a verifier that
    * merged them in would verify a standalone "બ" as 2. */
   bound_forms?: Record<string, LexiconBoundForm>;
+  /** Case endings that attach directly to a unit/cardinal word in this
+   * language ("लाखांचं", "કરોડનો"), and the oblique stem endings that may
+   * sit under one ("लाख" -> "लाखां-"). Absent for packs with none. */
+  word_suffixes?: string[];
+  word_oblique_endings?: string[];
 }
 interface LexiconJson {
   version: number;
@@ -39,6 +44,9 @@ const ALL_CLASSES: Map<string, Set<string>> = new Map();
 const RANGE_WORDS: Set<string> = new Set();
 // surface -> class -> the unit surfaces that surface may precede.
 const BOUND_FORMS: Map<string, Map<string, Set<string>>> = new Map();
+// Union of every pack's declared case endings / oblique stem endings.
+const WORD_SUFFIXES: Set<string> = new Set();
+const WORD_OBLIQUE_ENDINGS: Set<string> = new Set();
 for (const pack of Object.values(lexicon.packs)) {
   for (const [surface, cls] of Object.entries(pack.forms)) {
     if (!FORMS.has(surface)) FORMS.set(surface, cls);
@@ -56,6 +64,39 @@ for (const pack of Object.values(lexicon.packs)) {
     if (!units) byClass.set(spec.cls, (units = new Set()));
     for (const u of spec.before) units.add(u.toLowerCase());
   }
+  for (const suf of pack.word_suffixes ?? []) WORD_SUFFIXES.add(norm(suf));
+  for (const obl of pack.word_oblique_endings ?? []) WORD_OBLIQUE_ENDINGS.add(norm(obl));
+}
+
+const byLengthDesc = (a: string, b: string): number => b.length - a.length || (a < b ? -1 : a > b ? 1 : 0);
+const SUFFIXES_SORTED: string[] = [...WORD_SUFFIXES].sort(byLengthDesc);
+const OBLIQUES_SORTED: string[] = [...WORD_OBLIQUE_ENDINGS].sort(byLengthDesc);
+
+/** A PFX_, CARD_ or UNIT_ token whose exact surface is unknown may still be
+ * an inflected form of a known head: Marathi "लाखांचं" is UNIT_LAKH (लाख +
+ * oblique "ां" + ending "चं"), Gujarati "કરોડનો" is UNIT_CRORE. Exactly ONE
+ * declared ending is removed (longest first), optionally with one oblique
+ * stem ending under it, and the head must carry the token's own class. A
+ * surface that is itself a full lexicon form is never stripped. Mirrors
+ * python/sankhya/verify.py::_verify_suffixed. */
+function isSuffixedForm(cls: string, text: string): boolean {
+  const surface = norm(text);
+  if (SUFFIXES_SORTED.length === 0) return false;
+  if (ALL_CLASSES.has(surface)) return false;
+  for (const suf of SUFFIXES_SORTED) {
+    if (surface.length <= suf.length || !surface.endsWith(suf)) continue;
+    const stem = surface.slice(0, surface.length - suf.length);
+    const heads = [stem];
+    for (const obl of OBLIQUES_SORTED) {
+      if (stem.length > obl.length && stem.endsWith(obl)) {
+        heads.push(stem.slice(0, stem.length - obl.length));
+      }
+    }
+    for (const head of heads) {
+      if (ALL_CLASSES.get(head)?.has(cls)) return true;
+    }
+  }
+  return false;
 }
 
 /** A BOUND number form is justified only by what follows it: the very next
@@ -146,7 +187,11 @@ export function verifyTokens(tokens: Array<[string, string]>): boolean {
       }
       default: {
         // PFX_*/CARD_*/UNIT_*, or a bound form justified by the next token
-        if (FORMS.get(text.toLowerCase()) !== cls && !isBoundFormInContext(cls, text, nextText)) {
+        if (
+          !ALL_CLASSES.get(norm(text))?.has(cls) &&
+          !isBoundFormInContext(cls, text, nextText) &&
+          !isSuffixedForm(cls, text)
+        ) {
           return false;
         }
         hasContentToken = true;

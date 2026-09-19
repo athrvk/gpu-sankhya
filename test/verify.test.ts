@@ -175,3 +175,22 @@ test("a bound number form verifies only immediately before its unit", () => {
   // the free form is unaffected
   assert.equal(verifyTokens([["CARD_2", "બે"], ["SEP", " "], ["UNIT_LAKH", "લાખ"]]), true);
 });
+
+test("a declared case ending is stripped to its head class (mirrors python verify)", () => {
+  // लाखांचं = लाख + oblique "ां" + ending "चं"; कोटीचा = कोटी + "चा"
+  assert.equal(verifyTokens([["UNIT_LAKH", "लाखांचं"]]), true);
+  assert.equal(verifyTokens([["DIGITS", "५"], ["SEP", " "], ["UNIT_LAKH", "लाखांचं"]]), true);
+  assert.equal(verifyTokens([["UNIT_CRORE", "कोटीचा"]]), true);
+  assert.equal(verifyTokens([["UNIT_CRORE", "કરોડનો"]]), true);
+  assert.equal(verifyTokens([["UNIT_HAZAAR", "હજારનો"]]), true);
+  // a made-up ending is not declared, so it stays unverified
+  assert.equal(verifyTokens([["UNIT_LAKH", "लाखझझ"]]), false);
+  assert.equal(verifyTokens([["UNIT_CRORE", "કરોડxyz"]]), false);
+  // a surface that is itself a full lexicon form is never stripped:
+  // "છનું" is CARD_96, not CARD_6 + "નું"
+  assert.equal(verifyTokens([["CARD_96", "છનું"]]), true);
+  assert.equal(verifyTokens([["CARD_6", "છનું"]]), false);
+  // the head must carry the token's own class
+  assert.equal(verifyTokens([["CARD_5", "लाखांचं"]]), false);
+  assert.equal(verifyTokens([["PFX_SAVA", "कोटीचा"]]), false);
+});

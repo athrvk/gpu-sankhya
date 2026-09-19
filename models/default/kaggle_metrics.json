@@ -302,9 +302,9 @@
         },
         "strict": {
           "gold_spans": 607,
-          "covered": 505,
-          "coverage": 0.8319604612850082,
-          "value_correct": 505,
+          "covered": 550,
+          "coverage": 0.9060955518945635,
+          "value_correct": 550,
           "value_acc": 1.0,
           "spurious": 0,
           "negatives": {
@@ -602,9 +602,9 @@
         },
         "strict": {
           "gold_spans": 607,
-          "covered": 505,
-          "coverage": 0.8319604612850082,
-          "value_correct": 505,
+          "covered": 550,
+          "coverage": 0.9060955518945635,
+          "value_correct": 550,
           "value_acc": 1.0,
           "spurious": 0,
           "negatives": {
@@ -902,9 +902,9 @@
         },
         "strict": {
           "gold_spans": 607,
-          "covered": 506,
-          "coverage": 0.8336079077429983,
-          "value_correct": 506,
+          "covered": 552,
+          "coverage": 0.9093904448105437,
+          "value_correct": 552,
           "value_acc": 1.0,
           "spurious": 0,
           "negatives": {

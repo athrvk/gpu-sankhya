@@ -14,6 +14,13 @@ Format (version 1):
 english_fraction_phrases + indefinite_plurals as "O"). `range_words` are the
 alphabetic range connectors (stripped, lowercased).
 
+`word_suffixes` / `word_oblique_endings` (optional, absent for packs
+that declare none) are the pack's case endings and the oblique stems that
+may sit under them (Marathi "लाखांचं" = लाख + oblique "ां" + ending "चं").
+Both verifiers strip ONE declared ending from a PFX_*/CARD_*/UNIT_* token
+whose exact surface is unknown, and accept the token when the remaining
+head is a lexicon form of the token's own class -- see verify.py.
+
 `bound_forms` (optional, absent for packs that have none) holds surfaces
 that are ONLY valid immediately before one of the listed unit surfaces --
 Gujarati CARD_2 "બ", which exists in બસો (200) and nowhere else. They are
@@ -53,6 +60,12 @@ def build() -> dict:
         }
         if bound:
             entry["bound_forms"] = bound
+        suffixes = sorted({s.lower() for s in (pack.word_suffixes or [])})
+        if suffixes:
+            entry["word_suffixes"] = suffixes
+        obliques = sorted({o.lower() for o in (pack.word_oblique_endings or [])})
+        if obliques:
+            entry["word_oblique_endings"] = obliques
         packs[pid] = entry
     return {"version": 1, "packs": packs}
 

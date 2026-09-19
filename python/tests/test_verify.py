@@ -77,3 +77,35 @@ def test_exported_lexicon_matches_packs():
     with open(LEXICON_PATH, "r", encoding="utf-8") as f:
         committed = json.load(f)
     assert committed == built, "src/data/lexicon.json is stale: rerun python -m sankhya.export_lexicon"
+
+
+# declared case endings (LanguagePack.word_suffixes / word_oblique_endings)
+
+def test_marathi_case_ending_verifies_as_its_head_unit():
+    # लाखांचं = लाख + oblique "ां" + ending "चं"
+    assert verify_tokens([("UNIT_LAKH", "लाखांचं")])
+    assert verify_tokens([("DIGITS", "५"), ("SEP", " "), ("UNIT_LAKH", "लाखांचं")])
+    assert verify_tokens([("UNIT_CRORE", "कोटीचा")])
+
+
+def test_gujarati_case_ending_verifies_as_its_head_unit():
+    assert verify_tokens([("UNIT_CRORE", "કરોડનો")])
+    assert verify_tokens([("UNIT_HAZAAR", "હજારનો")])
+
+
+def test_made_up_suffix_does_not_verify():
+    assert not verify_tokens([("UNIT_LAKH", "लाखझझ")])
+    assert not verify_tokens([("UNIT_CRORE", "કરોડxyz")])
+
+
+def test_a_full_lexicon_form_is_never_stripped():
+    # "છનું" is CARD_96 in its own right; stripping "નું" would leave "છ"
+    # (CARD_6), so it must not verify as CARD_6.
+    assert verify_tokens([("CARD_96", "છનું")])
+    assert not verify_tokens([("CARD_6", "છનું")])
+
+
+def test_suffix_strip_requires_the_tokens_own_class():
+    # head "लाख" is UNIT_LAKH and nothing else
+    assert not verify_tokens([("CARD_5", "लाखांचं")])
+    assert not verify_tokens([("PFX_SAVA", "कोटीचा")])

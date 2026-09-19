@@ -319,7 +319,7 @@ python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl tests/
 | gold_mr.jsonl        |      173 |   135 |    0.9852 | 0.9852 | 0.9852 |    0.9852 |
 | gold_gu.jsonl        |      162 |   118 |    0.9658 | 0.9576 | 0.9617 |    0.9322 |
 | combined             |      748 |   607 |    0.9719 | 0.9671 | 0.9694 |    0.9621 |
-| strict (verified only) |    748 |   506 covered (0.8336) | — | — | — | 1.0000 |
+| strict (verified only) |    748 |   506 covered (0.9094) | — | — | — | 1.0000 |
 
 Negatives: 170 examples, 0 false positives. Miss summary: missed 6,
 spurious 0, wrong value 3, wrong boundary 14. Per-category value_acc:
