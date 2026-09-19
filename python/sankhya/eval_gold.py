@@ -35,7 +35,8 @@ _ALL_PACKS = None
 
 # gold files are named `gold.jsonl` / `gold_<suffix>.jsonl`; these map the
 # suffix to a pack id where they differ (see eval_matrix._lang_label).
-_GOLD_SUFFIX_ALIASES = {"": "hi_latn", "deva": "hi_deva", "latn": "hi_latn", "mr": "mr_deva"}
+_GOLD_SUFFIX_ALIASES = {"": "hi_latn", "deva": "hi_deva", "latn": "hi_latn",
+                        "mr": "mr_deva", "gu": "gu_gujr"}
 
 
 def _all_packs():

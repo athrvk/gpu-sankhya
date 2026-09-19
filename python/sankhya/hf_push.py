@@ -328,6 +328,7 @@ _GOLD_BLURBS = {
     "hi_latn": 'romanised Hindi / Hinglish\n  ("bhai sava lakh mein ho jayega kya")',
     "hi_deva": 'Devanagari Hindi\n  ("सवा लाख मिलेगा")',
     "mr_deva": 'Devanagari Marathi\n  ("दीड लाख मिळतील")',
+    "gu_gujr": 'Gujarati\n  ("દોઢ લાખનું પેકેજ છે")',
 }
 
 
