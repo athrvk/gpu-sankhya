@@ -270,6 +270,22 @@
   }
   .no-span { color: var(--muted); font-size: 0.8rem; font-style: italic; margin-top: 0.15rem; }
 
+  .report-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.08rem 0.5rem;
+    margin-top: 0.3rem;
+  }
+  .report-link:hover { color: var(--bad); border-color: var(--bad); }
+  .report-row { display: flex; justify-content: flex-end; }
+  .report-all-row { display: flex; justify-content: flex-end; margin-bottom: 0.4rem; }
+
   .span-row {
     display: grid;
     grid-template-columns: auto 1fr auto;
@@ -639,6 +655,9 @@ lakhon log aaye</textarea>
         <div class="copy-row hidden" id="copy-row">
           <button type="button" id="copy-json">Copy JSON</button>
         </div>
+        <div class="report-all-row">
+          <a class="report-link" id="report-all" href="#" target="_blank" rel="noopener" title="Report a wrong parse for the whole input">🚩 report wrong parse (all lines)</a>
+        </div>
         <div class="results-scroll">
           <div id="results"></div>
           <pre class="raw hidden" id="results-raw"></pre>
@@ -873,6 +892,7 @@ lakhon log aaye</textarea>
   // ---------- results (cards / raw json) ----------
   const results = document.getElementById("results");
   const resultsRaw = document.getElementById("results-raw");
+  const reportAllLink = document.getElementById("report-all");
   const viewCardsBtn = document.getElementById("view-cards");
   const viewJsonBtn = document.getElementById("view-json");
   const copyRow = document.getElementById("copy-row");
@@ -1010,6 +1030,78 @@ lakhon log aaye</textarea>
     return "low";
   }
 
+  // ---------- wrong-parse reporting ----------
+  const ISSUE_REPO = "athrvk/gpu-sankhya";
+  const MAX_ISSUE_BODY_BYTES = 6000;
+
+  // Rough script guess from the characters present in the text, used only
+  // to preselect the "Language pack" dropdown on the issue form.
+  function guessLangPack(text) {
+    if (/[઀-૿]/.test(text)) return "gu_gujr";
+    if (/[ऀ-ॿ]/.test(text)) {
+      // both hi_deva and mr_deva use Devanagari; default to hi_deva and let
+      // the reporter correct it if it's actually Marathi.
+      return "hi_deva";
+    }
+    if (/[A-Za-z]/.test(text)) return "hi_latn";
+    return "other";
+  }
+
+  function truncateForIssue(str, maxBytes) {
+    if (new Blob([str]).size <= maxBytes) return str;
+    // binary-search-ish trim to fit the byte budget, then mark truncated.
+    let lo = 0, hi = str.length;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if (new Blob([str.slice(0, mid)]).size <= maxBytes) lo = mid;
+      else hi = mid - 1;
+    }
+    return str.slice(0, lo) + "\n… (truncated)";
+  }
+
+  function buildIssueUrl({ text, gotJson }) {
+    const lang = guessLangPack(text);
+    const title = "wrong parse: " + text.slice(0, 60);
+    let bodyExtra =
+      "_Prefilled from the demo. Please fill in \"What the correct value / range / span should be\" below._";
+    const params = new URLSearchParams();
+    params.set("template", "wrong_parse.yml");
+    params.set("title", title);
+    params.set("input-text", truncateForIssue(text, 1000));
+    params.set("lang-pack", lang);
+    if (gotJson) {
+      params.set("got", "```json\n" + truncateForIssue(gotJson, MAX_ISSUE_BODY_BYTES - 1500) + "\n```");
+    }
+    const url =
+      `https://github.com/${ISSUE_REPO}/issues/new?` + params.toString();
+    if (new Blob([url]).size > MAX_ISSUE_BODY_BYTES) {
+      // last-resort safety net: drop the "got" JSON entirely.
+      const minimal = new URLSearchParams();
+      minimal.set("template", "wrong_parse.yml");
+      minimal.set("title", title);
+      minimal.set("input-text", truncateForIssue(text, 1000));
+      minimal.set("lang-pack", lang);
+      return `https://github.com/${ISSUE_REPO}/issues/new?` + minimal.toString();
+    }
+    return url;
+  }
+
+  function makeReportLink(text, spans, labelText) {
+    const a = document.createElement("a");
+    a.className = "report-link";
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.href = "#";
+    a.textContent = labelText || "🚩 report wrong parse";
+    a.title = "Open a GitHub issue prefilled with this text and result";
+    a.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const gotJson = JSON.stringify(spans, null, 2);
+      a.href = buildIssueUrl({ text, gotJson });
+    });
+    return a;
+  }
+
   function renderLine(text, spans, index) {
     const lineDiv = document.createElement("div");
     lineDiv.className = "line";
@@ -1029,6 +1121,10 @@ lakhon log aaye</textarea>
         noSpan.className = "no-span";
         noSpan.textContent = "no quantity found";
         lineDiv.appendChild(noSpan);
+        const reportRow = document.createElement("div");
+        reportRow.className = "report-row";
+        reportRow.appendChild(makeReportLink(text, spans));
+        lineDiv.appendChild(reportRow);
       }
       return lineDiv;
     }
@@ -1180,6 +1276,12 @@ lakhon log aaye</textarea>
       lineDiv.appendChild(row);
       lineDiv.appendChild(howPanel);
     });
+
+    const reportRow = document.createElement("div");
+    reportRow.className = "report-row";
+    reportRow.appendChild(makeReportLink(text, spans));
+    lineDiv.appendChild(reportRow);
+
     return lineDiv;
   }
 
@@ -1216,6 +1318,11 @@ lakhon log aaye</textarea>
       lastParseData.push({ text: line, spans });
       results.appendChild(renderLine(line, spans, i));
     });
+    reportAllLink.onclick = (e) => {
+      const wholeText = input.value;
+      const gotJson = JSON.stringify(lastParseData.map((l) => l.spans), null, 2);
+      reportAllLink.href = buildIssueUrl({ text: wholeText, gotJson });
+    };
     const t1 = performance.now();
     statLatency.textContent = (t1 - t0).toFixed(2) + " ms";
     statLines.textContent = String(lines.length);
