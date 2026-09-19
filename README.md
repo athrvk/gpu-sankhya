@@ -32,6 +32,8 @@ component); this package is the runtime that loads its exported weights.
 See `python/README.md` if you want to train your own weights and load
 them via `createParser({ weights })` instead of the bundled default.
 
+See [`CHANGELOG.md`](./CHANGELOG.md) for what changed in each release.
+
 ## Install
 
 ```bash
