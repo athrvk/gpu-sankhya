@@ -39,7 +39,8 @@ def test_pack_registered_and_complete():
     assert "शे" in pack.lexicon["UNIT_SAU"]
     assert "कोटी" in pack.lexicon["UNIT_CRORE"] and "करोड" in pack.lexicon["UNIT_CRORE"]
     assert "अब्ज" in pack.lexicon["UNIT_ARAB"]
-    assert getattr(pack, "deva_digit_prob", 0) > 0
+    assert pack.native_digits == "०१२३४५६७८९"
+    assert pack.native_digit_prob > 0
 
 
 def test_every_surface_form_is_unambiguous_within_the_pack():
