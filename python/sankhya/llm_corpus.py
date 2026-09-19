@@ -182,11 +182,13 @@ def _word_tokens(pack, word, depth=0):
     as an unknown token).
     """
     wl = word.lower()
-    glue_forms = {f.lower() for f in getattr(pack, "glue_unit_forms", []) or []}
-    if wl in glue_forms:
+    bound_units = {f.lower() for f in pack.bound_units()}
+    if wl in bound_units:
         # a BOUND unit form is never a standalone word: on its own this is
         # some other word entirely (Marathi "शेत" = field, not "शे" + a case
-        # ending), so it must not resolve to the unit.
+        # ending), so it must not resolve to the unit. Glue forms that are
+        # also free words (Gujarati "સો") are not in bound_units() and fall
+        # through to the ordinary lexicon lookup below.
         return None
     cls = _word_class(pack, wl)
     if cls is not None:
@@ -206,6 +208,14 @@ def _word_tokens(pack, word, depth=0):
         if wl.endswith(suf.lower()) and len(wl) > len(suf):
             head = word[: -len(suf)]
             head_toks = _word_tokens(pack, head, depth + 1)
+            if head_toks is None:
+                # the head may be a BOUND number form that only exists in
+                # this glued position (Gujarati "બ" in બસો = CARD_2 +
+                # UNIT_SAU). Looking it up only here -- keyed by the unit
+                # it precedes -- is what stops a standalone "બ" resolving.
+                bcls = pack.bound_number_map(before=suf).get(head.lower())
+                if bcls is not None:
+                    head_toks = [(bcls, head)]
             if head_toks and all(C.is_card(c) or C.is_prefix(c) for c, _ in head_toks):
                 return head_toks + [(forms[suf.lower()], word[len(word) - len(suf):])]
 
@@ -363,7 +373,7 @@ def _negative_has_quantity(pack, normalized_text):
             if wl in marker_words or wl in after_words:
                 return True
             cls = forms.get(wl)
-            if wl in {f.lower() for f in getattr(pack, "glue_unit_forms", []) or []}:
+            if wl in {f.lower() for f in pack.bound_units()}:
                 cls = None  # bound form, never a standalone unit word
             if cls is None:
                 # a word this pack writes fused or inflected ("दोनशे",

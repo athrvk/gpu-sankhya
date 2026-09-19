@@ -155,3 +155,23 @@ test("RANGE word tokens carry their surrounding spaces (decoder emits ' कि�
   assert.equal(verifyTokens([["CARD_3", "teen"], ["RANGE", " se "], ["CARD_4", "chaar"], ["SEP", " "], ["UNIT_LAKH", "lakh"]]), true);
   assert.equal(verifyTokens([["CARD_3", "teen"], ["RANGE", " xyz "], ["CARD_4", "chaar"], ["SEP", " "], ["UNIT_LAKH", "lakh"]]), false);
 });
+
+test("Gujarati digits count as DIGITS, mirroring python verify._NATIVE_DIGITS", () => {
+  assert.equal(verifyTokens([["DIGITS", "૭૫૦૦"]]), true);
+  assert.equal(verifyTokens([["DIGITS", "૧૨"], ["SEP", " "], ["UNIT_LAKH", "લાખ"]]), true);
+  // Devanagari digits keep working, and a non-digit glyph still fails
+  assert.equal(verifyTokens([["DIGITS", "२५"]]), true);
+  assert.equal(verifyTokens([["DIGITS", "૭x"]]), false);
+});
+
+test("a bound number form verifies only immediately before its unit", () => {
+  // બસો = 200: CARD_2 "બ" is justified by the "સો" that follows it
+  assert.equal(verifyTokens([["CARD_2", "બ"], ["UNIT_SAU", "સો"]]), true);
+  assert.equal(verifyTokens([["CARD_6", "છસ્"], ["UNIT_SAU", "સો"]]), true);
+  // ... and never on its own, spaced, or before any other unit
+  assert.equal(verifyTokens([["CARD_2", "બ"]]), false);
+  assert.equal(verifyTokens([["CARD_2", "બ"], ["SEP", " "], ["UNIT_SAU", "સો"]]), false);
+  assert.equal(verifyTokens([["CARD_2", "બ"], ["UNIT_HAZAAR", "હજાર"]]), false);
+  // the free form is unaffected
+  assert.equal(verifyTokens([["CARD_2", "બે"], ["SEP", " "], ["UNIT_LAKH", "લાખ"]]), true);
+});
