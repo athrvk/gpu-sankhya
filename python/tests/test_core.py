@@ -325,3 +325,62 @@ def test_detect_currency_window_wide_enough_for_rupees_after_a_short_number():
 def test_detect_currency_glued_symbol_before_digits():
     text = "₹85000"
     assert core.detect_currency(text, 1, 6, pack) == "INR"
+
+
+def test_r7_teen_hazaar_paanch_hazaar_juxtaposition_range():
+    r = ev(("CARD_3", "teen"), ("SEP", " "), ("UNIT_HAZAAR", "hazaar"), ("SEP", " "),
+           ("CARD_5", "paanch"), ("SEP", " "), ("UNIT_HAZAAR", "hazaar"))
+    assert r.value == 3000, r.value
+    assert r.range == (3000, 5000), r.range
+    assert r.unit == "hazaar"
+
+
+def test_r7_bees_lakh_pachees_lakh_juxtaposition_range():
+    r = ev(("CARD_20", "bees"), ("SEP", " "), ("UNIT_LAKH", "lakh"), ("SEP", " "),
+           ("CARD_25", "pachees"), ("SEP", " "), ("UNIT_LAKH", "lakh"))
+    assert r.value == 2000000, r.value
+    assert r.range == (2000000, 2500000), r.range
+    assert r.unit == "lakh"
+
+
+def test_r7_3_hazaar_5_hazaar_digits_juxtaposition_range():
+    r = ev(("DIGITS", "3"), ("SEP", " "), ("UNIT_HAZAAR", "hazaar"), ("SEP", " "),
+           ("DIGITS", "5"), ("SEP", " "), ("UNIT_HAZAAR", "hazaar"))
+    assert r.value == 3000, r.value
+    assert r.range == (3000, 5000), r.range
+
+
+def test_r7_paanch_lakh_paanch_lakh_equal_falls_back_to_additive():
+    # Deliberate choice: equal juxtaposed terms are ambiguous with plain
+    # repetition/emphasis, not a genuine [x, x] range, so R7 requires
+    # low < high strictly and this falls back to today's additive sum.
+    r = ev(("CARD_5", "paanch"), ("SEP", " "), ("UNIT_LAKH", "lakh"), ("SEP", " "),
+           ("CARD_5", "paanch"), ("SEP", " "), ("UNIT_LAKH", "lakh"))
+    assert r.value == 1000000, r.value
+    assert r.range is None
+
+
+def test_r7_das_hazaar_crore_multiplicative_stacking_unaffected():
+    # Second term (crore) has NO explicit coefficient, so R7 must not fire.
+    r = ev(("CARD_10", "das"), ("SEP", " "), ("UNIT_HAZAAR", "hazaar"), ("SEP", " "),
+           ("UNIT_CRORE", "crore"))
+    assert r.value == 1e11, r.value
+    assert r.range is None
+
+
+def test_r7_ek_lakh_dus_hazaar_descending_additive_chain_unaffected():
+    # unit_value(hazaar) < unit_value(lakh), so R7 must not fire.
+    r = ev(("CARD_1", "ek"), ("SEP", " "), ("UNIT_LAKH", "lakh"), ("SEP", " "),
+           ("CARD_10", "dus"), ("SEP", " "), ("UNIT_HAZAAR", "hazaar"))
+    assert r.value == 110000, r.value
+    assert r.range is None
+
+
+def test_r7_do_teen_lakh_cardinal_only_juxtaposition_unaffected():
+    # By the time this reaches evaluate(), decode-time repair has already
+    # inserted an explicit RANGE token between the two cardinals, so this
+    # exercises the existing RANGE-based path (R6-adjacent), not R7.
+    r = ev(("CARD_2", "do"), ("RANGE", " "),
+           ("CARD_3", "teen"), ("SEP", " "), ("UNIT_LAKH", "lakh"))
+    assert r.range == (200000, 300000), r.range
+    assert r.unit == "lakh"

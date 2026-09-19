@@ -242,15 +242,16 @@ training): 0.925 value accuracy. This number is optimistic — it's testing
 the model on its own distribution.
 
 On two hand-written gold sets, written independently of the generator —
-`python/tests/gold.jsonl` (romanised Hindi, 225 sentences / 197 spans)
-and `python/tests/gold_deva.jsonl` (Devanagari Hindi, 185 sentences / 154
+`python/tests/gold.jsonl` (romanised Hindi, 227 sentences / 199 spans)
+and `python/tests/gold_deva.jsonl` (Devanagari Hindi, 186 sentences / 155
 spans) — evaluated against the shipped int8-quantized weights:
 
 | gold set | examples | spans | value accuracy | span precision | span recall | span F1 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| gold.jsonl (romanised) | 225 | 197 | 0.9543 | 0.9497 | 0.9594 | 0.9545 |
-| gold_deva.jsonl (Devanagari) | 185 | 154 | 0.9740 | 0.9805 | 0.9805 | 0.9805 |
-| combined | 410 | 351 | 0.9632 | 0.9632 | 0.9687 | 0.9659 |
+| gold.jsonl (romanised) | 227 | 199 | 0.9548 | 0.9502 | 0.9598 | 0.9550 |
+| gold_deva.jsonl (Devanagari) | 186 | 155 | 0.9806 | 0.9806 | 0.9806 | 0.9806 |
+| combined | 413 | 354 | 0.9661 | 0.9635 | 0.9689 | 0.9662 |
+| strict mode (verified spans only) | 413 | 320 covered (0.904) | 1.0000 | — | — | — |
 
 Negatives (zero-gold-span examples, 75 total): 0 false positives.
 Miss summary: missed 1, spurious 1, wrong value 2, wrong boundary 10.
@@ -386,6 +387,19 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   space) as one additive amount rather than a `[low, high]` range —
   genuine ranges (only one side has a unit, or both do but ascending) are
   unaffected.
+- **R7 — juxtaposed ranges with no connector word**: two adjacent
+  coefficient+unit terms with NO `RANGE` token between them at all (e.g.
+  `"teen hazaar paanch hazaar"`, `"bees lac pachees lac"`, `"तीन हज़ार
+  पाँच हज़ार"`) are evaluated as a `[low, high]` range rather than
+  summed, when both terms carry an explicit coefficient and the second
+  term's unit is the same size or larger — this is the same shape of
+  arithmetic as an explicit range connector, just spoken without one.
+  Multiplicative stacking (`"das hazaar crore"`, second term has no
+  coefficient), descending additive chains (`"ek lakh dus hazaar"`), and
+  cardinal-only juxtaposition (`"do teen lakh"`, already repaired into an
+  explicit `RANGE` upstream) are all unaffected; two equal terms
+  (`"paanch lakh paanch lakh"`) fall back to plain additive doubling
+  rather than a degenerate `[x, x]` range.
 
 An optional linear-chain CRF (`--crf`, see `python/README.md`) can replace
 the plain per-character argmax with Viterbi decoding, but experiments on

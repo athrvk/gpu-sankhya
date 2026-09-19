@@ -223,3 +223,5 @@
 {"text": "das kharab ka budget hai sarkar ka", "lang": "hi_latn", "spans": [{"start": 0, "end": 10, "value": 1000000000000}]}
 {"text": "sawalakh ka scooter le liya", "lang": "hi_latn", "spans": [{"start": 0, "end": 8, "value": 125000}]}
 {"text": "5 hazaar se 8 hazaar tak lagenge", "lang": "hi_latn", "spans": [{"start": 0, "end": 20, "value": 5000, "range": [5000, 8000]}]}
+{"text": "tin karore paanch karore", "lang": "hi_latn", "spans": [{"start": 0, "end": 24, "value": 30000000, "range": [30000000, 50000000]}]}
+{"text": "bees lac pachees lac", "lang": "hi_latn", "spans": [{"start": 0, "end": 20, "value": 2000000, "range": [2000000, 2500000]}]}

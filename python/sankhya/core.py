@@ -168,6 +168,80 @@ def _num(v):
     return v
 
 
+def _split_terms(merged):
+    """Split a merged (RANGE-free) token stream into terms, each being
+    zero-or-more coefficient tokens (NUM/CARD_*/PFX_*) followed by at most
+    one UNIT token that closes it. Returns a list of
+    (start, end, has_explicit_coef, unit_cls_or_None) over indices into
+    `merged`; a trailing unit-less term (if any) is included with
+    unit_cls=None.
+    """
+    terms = []
+    term_start = 0
+    has_coef = False
+    for idx, (cls, text) in enumerate(merged):
+        if cls == "NUM" or C.is_card(cls) or C.is_prefix(cls):
+            has_coef = True
+        elif C.is_unit(cls):
+            terms.append((term_start, idx + 1, has_coef, cls))
+            term_start = idx + 1
+            has_coef = False
+        else:
+            continue
+    if term_start < len(merged):
+        terms.append((term_start, len(merged), has_coef, None))
+    return terms
+
+
+def _try_juxtaposition_range(tokens):
+    """R7: juxtaposed ranges with no connector word, e.g. "teen hazaar
+    paanch hazaar" (3000..5000) or "bees lac pachees lac" (2e6..2.5e6).
+    The model emits no RANGE token here, so the normal additive evaluator
+    would sum the terms; this rule detects the shape first.
+
+    A RANGE-free token stream is split into terms (coefficient + UNIT).
+    If term i has an EXPLICIT coefficient (a NUM/CARD_*/PFX_* token, not
+    the implicit "1") AND term i+1 also has an explicit coefficient AND
+    unit_value(i+1) >= unit_value(i), the boundary between them is a
+    juxtaposition range: low = eval(terms[..i]), high = eval(terms[i+1..]).
+    Requires low < high strictly; low == high ("paanch lakh paanch lakh")
+    is deliberately NOT treated as a range -- it's ambiguous with plain
+    repetition/emphasis, so it falls back to today's additive behaviour
+    (2 * value, no range).
+
+    This must NOT fire on:
+      - multiplicative stacking ("das hazaar crore"): the second term has
+        NO coefficient, so has_coef is False.
+      - descending additive chains ("ek lakh dus hazaar"): unit_value of
+        the second term (hazaar) is SMALLER than the first (lakh).
+      - cardinal-only juxtaposition ("do teen lakh"): already turned into
+        an explicit RANGE token upstream by decode-time repair, so it
+        never reaches here RANGE-free.
+
+    Returns a Result on a match, else None (caller falls back).
+    """
+    merged = _collapse_repeated_prefixes(_merge_numbers(tokens))
+    terms = _split_terms(merged)
+    for i in range(len(terms) - 1):
+        _, end_i, coef_i, unit_i = terms[i]
+        start_j, _, coef_j, unit_j = terms[i + 1]
+        if not (coef_i and coef_j and unit_i is not None and unit_j is not None):
+            continue
+        if C.unit_value(unit_j) < C.unit_value(unit_i):
+            continue
+        low, _ = _eval_amount(merged[:end_i])
+        high, _ = _eval_amount(merged[start_j:])
+        if not (low < high):
+            continue
+        return Result(
+            value=_num(low),
+            range=(_num(low), _num(high)),
+            unit=C.UNIT_NAME.get(unit_i),
+            classes=[c for c, _ in tokens],
+        )
+    return None
+
+
 def evaluate(tokens: List[Tuple[str, str]]) -> Result:
     """Evaluate a class-token sequence for one span. Never raises."""
     try:
@@ -187,6 +261,12 @@ def evaluate(tokens: List[Tuple[str, str]]) -> Result:
             return Result(value=0, range=None, unit=None, classes=all_classes)
 
         if len(amounts) == 1:
+            # R7: no RANGE token present -- check for a juxtaposition range
+            # (e.g. "teen hazaar paanch hazaar") before the plain additive
+            # evaluation below.
+            r7 = _try_juxtaposition_range(parts[0])
+            if r7 is not None:
+                return r7
             value, unit = amounts[0]
             return Result(value=_num(value), range=None, unit=(C.UNIT_NAME.get(unit) if unit else None), classes=all_classes)
 

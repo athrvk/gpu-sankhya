@@ -154,6 +154,82 @@ function collapsePfxRuns(tokens: Tok[]): Tok[] {
   return out;
 }
 
+type Term = [number, number, boolean, string | null];
+
+/** Split a merged (RANGE-free) token stream into terms, each being
+ * zero-or-more coefficient tokens (NUM, CARD_*, PFX_*) followed by at most
+ * one UNIT token that closes it. Returns Term tuples (start, end,
+ * hasExplicitCoef, unitClsOrNull) over indices into merged; a trailing
+ * unit-less term (if any) is included with unit = null. */
+function splitTerms(merged: Array<[string, string | number]>): Term[] {
+  const terms: Term[] = [];
+  let termStart = 0;
+  let hasCoef = false;
+  for (let idx = 0; idx < merged.length; idx++) {
+    const [cls] = merged[idx];
+    if (cls === "NUM" || C.isCard(cls) || C.isPrefix(cls)) {
+      hasCoef = true;
+    } else if (C.isUnit(cls)) {
+      terms.push([termStart, idx + 1, hasCoef, cls]);
+      termStart = idx + 1;
+      hasCoef = false;
+    } else {
+      continue;
+    }
+  }
+  if (termStart < merged.length) {
+    terms.push([termStart, merged.length, hasCoef, null]);
+  }
+  return terms;
+}
+
+/** R7: juxtaposed ranges with no connector word, e.g. "teen hazaar paanch
+ * hazaar" (3000..5000) or "bees lac pachees lac" (2e6..2.5e6). The model
+ * emits no RANGE token here, so the normal additive evaluator would sum
+ * the terms; this rule detects the shape first.
+ *
+ * A RANGE-free token stream is split into terms (coefficient + UNIT). If
+ * term i has an EXPLICIT coefficient (a NUM, CARD_*, PFX_* token, not the
+ * implicit "1") AND term i+1 also has an explicit coefficient AND
+ * unitValue(i+1) >= unitValue(i), the boundary between them is a
+ * juxtaposition range: low = eval(terms[..i]), high = eval(terms[i+1..]).
+ * Requires low < high strictly; low == high ("paanch lakh paanch lakh")
+ * is deliberately NOT treated as a range -- it's ambiguous with plain
+ * repetition/emphasis, so it falls back to today's additive behaviour
+ * (2 * value, no range).
+ *
+ * This must NOT fire on:
+ *   - multiplicative stacking ("das hazaar crore"): the second term has
+ *     NO coefficient.
+ *   - descending additive chains ("ek lakh dus hazaar"): unitValue of the
+ *     second term (hazaar) is SMALLER than the first (lakh).
+ *   - cardinal-only juxtaposition ("do teen lakh"): already turned into an
+ *     explicit RANGE token upstream by decode-time repair, so it never
+ *     reaches here RANGE-free.
+ *
+ * Returns a Result on a match, else null (caller falls back). */
+function tryJuxtapositionRange(tokens: Tok[], allClasses: string[]): Result | null {
+  const merged = mergeNumbers(tokens);
+  const terms = splitTerms(merged);
+  for (let i = 0; i < terms.length - 1; i++) {
+    const [, endI, coefI, unitI] = terms[i];
+    const [startJ, , coefJ, unitJ] = terms[i + 1];
+    if (!(coefI && coefJ && unitI !== null && unitJ !== null)) continue;
+    if (C.unitValue(unitJ) < C.unitValue(unitI)) continue;
+    const [low] = evalAmount(merged.slice(0, endI) as unknown as Tok[]);
+    const [high] = evalAmount(merged.slice(startJ) as unknown as Tok[]);
+    if (!(low < high)) continue;
+    return {
+      value: num(low),
+      range: [num(low), num(high)],
+      unit: C.UNIT_NAME[unitI] ?? null,
+      classes: allClasses,
+      currency: null,
+    };
+  }
+  return null;
+}
+
 export function evaluate(rawTokens: Tok[]): Result {
   try {
     // `classes` in the Result reports the original (uncollapsed) token
@@ -177,6 +253,11 @@ export function evaluate(rawTokens: Tok[]): Result {
     }
 
     if (amounts.length === 1) {
+      // R7: no RANGE token present -- check for a juxtaposition range
+      // (e.g. "teen hazaar paanch hazaar") before the plain additive
+      // evaluation below.
+      const r7 = tryJuxtapositionRange(parts[0], allClasses);
+      if (r7 !== null) return r7;
       const [value, unit] = amounts[0];
       return {
         value: num(value),
