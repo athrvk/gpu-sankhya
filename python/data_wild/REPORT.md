@@ -228,6 +228,17 @@ turns it straight into a gold line.
 
 ## 5. Model-side experiments
 
+**Decision (0.8.0):** the shipped weights stay. Re-evaluated under the R11–R18
+rules (which landed in parallel), experiment B and the shipped weights are
+within seed noise of each other on every metric — real-text FP 8 vs 10 of
+240, verified FP 6 vs 4, synthetic value accuracy identical, strict value
+accuracy 1.000 for both — and B also changes the charset. The rules
+captured most of what B learned from real negatives. Real-negative mixing
+(`--extra-negatives`) and the pretrained trunk (`--init-from`) are now the
+standard recipe for the next weights release, when a fifth language or a
+new gold finding gives a reason to retrain.
+
+
 Section 3's headline is a *precision* problem: 20% of real no-amount
 sentences produce a span (8.8% a verified one) against 0% on the hand-written
 negatives, because the model has never seen real non-amount text. Two
