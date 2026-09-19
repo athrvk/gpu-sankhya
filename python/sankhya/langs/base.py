@@ -162,3 +162,28 @@ def get_pack(lang_id: str) -> LanguagePack:
 
         importlib.import_module(f"{__package__}.{lang_id}")
     return registry[lang_id]
+
+
+GOLD_SUFFIX_ALIASES = {"": "hi_latn", "deva": "hi_deva", "latn": "hi_latn",
+                        "mr": "mr_deva", "gu": "gu_gujr"}
+
+
+def resolve_pack(lang_id: str):
+    """Resolve an example's `lang` (or a `gold_<suffix>.jsonl` suffix) to a
+    pack. Tries the id itself, then the gold-suffix aliases, then any
+    registered pack whose id ends/starts with that suffix - so a new pack is
+    picked up with no code change here. Falls back to the first registered
+    pack (best-effort, never fatal). Pure: safe to call from tooling that
+    must not import numpy/torch (hf_push)."""
+    packs = load_all()
+    if lang_id in packs:
+        return packs[lang_id]
+    alias = GOLD_SUFFIX_ALIASES.get(lang_id or "")
+    if alias and alias in packs:
+        return packs[alias]
+    if lang_id:
+        matches = [p for k, p in packs.items() if k.endswith(f"_{lang_id}") or k.startswith(f"{lang_id}_")]
+        if len(matches) == 1:
+            return matches[0]
+    ordered = all_packs()
+    return ordered[0] if ordered else None

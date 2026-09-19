@@ -2,6 +2,7 @@
 
 Run with `python -m pytest tests/test_hf_push.py -q` from `python/`.
 """
+import os
 import json
 import sys
 from pathlib import Path
@@ -86,3 +87,26 @@ def test_get_api_requires_token(monkeypatch):
     monkeypatch.delenv("HF_TOKEN", raising=False)
     with pytest.raises(SystemExit):
         hf_push._get_api(dry_run=False)
+
+
+def test_hf_push_does_not_need_numpy_or_torch():
+    """The huggingface publish jobs install only requirements-hf.txt; the
+    dataset card must build without numpy/torch (regression: 0.5.0/0.6.0
+    dataset jobs failed with ModuleNotFoundError)."""
+    import subprocess, sys
+    code = (
+        "import sys\n"
+        "class Block:\n"
+        "    def find_spec(self, name, path=None, target=None):\n"
+        "        if name.split('.')[0] in ('numpy', 'torch', 'onnx', 'onnxruntime'):\n"
+        "            raise ImportError('blocked: ' + name)\n"
+        "sys.meta_path.insert(0, Block())\n"
+        "from sankhya import hf_push\n"
+        "sets = hf_push.gold_sets()\n"
+        "assert len(sets) >= 4, sets\n"
+        "hf_push.build_dataset_card()\n"
+        "print('ok', len(sets))\n"
+    )
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    assert out.returncode == 0, out.stderr
+    assert out.stdout.strip().startswith("ok")

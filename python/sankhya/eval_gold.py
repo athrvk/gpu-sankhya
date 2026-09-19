@@ -36,8 +36,9 @@ _ALL_PACKS = None
 
 # gold files are named `gold.jsonl` / `gold_<suffix>.jsonl`; these map the
 # suffix to a pack id where they differ (see eval_matrix._lang_label).
-_GOLD_SUFFIX_ALIASES = {"": "hi_latn", "deva": "hi_deva", "latn": "hi_latn",
-                        "mr": "mr_deva", "gu": "gu_gujr"}
+# alias table + resolver live in langs.base (pure) so hf_push can use them
+# without importing numpy/torch; kept re-exported here for existing callers.
+_GOLD_SUFFIX_ALIASES = langs_base.GOLD_SUFFIX_ALIASES
 
 
 def _all_packs():
@@ -90,25 +91,9 @@ def _apply_bare_digits_gate(text, decoded, classes):
 
 
 def _get_pack(lang_id):
-    """Resolve an example's `lang` (or a gold-file suffix) to a pack.
-
-    Tries the id itself, then the `gold_<suffix>.jsonl` aliases, then any
-    registered pack whose id ends with that suffix - so a new pack is
-    picked up with no code change here. Falls back to the first registered
-    pack (categorisation is best-effort, never fatal).
-    """
-    packs = langs_base.load_all()
-    if lang_id in packs:
-        return packs[lang_id]
-    alias = _GOLD_SUFFIX_ALIASES.get(lang_id or "")
-    if alias and alias in packs:
-        return packs[alias]
-    if lang_id:
-        matches = [p for k, p in packs.items() if k.endswith(f"_{lang_id}") or k.startswith(f"{lang_id}_")]
-        if len(matches) == 1:
-            return matches[0]
-    ordered = langs_base.all_packs()
-    return ordered[0] if ordered else None
+    """Resolve an example's `lang` (or a gold-file suffix) to a pack; see
+    langs.base.resolve_pack."""
+    return langs_base.resolve_pack(lang_id)
 
 
 def categorize_span(text, span, pack):
