@@ -149,3 +149,9 @@ test("a span with only SEP/RANGE/DOT (no content token) is not verified", () => 
 test("unknown surface for a PFX/CARD/UNIT class is not verified", () => {
   assert.equal(verifyTokens([["UNIT_LAKH", "notaword"]]), false);
 });
+
+test("RANGE word tokens carry their surrounding spaces (decoder emits ' किंवा ' as one token)", () => {
+  assert.equal(verifyTokens([["CARD_3", "तीन"], ["RANGE", " किंवा "], ["CARD_4", "चार"], ["SEP", " "], ["UNIT_LAKH", "लाख"]]), true);
+  assert.equal(verifyTokens([["CARD_3", "teen"], ["RANGE", " se "], ["CARD_4", "chaar"], ["SEP", " "], ["UNIT_LAKH", "lakh"]]), true);
+  assert.equal(verifyTokens([["CARD_3", "teen"], ["RANGE", " xyz "], ["CARD_4", "chaar"], ["SEP", " "], ["UNIT_LAKH", "lakh"]]), false);
+});
