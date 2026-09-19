@@ -22,7 +22,9 @@ from .decode import decode_spans
 from .eval_gold import _apply_bare_digits_gate
 from .generator import generate, generate_multi
 from .langs import base as langs_base
-from .langs import hi_latn, hi_deva  # noqa: F401  (registers packs)
+from .langs.base import load_all
+
+load_all()  # registers every known pack
 from .model import SankhyaCNN
 from .np_infer import PAD_TAIL
 from .train import MAX_LEN, build_char_to_id
@@ -198,7 +200,7 @@ def main(argv=None):
     ap.add_argument("--n", type=int, default=10000)
     ap.add_argument("--seed", type=int, default=11)
     ap.add_argument("--ckpt", default="../models/default/sankhya.pt")
-    ap.add_argument("--lang", default="hi_latn,hi_deva")
+    ap.add_argument("--lang", default=",".join(langs_base.KNOWN_PACKS))
     ap.add_argument("--mix", default=None, help="comma-separated weights matching --lang")
     ap.add_argument("--cross", type=float, default=0.0)
     ap.add_argument("--batch-size", type=int, default=256)

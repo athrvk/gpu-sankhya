@@ -35,6 +35,22 @@
         "ambiguous_phrase": 7,
         "unknown_token": 1
       }
+    },
+    "mr_deva": {
+      "timestamp": "2026-09-19T06:18:31Z",
+      "total": 600,
+      "accepted": 591,
+      "rejected": 9,
+      "malformed": 0,
+      "prompt_file": "/home/user/gpu-sankhya/.claude/worktrees/agent-ad35e277d821107f7/python/data_llm/prompts/GENERATOR_BRIEF.md",
+      "prompt_sha256": "9fafee2dd67c30c8632bf2c8338e411c088b9c0fee05d7786c4aa3fb3203ef8c",
+      "input_files": [
+        "data_llm/raw/mr_deva.sonnet.jsonl"
+      ],
+      "reject_histogram": {
+        "value_mismatch": 4,
+        "negative_contains_quantity": 5
+      }
     }
   }
 }

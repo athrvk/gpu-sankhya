@@ -177,7 +177,9 @@ def main(argv=None):
     ap.add_argument("--batch", type=int, default=128)
     ap.add_argument("--lr", type=float, default=3e-3)
     ap.add_argument("--out", default="models/")
-    ap.add_argument("--lang", default="hi_latn", help="comma-separated pack ids, e.g. hi_latn,hi_deva")
+    ap.add_argument("--lang", default="hi_latn",
+                    help="comma-separated pack ids, e.g. hi_latn,hi_deva,mr_deva "
+                         "(see sankhya.langs.base.KNOWN_PACKS)")
     ap.add_argument("--dilation", type=int, default=1)
     ap.add_argument("--channels", type=int, default=32)
     ap.add_argument("--layers", type=int, default=3, choices=[3, 4])

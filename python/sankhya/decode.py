@@ -82,6 +82,33 @@ def _majority_vote_run(raw_ids: List[int]) -> int:
     return best_cid
 
 
+def _is_bound_unit_tail(sub_runs, idx) -> bool:
+    """R2c: a word-final UNIT_* sub-run of length 2 that directly follows a
+    CARD_*/PFX_* sub-run of length >= 2 is a BOUND unit suffix written with
+    no space -- Marathi's fused hundreds ("दोनशे" = CARD_2 + UNIT_SAU,
+    "अठराशे", "दीडशे"), and equally "दोसौ" in Devanagari Hindi. Without this
+    the sub-run smoothing below would absorb the 2-char unit into the
+    cardinal before it and evaluate "दोनशे" as 2 instead of 200.
+
+    Deliberately narrow: only the LAST sub-run of the run, only a unit
+    class, and only when the number word before it stands on its own
+    evidence -- a stray 1-2 char misprediction in the middle of a word is
+    still smoothed away as before.
+    """
+    if idx != len(sub_runs) - 1 or idx == 0:
+        return False
+    c, s, e = sub_runs[idx]
+    if e - s < 2:
+        return False
+    if not C.CLASSES[c].startswith("UNIT_"):
+        return False
+    pc, ps, pe = sub_runs[idx - 1]
+    if pe - ps < 2:
+        return False
+    pname = C.CLASSES[pc]
+    return pname.startswith("CARD_") or pname.startswith("PFX_")
+
+
 def _repair_letters_run(raw_ids: List[int]) -> List[int]:
     """Sub-run smoothing within one letters run.
 
@@ -108,7 +135,7 @@ def _repair_letters_run(raw_ids: List[int]) -> List[int]:
     fallback_positions = []
 
     for idx, (c, s, e) in enumerate(sub_runs):
-        if e - s >= 3:
+        if e - s >= 3 or _is_bound_unit_tail(sub_runs, idx):
             continue  # keep as-is
         prev_run = sub_runs[idx - 1] if idx > 0 else None
         next_run = sub_runs[idx + 1] if idx < len(sub_runs) - 1 else None
@@ -209,7 +236,7 @@ def _run_unanimous_class(raw_run: List[int]) -> Optional[int]:
 
     resolved = []
     for idx, (c, s, e) in enumerate(sub_runs):
-        if e - s >= 3:
+        if e - s >= 3 or _is_bound_unit_tail(sub_runs, idx):
             resolved.append(c)
             continue
         prev_run = sub_runs[idx - 1] if idx > 0 else None

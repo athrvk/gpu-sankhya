@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { evaluate, detectCurrency, mergeLangPacks, isBareDigits, shouldDropBareDigits, shouldDropLoneAmbiguousUnit } from "../src/core.ts";
 import { HI_LATN } from "../src/lang-hi-latn.ts";
 import { HI_DEVA } from "../src/lang-hi-deva.ts";
+import { MR_DEVA } from "../src/lang-mr-deva.ts";
 
 type Tok = [string, string];
 function ev(...toks: Tok[]) {
@@ -144,6 +145,31 @@ test("mergeLangPacks: union of hi_latn + hi_deva, longest-match first", () => {
   assert.equal(detectCurrency("Rs.500 only", 3, 6, pack), "INR");
   // negative case still negative through the merged pack
   assert.equal(detectCurrency("do din baad", 0, 2, pack), null);
+});
+
+test("mr_deva currency detection: markers before and words after", () => {
+  assert.equal(detectCurrency("₹500 फक्त", 1, 4, MR_DEVA), "INR");
+  assert.equal(detectCurrency("रु. 1200 झाले", 4, 8, MR_DEVA), "INR");
+  assert.equal(detectCurrency("पन्नास रुपये हवेत", 0, 6, MR_DEVA), "INR");
+  // the oblique stem covers every case-inflected form
+  assert.equal(detectCurrency("सहा लाख रुपयांचा तोटा", 0, 7, MR_DEVA), "INR");
+  assert.equal(detectCurrency("दोन दिवसांत येतो", 0, 3, MR_DEVA), null);
+});
+
+test("mergeLangPacks: adding mr_deva keeps the hi packs working", () => {
+  // this is exactly the CURRENCY_PACK the parser builds in index.ts
+  const pack = mergeLangPacks(HI_LATN, HI_DEVA, MR_DEVA);
+  // every pack's markers are still recognised through the merged pack
+  assert.equal(detectCurrency("Rs 500 only", 3, 6, pack), "INR");
+  assert.equal(detectCurrency("pachas rupaye chahiye", 0, 6, pack), "INR");
+  assert.equal(detectCurrency("पचास रुपये चाहिए", 0, 4, pack), "INR");
+  assert.equal(detectCurrency("दोनशे रुपयांचे बिल", 0, 5, pack), "INR");
+  assert.equal(detectCurrency("₹2,50,000 भरले", 1, 9, pack), "INR");
+  // longest-match ordering survives the third pack
+  assert.equal(detectCurrency("Rs.500 only", 3, 6, pack), "INR");
+  // and a non-currency context is still negative
+  assert.equal(detectCurrency("do din baad", 0, 2, pack), null);
+  assert.equal(detectCurrency("दोन दिवसांत येतो", 0, 3, pack), null);
 });
 
 test("das hazaar crore", () => {

@@ -422,16 +422,21 @@ outputs are discarded; only the real characters' predictions are used.
 
 ## Limitations
 
-- **Hinglish and Devanagari Hindi.** Romanised Hindi / Indian-English
-  amount phrases and Devanagari-script Hindi (`डेढ़ लाख`, `सवा करोड़`) are
-  both supported, including mixed-script input in the same string.
-  Currency and unit detection scan the Latin (`hi_latn`) and Devanagari
-  (`hi_deva`) marker lists together. Other Indian languages (Marathi,
-  Gujarati, Bengali, Tamil/Telugu/Kannada) are planned via additional
-  language packs (the arithmetic core is already language-independent;
-  only the class vocabulary and currency-marker lists are per-language) —
-  see Roadmap. Devanagari accuracy depends on the bundled weights being
-  trained on the `hi_deva` pack; see Devanagari gold-set numbers above.
+- **Languages.** One language pack per language/script, all sharing the
+  same (language-independent) arithmetic core, class inventory and
+  decoder. Currency and unit detection scan every pack's marker lists
+  together, so mixed-script input in one string is fine.
+
+  | pack | language / script | status |
+  | --- | --- | --- |
+  | `hi_latn` | Romanised Hindi / Hinglish (`sava lakh`) | shipped, in the bundled weights |
+  | `hi_deva` | Devanagari Hindi (`डेढ़ लाख`, `सवा करोड़`) | shipped, in the bundled weights |
+  | `mr_deva` | Devanagari Marathi (`दीड लाख`, `साडेतीनशे`) | pack + data + gold set landed; **not yet in the bundled weights** |
+
+  A pack's accuracy depends on the bundled weights having been trained on
+  it: `mr_deva` text is only parsed correctly once a checkpoint trained
+  with `--lang hi_latn,hi_deva,mr_deva` ships. Gujarati, Bengali and
+  Tamil/Telugu/Kannada are planned the same way — see Roadmap.
 - **Offsets are into the normalized string.** `parse()`'s `start`/`end`
   index `normalizeText(text)`, not the raw input, in the rare case NFC
   normalization changes the string's length (see `normalizeText` in the
@@ -498,10 +503,15 @@ support non-Indian numbering/currency shorthand.
    normalization (NFC + Devanagari-digit mapping) are all in place, and
    mixed Latin/Devanagari input is supported. See `python/README.md` for
    the training-side status and gold-set numbers.
-2. **Other Indian languages as packs**: Marathi (साडे, सव्वा), Gujarati
-   (સવા, દોઢ), Bengali (দেড়, আড়াই), and Tamil/Telugu/Kannada number
-   words. Same shape as (1) — a new pack, a new noise function, a charset
-   rebuild.
+2. **Other Indian languages as packs.** Marathi (`mr_deva`) is **in
+   progress**: the pack (cardinals 1-99 with phone-typed variants, fused
+   hundreds `दोनशे`, prefixes सव्वा/दीड/अडीच/साडे/पावणे/अर्धा/पाव, case
+   endings), a verified 591-line LLM corpus and a 173-example gold set
+   (`python/tests/gold_mr.jsonl`) have landed; the shipped weights do not
+   include it yet. Gujarati (સવા, દોઢ), Bengali (দেড়, আড়াই) and
+   Tamil/Telugu/Kannada number words are next. Same shape each time — a
+   new pack, currency markers, a charset rebuild and a retrain; see the
+   "adding a language" checklist in `python/README.md`.
 3. **A WASM SIMD kernel**, if sub-millisecond latency is ever needed
    beyond what the plain-JS CPU path already gives.
 

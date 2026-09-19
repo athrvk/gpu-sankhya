@@ -402,6 +402,81 @@ def _maybe_join_words(pack, rng, toks, p=None):
     return toks[:i] + toks[i + 1:]
 
 
+def _prev_meaningful(toks, i):
+    """Index of the nearest non-SEP token before i, or None."""
+    j = i - 1
+    while j >= 0 and toks[j][0] == "SEP":
+        j -= 1
+    return j if j >= 0 else None
+
+
+def _next_meaningful(toks, i):
+    j = i + 1
+    while j < len(toks) and toks[j][0] == "SEP":
+        j += 1
+    return j if j < len(toks) else None
+
+
+def _apply_pack_glue(pack, rng, toks):
+    """Language-specific no-space word forms, driven by pack attributes:
+
+    * `glue_unit_forms` -- a BOUND unit form (Marathi's fused-hundreds "शे")
+      may only appear glued to the CARD_*/PFX_* word before it. When that
+      shape is available the intervening SEP is deleted ("दोन" + "शे" ->
+      "दोनशे"); when it is not (the unit stands alone, follows digits, or
+      follows another unit) the form is swapped for a free one (शंभर).
+    * `fused_prefix_forms` -- a prefix that is usually typed as one word
+      with its cardinal ("साडे" + "तीन" -> "साडेतीन") loses the SEP with
+      the configured probability. Keys are either a surface form or a
+      PFX_* class name (class keys also cover noised surfaces).
+
+    Both only ever DELETE a SEP (or swap one word form for another of the
+    same class), so per-token classes -- and therefore the char labels and
+    core.evaluate() result -- are unchanged.
+    """
+    glue_units = {f for f in getattr(pack, "glue_unit_forms", []) or []}
+    fused_pfx = getattr(pack, "fused_prefix_forms", {}) or {}
+    if not glue_units and not fused_pfx:
+        return toks
+
+    toks = list(toks)
+    if glue_units:
+        for i in range(len(toks)):
+            cls, text = toks[i]
+            if not (C.is_unit(cls) and text in glue_units):
+                continue
+            p = _prev_meaningful(toks, i)
+            left_ok = p is not None and (C.is_card(toks[p][0]) or C.is_prefix(toks[p][0]))
+            if left_ok:
+                if i - 1 >= 0 and toks[i - 1][0] == "SEP":
+                    toks[i - 1] = None  # marked for removal
+            else:
+                free = [f for f in pack.lexicon.get(cls, []) if f not in glue_units]
+                if not free:
+                    return toks
+                toks[i] = (cls, rng.choice(free))
+        toks = [t for t in toks if t is not None]
+
+    if fused_pfx:
+        for i in range(len(toks)):
+            cls, text = toks[i]
+            if not C.is_prefix(cls):
+                continue
+            prob = fused_pfx.get(text, fused_pfx.get(cls))
+            if not prob:
+                continue
+            nxt = _next_meaningful(toks, i)
+            if nxt is None or not C.is_card(toks[nxt][0]):
+                continue
+            if nxt != i + 2 or toks[i + 1][0] != "SEP":
+                continue
+            if rng.random() < prob:
+                toks[i + 1] = None
+        toks = [t for t in toks if t is not None]
+
+    return toks
+
+
 def build_phrase(pack, rng, structure=None, exclude_currency_bare=False):
     if structure is None:
         pool = _STRUCTURE_WEIGHTS
@@ -413,6 +488,7 @@ def build_phrase(pack, rng, structure=None, exclude_currency_bare=False):
         weights = [w for _, w in pool]
         structure = rng.choices(names, weights=weights)[0]
     toks = build_term_tokens(pack, rng, structure)
+    toks = _apply_pack_glue(pack, rng, toks)
     toks = _maybe_possessive(rng, toks)
     toks = _maybe_join_words(pack, rng, toks)
     return toks, structure
@@ -490,7 +566,7 @@ def build_range_phrase(pack, rng):
         right = _num_tokens_from_digits_p(pack, rng, high_s)
         space = _sep() if (rng.random() < 0.5 or not is_symbol) else None
         toks = left + [connector] + right + ([space] if space else []) + [(u, uword)]
-        return toks
+        return _apply_pack_glue(pack, rng, toks)
 
     if mode == "cardword":
         n1, n2 = rng.choice(_RANGE_CARD_PAIRS)
@@ -504,7 +580,7 @@ def build_range_phrase(pack, rng):
         left = _maybe_repeat_unit(pack, rng, left, u, uword)
         connector = _range_connector(pack, rng)
         toks = left + [connector, (card2, w2), _sep(), (u, uword)]
-        return toks
+        return _apply_pack_glue(pack, rng, toks)
 
     # prefix_juxt: standalone prefix (dedh=1.5 / dhai=2.5) juxtaposed with a
     # nearby cardinal, e.g. "dedh do lakh" (1.5-2 lakh), "do dhai lakh" (2-2.5 lakh)
@@ -526,7 +602,7 @@ def build_range_phrase(pack, rng):
         left_tok, right_tok = card_tok, pfx_tok
     connector = _range_connector(pack, rng)
     toks = [left_tok, connector, right_tok, _sep(), (u, uword)]
-    return toks
+    return _apply_pack_glue(pack, rng, toks)
 
 
 def build_conjunction_phrase(pack, rng, ppack):
@@ -1038,7 +1114,9 @@ def main(argv=None):
     ap.add_argument("--n", type=int, default=1000)
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--out", type=str, default="data/train.jsonl")
-    ap.add_argument("--lang", type=str, default="hi_latn", help="comma-separated pack ids, e.g. hi_latn,hi_deva")
+    ap.add_argument("--lang", type=str, default="hi_latn",
+                    help="comma-separated pack ids, e.g. hi_latn,hi_deva,mr_deva "
+                         "(see sankhya.langs.base.KNOWN_PACKS)")
     ap.add_argument("--mix", type=str, default=None, help="comma-separated weights matching --lang, e.g. 0.55,0.45")
     ap.add_argument("--cross", type=float, default=0.0, help="share of examples that mix template/phrase across packs")
     ap.add_argument("--unk-noise", type=float, default=P_UNK, help="probability of inserting an out-of-vocab 'unk noise' run per example (0 disables)")
