@@ -12,6 +12,14 @@ test("normalizeText: maps Devanagari digits to ASCII 1:1", () => {
   assert.equal(normalizeText("०१२३४५६७८९"), "0123456789");
 });
 
+test("normalizeText: maps Gujarati digits to ASCII 1:1", () => {
+  assert.equal(normalizeText("૨.૫ લાખ"), "2.5 લાખ");
+  assert.equal(normalizeText("૦૧૨૩૪૫૬૭૮૯"), "0123456789");
+  assert.equal(normalizeText("૧,૨૫,૦૦૦").length, "૧,૨૫,૦૦૦".length);
+  // the two Indic blocks coexist in one string
+  assert.equal(normalizeText("२५ / ૨૫"), "25 / 25");
+});
+
 test("normalizeText: NFC-normalizes decomposed input", () => {
   // "é" (U+00E9) has a canonical NFC composition but is also representable,
   // non-canonically, as the decomposed pair "e" (U+0065) + combining acute

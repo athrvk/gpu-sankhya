@@ -51,6 +51,24 @@
         "value_mismatch": 4,
         "negative_contains_quantity": 5
       }
+    },
+    "gu_gujr": {
+      "timestamp": "2026-09-19T07:23:41Z",
+      "total": 600,
+      "accepted": 583,
+      "rejected": 17,
+      "malformed": 0,
+      "prompt_file": "/home/user/gpu-sankhya/.claude/worktrees/agent-a5464b064aa55ca0b/python/data_llm/prompts/GENERATOR_BRIEF.md",
+      "prompt_sha256": "9fafee2dd67c30c8632bf2c8338e411c088b9c0fee05d7786c4aa3fb3203ef8c",
+      "input_files": [
+        "data_llm/raw/gu_gujr.sonnet.jsonl"
+      ],
+      "reject_histogram": {
+        "phrase_not_found": 4,
+        "value_mismatch": 4,
+        "unknown_token": 3,
+        "negative_contains_quantity": 6
+      }
     }
   }
 }

@@ -3,11 +3,12 @@ import { loadWeights, type LoadedWeights } from "./weights.ts";
 import { buildCharToId, encodeChars, makeWindows, normalizeText, MAX_LEN, PADDED_MAX, paddedLength } from "./charset.ts";
 import { forward, softmaxRow, argmaxRow, viterbi, Scratch } from "./infer-cpu.ts";
 import { decodeSpans } from "./decode.ts";
-import { evaluate, detectCurrency, mergeLangPacks, shouldDropBareDigits, shouldDropLoneAmbiguousUnit } from "./core.ts";
-import { verifyTokens } from "./verify.ts";
+import { evaluate, detectCurrency, mergeLangPacks, shouldDropBareDigits, shouldDropLoneAmbiguousUnit, hasLeadingZeroCoefficient } from "./core.ts";
+import { verifyTokens, isLexiconOOnly } from "./verify.ts";
 import { HI_LATN } from "./lang-hi-latn.ts";
 import { HI_DEVA } from "./lang-hi-deva.ts";
 import { MR_DEVA } from "./lang-mr-deva.ts";
+import { GU_GUJR } from "./lang-gu-gujr.ts";
 import { CLASSES } from "./classes.ts";
 import { WebGPUBackend, probeWebGPU } from "./infer-webgpu.ts";
 import defaultWeightsJson from "./data/default-weights.json" with { type: "json" };
@@ -20,6 +21,17 @@ export { CLASSES } from "./classes.ts";
 export interface CreateParserOptions {
   weights?: WeightsJson;
   backend?: "cpu" | "webgpu" | "auto";
+}
+
+/** R9: any meaningful token whose surface is a lexicon-"O"-only word --
+ * see verify.isLexiconOOnly. Mirrors
+ * python/sankhya/eval_gold.py::_has_lexicon_o_token. */
+function hasLexiconOToken(tokens: Array<[string, string]>): boolean {
+  return tokens.some(
+    ([cls, text]) =>
+      (cls === "DIGITS" || cls.startsWith("UNIT_") || cls.startsWith("PFX_") || cls.startsWith("CARD_")) &&
+      isLexiconOOnly(text),
+  );
 }
 
 export class Parser {
@@ -132,6 +144,13 @@ export class Parser {
       // preceding number) unless a currency marker was found for it -- see
       // shouldDropLoneAmbiguousUnit().
       if (shouldDropLoneAmbiguousUnit(tokens) && currency === null) continue;
+      // R10: a leading-zero digits coefficient ("GJ05 CD") is never an amount.
+      if (hasLeadingZeroCoefficient(tokens)) continue;
+      // R9: drop a span carrying a meaningful token whose surface a language
+      // pack declares an ordinary word (lexicon class "O" and no other
+      // class anywhere in the union) -- the indefinite plurals
+      // "karodon"/"करोडो" the model likes to tag UNIT_CRORE.
+      if (hasLexiconOToken(tokens)) continue;
       const verified = verifyTokens(tokens);
       if (strict && !verified) continue;
       const res = evaluate(tokens);
@@ -327,4 +346,4 @@ export function createParser(opts: CreateParserOptions = {}): Parser {
 // detection so a mixed-script input ("₹2 lakh", "2 लाख रुपये", "दीड लाख
 // रुपयांचा") is handled the same way regardless of which script/language
 // wrote the currency marker. Adding a language pack means adding it here.
-const CURRENCY_PACK = mergeLangPacks(HI_LATN, HI_DEVA, MR_DEVA);
+const CURRENCY_PACK = mergeLangPacks(HI_LATN, HI_DEVA, MR_DEVA, GU_GUJR);

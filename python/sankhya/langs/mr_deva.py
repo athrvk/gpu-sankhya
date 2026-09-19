@@ -528,6 +528,8 @@ PACK.duration_nouns = [
     if w.lower() not in _forms_for_filter and w.lower() not in BLOCKED_SURFACES
 ]
 
-PACK.deva_digit_prob = 0.25  # 25% of DIGITS tokens rendered with Devanagari glyphs
+# 25% of DIGITS tokens are rendered with this script's own digit glyphs.
+PACK.native_digits = "०१२३४५६७८९"  # Devanagari U+0966-U+096F
+PACK.native_digit_prob = 0.25
 
 base.register(PACK)

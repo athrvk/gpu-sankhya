@@ -6,12 +6,13 @@
 [![demo](https://img.shields.io/badge/demo-live-brightgreen)](https://athrvk.github.io/gpu-sankhya/)
 
 Parses Indian informal number/currency shorthand — Hinglish (romanised
-Hindi), Devanagari Hindi, and Indian-English amount phrases like `sava
-lakh`, `dedh crore`, `डेढ़ लाख`, `सवा करोड़`, `2.5L`, `20k`, `2-3 lakh` —
-into a clean numeric value, with the span, unit, currency, and confidence
-that produced it. Mixed-script input (Latin and Devanagari in the same
-string, e.g. `"budget 2 लाख hai"`) is supported: currency and unit
-detection scan both scripts' marker lists.
+Hindi), Devanagari Hindi, Marathi, Gujarati, and Indian-English amount
+phrases like `sava lakh`, `dedh crore`, `डेढ़ लाख`, `सवा करोड़`, `દોઢ લાખ`,
+`2.5L`, `20k`, `2-3 lakh` — into a clean numeric value, with the span,
+unit, currency, and confidence that produced it. Mixed-script input
+(Latin, Devanagari and Gujarati in the same string, e.g. `"budget 2
+લાખ hai"`) is supported: currency and unit detection scan every
+script's marker lists.
 
 A small char-level CNN tags each character of the input with a BIO span
 label and a semantic token class (digit, prefix word like "sava"/"dedh",
@@ -125,7 +126,10 @@ deterministic core (lexicon lookups + the arithmetic in `core.ts`) computes
 the value. A span is **verified** when every one of its `tokens` is
 independently justified by the lexicon — a digit run is all digits, a
 separator is whitespace, and every other token's exact (lowercased) text
-is the surface form the lexicon lists for that class — so a verified
+is the surface form the lexicon lists for that class (or that surface minus
+one case ending the language pack declares, so inflected Marathi/Gujarati
+number words like "लाखांचं" and "કરોડનો" verify as their head unit, while a
+surface that is a full lexicon form in its own right is never stripped) — so a verified
 span's value is a pure function of the lexicon and the arithmetic core,
 neither of which is a black box: both are unit-tested (`test/verify.test.ts`,
 `test/core.test.ts`) independent of the model. `strict: true` uses this to
@@ -205,7 +209,7 @@ returning a value for a spelling the model merely guessed at.
 ### Why CPU by default
 
 One inference is small — a 5-layer, 48-channel dilated/residual char
-CNN, 39,687 parameters — and `parse()` runs in about 3.6 ms p50 (60-char
+CNN, 40,503 parameters — and `parse()` runs in about 3.6 ms p50 (60-char
 input) in plain JS; `parseBatch` on CPU averages about 4.0 ms/string over
 500 strings. A WebGPU dispatch has fixed overhead of a few milliseconds
 (device/pipeline setup, buffer upload, queue submit, readback), which
@@ -224,49 +228,51 @@ count rather than a silent wrong answer.
 
 ## Accuracy
 
-The bundled default model (arch `v2`): 39,687 parameters, 5 conv layers
+The bundled default model (arch `v2`): 40,503 parameters, 5 conv layers
 over 16-dim char embeddings — a plain kernel-5 layer, then four residual
 kernel-3 layers with dilations 1/2/4/8 (`y = relu(conv(x)) + x`), 48
-channels, ±17-character receptive field — over a 119-character vocab
-(union of the `hi_latn`, `hi_deva`, and `mr_deva` packs), 120 output
-classes. Trained 20 epochs on 200,000 synthetic examples generated from
-all three language packs' grammars, mixed 0.40/0.33/0.27 with a 10%
-cross-pack share, plus out-of-vocab "unk noise" augmentation so the
-model has actually seen `<unk>` characters (emoji, CJK, Cyrillic, other
-symbols) during training (see `python/README.md`). An older `v1` preset
-(the previously shipped 4-layer, non-residual, 32-channel stack) is
-still loadable by both the Python and JS runtimes for anyone using
-older exported weights.
+channels, ±17-character receptive field — over a 170-character vocab
+(union of the `hi_latn`, `hi_deva`, `mr_deva`, and `gu_gujr` packs), 120
+output classes. Trained 20 epochs on 200,000 synthetic examples
+generated from all four language packs' grammars, mixed
+0.32/0.26/0.21/0.21 with a 10% cross-pack share, plus out-of-vocab "unk
+noise" augmentation so the model has actually seen `<unk>` characters
+(emoji, CJK, Cyrillic, other symbols) during training (see
+`python/README.md`). An older `v1` preset (the previously shipped
+4-layer, non-residual, 32-channel stack) is still loadable by both the
+Python and JS runtimes for anyone using older exported weights.
 
 On synthetic validation data (drawn from the same generator/templates as
-training): 0.9086 value accuracy. This number is optimistic — it's testing
+training): 0.9669 value accuracy. This number is optimistic — it's testing
 the model on its own distribution.
 
-On three hand-written gold sets, written independently of the generator —
+On four hand-written gold sets, written independently of the generator —
 `python/tests/gold.jsonl` (romanised Hindi, 227 sentences / 199 spans),
 `python/tests/gold_deva.jsonl` (Devanagari Hindi, 186 sentences / 155
-spans), and `python/tests/gold_mr.jsonl` (Devanagari Marathi, 173
-sentences / 135 spans) — evaluated against the shipped int8-quantized
+spans), `python/tests/gold_mr.jsonl` (Devanagari Marathi, 173
+sentences / 135 spans), and `python/tests/gold_gu.jsonl` (Gujarati, 162
+sentences / 118 spans) — evaluated against the shipped int8-quantized
 weights:
 
 | gold set | examples | spans | value accuracy | span precision | span recall | span F1 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| gold.jsonl (romanised) | 227 | 199 | 0.9548 | 0.9550 | 0.9598 | 0.9574 |
-| gold_deva.jsonl (Devanagari) | 186 | 155 | 0.9613 | 0.9739 | 0.9613 | 0.9675 |
-| gold_mr.jsonl (Marathi) | 173 | 135 | 0.9778 | 0.9565 | 0.9778 | 0.9670 |
-| combined | 586 | 489 | 0.9632 | 0.9613 | 0.9652 | 0.9633 |
-| strict mode (verified spans only) | 586 | 427 covered (0.8732) | 1.0000 | — | — | — |
+| gold.jsonl (romanised) | 227 | 199 | 0.9598 | 0.9550 | 0.9598 | 0.9574 |
+| gold_deva.jsonl (Devanagari) | 186 | 155 | 0.9677 | 0.9868 | 0.9677 | 0.9772 |
+| gold_mr.jsonl (Marathi) | 173 | 135 | 0.9852 | 0.9852 | 0.9852 | 0.9852 |
+| gold_gu.jsonl (Gujarati) | 162 | 118 | 0.9322 | 0.9658 | 0.9576 | 0.9617 |
+| combined | 748 | 607 | 0.9621 | 0.9719 | 0.9671 | 0.9694 |
+| strict mode (verified spans only) | 748 | 506 covered (0.9094) | 1.0000 | — | — | — |
 
-Negatives (zero-gold-span examples, 120 total): 0 false positives.
-Miss summary: missed 3, spurious 0, wrong value 1, wrong boundary 14.
-Per-category value accuracy: digits 0.967, words 0.962, prefix 0.971,
-range 0.929, currency 0.987, multi_unit 0.964, symbol_unit 0.976,
-mixed_script 1.0, long 0.813.
+Negatives (zero-gold-span examples, 170 total): 0 false positives.
+Miss summary: missed 6, spurious 0, wrong value 3, wrong boundary 14.
+Per-category value accuracy: digits 0.972, words 0.959, prefix 0.981,
+range 0.959, currency 0.966, multi_unit 0.964, symbol_unit 1.0,
+mixed_script 1.0, long 0.875.
 
-For comparison, the previous shipped weights (0.4.0, Hindi only, 413
-examples) scored 0.9548 (romanised) / 0.9806 (Devanagari) / 0.9661
-combined value acc, strict coverage 0.904 at 1.000 value accuracy.
-This round also ran a 198-case hand-written
+For comparison, the previous shipped weights (0.5.0, three languages, 586
+examples) scored 0.9548 (Hinglish) / 0.9613 (Devanagari) / 0.9778
+(Marathi) / 0.9632 combined value acc, strict coverage 0.873 at 1.000
+value accuracy. This round also ran a 198-case hand-written
 edge-case probe across 12 categories (whitespace/short input, long
 input, Unicode, numeric forms, prefix semantics, compound units,
 currency, negatives, multi-span strings, noise/typos, Devanagari
@@ -288,7 +294,7 @@ order of frequency:
   context
 
 Reproduce these numbers yourself with
-`python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl tests/gold_mr.jsonl --weights-json src/data/default-weights.json --int8`
+`python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl tests/gold_mr.jsonl tests/gold_gu.jsonl --weights-json src/data/default-weights.json --int8`
 from `python/` (see `python/README.md`).
 
 ## How it works
@@ -376,6 +382,38 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   the BIO head splitting a range like `"दो लाख से तीन लाख"` or `"5 hazaar
   se 8 hazaar"` into two separate amounts even though the class head
   correctly tagged the connector word.
+- **Incomplete-amount span merge**: when the BIO head cuts one amount in
+  two at a word boundary with no connector at all, the two spans are
+  merged back into one. The first span must be an *incomplete* amount --
+  its last meaningful token is a bare number (`CARD_*`/`PFX_*`/`DIGITS`)
+  with no unit after it -- the second must start with a `UNIT_*` (the
+  unit the first is missing) or another `CARD_*`, and exactly one
+  whitespace character may stand between them, so nothing (not even
+  punctuation) is crossed. Repeated until stable, so a chain collapses in
+  one go: `"ચોંસઠ લાખમાં"` (64 + lakh) → 6400000, `"पाव कोटीचा"` → 2500000,
+  `"दस बीस हज़ार"` → one span, which R8 below then reads as a range. Two
+  *complete* amounts are untouched (`"5 lakh 3 crore"`: the first span
+  already ends in a unit).
+- **Bound forms and fused number words**: a letters run written solid can
+  be split into two or three unanimous sub-runs in `PFX? CARD? UNIT?`
+  order (at least two present) and each part kept on its own class
+  instead of being smoothed into its neighbour — `"दोनशे"` (2 + 100),
+  `"पावणेचार"` (0.75 + 4), and the three-part `"સાડાત્રણસો"`
+  (`PFX_SAADHE` + `CARD_3` + `UNIT_SAU` = 350). Each sub-run normally
+  needs ≥ 2 characters of its own evidence; a *single*-character sub-run
+  is kept only when its surface is a **bound number form** the language
+  pack declares for exactly the surface that follows it (`bound_forms` in
+  `src/data/lexicon.json`) — Gujarati `"બ"` is `CARD_2` only in `"બસો"`,
+  so `"બસો"` = 200 while a stray 1-char sub-run anywhere else is still
+  smoothed away. The same map is what makes `verifyTokens` accept
+  `[("CARD_2", "બ"), ("UNIT_SAU", "સો")]` and reject a standalone `"બ"`.
+- **Lexicon-"O" gate**: a span is dropped when any of its meaningful
+  tokens' surface is declared an ordinary word (lexicon class `"O"`) by a
+  language pack and carries **no other class anywhere in the lexicon
+  union** — the indefinite plurals `"karodon"`/`"करोडो"` ("crores of",
+  no definite amount), which the model likes to tag `UNIT_CRORE`. A
+  surface that some other pack also declares a real number word is a
+  cross-pack conflict and is left alone.
 - **Possessive trim**: a trailing `'s`/`’s` (1-2 letters) is stripped from
   the end of a word and excluded from the span (`"2 lakh's"` → `"2 lakh"`).
 - **Confidence filter**: a span's confidence is the mean of the max BIO
@@ -394,6 +432,10 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   summed, when both terms carry an explicit coefficient and the second
   term's unit is the same size or larger — this is the same shape of
   arithmetic as an explicit range connector, just spoken without one.
+- **R10 — leading-zero digits are never a coefficient**: a span whose first
+  digits token starts with `0` and has two or more digits (`"GJ05 CD"`,
+  `"007"`) is dropped; vehicle plates, PINs, dates and phone fragments, not
+  amounts. A fractional part after a dot (`"1.05 lakh"`) is exempt.
 - **R8 — juxtaposed spelled cardinals**: two adjacent spelled cardinals
   with nothing but a space between them and the smaller first (`"do teen
   lakh"`, `"paach ten hazar"`, `"तीस पैंतीस हज़ार"`) are a `[low, high]`
@@ -437,10 +479,10 @@ outputs are discarded; only the real characters' predictions are used.
   | `hi_latn` | Romanised Hindi / Hinglish (`sava lakh`) | shipped, in the bundled weights |
   | `hi_deva` | Devanagari Hindi (`डेढ़ लाख`, `सवा करोड़`) | shipped, in the bundled weights |
   | `mr_deva` | Devanagari Marathi (`दीड लाख`, `साडेतीनशे`) | shipped, in the bundled weights |
+  | `gu_gujr` | Gujarati (`દોઢ લાખ`, `બસો`) | shipped, in the bundled weights |
 
-  A pack's accuracy depends on the bundled weights having been trained on
-  it. Gujarati, Bengali and Tamil/Telugu/Kannada are planned the same
-  way — see Roadmap.
+  Bengali and Tamil/Telugu/Kannada are planned the same way — see
+  Roadmap.
 - **Offsets are into the normalized string.** `parse()`'s `start`/`end`
   index `normalizeText(text)`, not the raw input, in the rare case NFC
   normalization changes the string's length (see `normalizeText` in the
@@ -512,10 +554,15 @@ support non-Indian numbering/currency shorthand.
    `दोनशे`, prefixes सव्वा/दीड/अडीच/साडे/पावणे/अर्धा/पाव, case endings), a
    verified 591-line LLM corpus and a 173-example gold set
    (`python/tests/gold_mr.jsonl`) are in the shipped weights. Gujarati
-   (સવા, દોઢ), Bengali (দেড়, আড়াই) and Tamil/Telugu/Kannada number words
-   are next. Same shape each time — a new pack, currency markers, a
-   charset rebuild and a retrain; see the "adding a language" checklist
-   in `python/README.md`.
+   (`gu_gujr`) is **Done.** The pack (cardinals 1-99 with phone-typed
+   variants, the glued hundreds બારસો/ત્રણસો and the two irregular ones
+   બસો/છસ્સો, prefixes સવા/દોઢ/અઢી/સાડા/પોણા/અડધો/પા, case endings), a
+   verified 583-line LLM corpus and a 162-example gold set
+   (`python/tests/gold_gu.jsonl`) are in the shipped weights. Bengali
+   (দেড়, আড়াই) and Tamil/Telugu/Kannada number words are next. Same
+   shape each time — a new pack, currency markers, a charset rebuild and
+   a retrain; see the "adding a language" checklist in
+   `python/README.md`.
 3. **A WASM SIMD kernel**, if sub-millisecond latency is ever needed
    beyond what the plain-JS CPU path already gives.
 

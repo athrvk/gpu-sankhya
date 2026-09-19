@@ -125,14 +125,17 @@ def test_repair_letters_run_preserves_long_subruns_dedhlakh():
 def test_repair_letters_run_short_subrun_snaps_to_longer_neighbour():
     # a short (length-2) sub-run between two long (>=3) sub-runs of DIFFERENT
     # classes should snap to the longer neighbour; equal-length neighbours ->
-    # prefer the left one.
+    # prefer the left one. (The middle sub-run is a UNIT_ here, so the
+    # three sub-runs are PFX/UNIT/UNIT -- NOT the PFX? CARD? UNIT? shape
+    # `_bound_keep_indices` keeps as a fused word; see the fused-word
+    # tests below.)
     # neighbours of equal length (4 vs 4): prefer left
-    raw_equal = [PFX_DEDH] * 4 + [CARD_10] * 2 + [UNIT_LAKH] * 4
+    raw_equal = [PFX_DEDH] * 4 + [UNIT_HAZAAR] * 2 + [UNIT_LAKH] * 4
     result_equal = _repair_letters_run(raw_equal)
     assert [C.CLASSES[c] for c in result_equal] == ["PFX_DEDH"] * 6 + ["UNIT_LAKH"] * 4
 
     # neighbours of unequal length: prefer the longer (right) one
-    raw_unequal = [PFX_DEDH] * 3 + [CARD_10] * 2 + [UNIT_LAKH] * 5
+    raw_unequal = [PFX_DEDH] * 3 + [UNIT_HAZAAR] * 2 + [UNIT_LAKH] * 5
     result_unequal = _repair_letters_run(raw_unequal)
     assert [C.CLASSES[c] for c in result_unequal] == ["PFX_DEDH"] * 3 + ["UNIT_LAKH"] * 7
 
@@ -589,3 +592,163 @@ if __name__ == "__main__":
     print(f"{total - failures}/{total} passed")
     if failures:
         sys.exit(1)
+
+
+# ---------------------------------------------------------------------------
+# R4c: merging an INCOMPLETE amount with the span that follows it
+# ---------------------------------------------------------------------------
+
+def _tok_names(span):
+    return [(C.CLASSES[cid], sub) for cid, sub in span["tokens"]]
+
+
+def test_merge_incomplete_amount_with_following_unit_span():
+    # "ચોંસઠ લાખમાં": the BIO head cuts the amount in two at the space, so
+    # "ચોંસઠ" (CARD_64) and "લાખમાં" (UNIT_LAKH) decode as separate spans.
+    # The first has no UNIT after it (an INCOMPLETE amount) and the second
+    # starts with the unit it is missing, so they are one amount.
+    CARD_64 = C.CLASS_TO_ID["CARD_64"]
+    text = "ચોંસઠ લાખમાં"
+    cls = [CARD_64] * 5 + [SEP] + [UNIT_LAKH] * 6
+    bio = [1, 2, 2, 2, 2, 0, 1, 2, 2, 2, 2, 2]
+    spans = decode_spans(text, bio, cls)
+    assert len(spans) == 1
+    assert (spans[0]["start"], spans[0]["end"]) == (0, 12)
+    assert _tok_names(spans[0]) == [
+        ("CARD_64", "ચોંસઠ"), ("SEP", " "), ("UNIT_LAKH", "લાખમાં"),
+    ]
+
+
+def test_merge_incomplete_amount_with_following_cardinal_span():
+    # "दस बीस हज़ार" -> "दस" + "बीस हज़ार"; A is a bare CARD, B starts with a
+    # CARD, so they merge and core's R8 juxtaposition range then applies.
+    from sankhya import core
+    CARD_20 = C.CLASS_TO_ID["CARD_20"]
+    text = "दस बीस हज़ार"
+    cls = [CARD_10] * 2 + [SEP] + [CARD_20] * 3 + [SEP] + [UNIT_HAZAAR] * 5
+    bio = [1, 2, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2]
+    spans = decode_spans(text, bio, cls)
+    assert len(spans) == 1
+    assert (spans[0]["start"], spans[0]["end"]) == (0, len(text))
+    res = core.evaluate([(C.CLASSES[cid], sub) for cid, sub in spans[0]["tokens"]])
+    assert res.range == (10000, 20000)
+
+
+def test_merge_incomplete_amount_leaves_two_complete_amounts_alone():
+    # "5 lakh 3 crore": span A ends with UNIT_LAKH, so it is a COMPLETE
+    # amount and must not swallow the next span.
+    text = "5 lakh 3 crore"
+    cls = [DIGITS] + [SEP] + [UNIT_LAKH] * 4 + [SEP] + [DIGITS] + [SEP] + [UNIT_CRORE] * 5
+    bio = [1, 2, 2, 2, 2, 2, 0, 1, 2, 2, 2, 2, 2, 2]
+    spans = decode_spans(text, bio, cls)
+    assert len(spans) == 2
+    assert [s["text"] for s in spans] == ["5 lakh", "3 crore"]
+
+
+def test_merge_incomplete_amount_does_not_cross_punctuation():
+    # Anything but exactly one whitespace char between the two spans (here a
+    # comma + space) keeps them separate.
+    text = "das, hazaar"
+    cls = [CARD_10] * 3 + [O] * 2 + [UNIT_HAZAAR] * 6
+    bio = [1, 2, 2, 0, 0, 1, 2, 2, 2, 2, 2]
+    spans = decode_spans(text, bio, cls)
+    assert len(spans) == 2
+
+
+def test_merge_incomplete_amount_does_not_cross_two_spaces():
+    text = "das  hazaar"
+    cls = [CARD_10] * 3 + [O] * 2 + [UNIT_HAZAAR] * 6
+    bio = [1, 2, 2, 0, 0, 1, 2, 2, 2, 2, 2]
+    spans = decode_spans(text, bio, cls)
+    assert len(spans) == 2
+
+
+def test_merge_incomplete_amount_chains_until_stable():
+    # three spans: CARD + CARD + UNIT, each separated by one space
+    from sankhya import core
+    CARD_20 = C.CLASS_TO_ID["CARD_20"]
+    text = "das bees hazaar"
+    cls = [CARD_10] * 3 + [SEP] + [CARD_20] * 4 + [SEP] + [UNIT_HAZAAR] * 6
+    bio = [1, 2, 2, 0, 1, 2, 2, 2, 0, 1, 2, 2, 2, 2, 2]
+    spans = decode_spans(text, bio, cls)
+    assert len(spans) == 1
+    assert spans[0]["text"] == text
+    res = core.evaluate([(C.CLASSES[cid], sub) for cid, sub in spans[0]["tokens"]])
+    assert res.range == (10000, 20000)
+
+
+# ---------------------------------------------------------------------------
+# R2c: bound forms and three-part fused words
+# ---------------------------------------------------------------------------
+
+def test_bound_form_one_char_subrun_baso():
+    # "બસો" = CARD_2 "બ" (a BOUND form declared in the lexicon, valid only
+    # before "સો") + UNIT_SAU "સો" = 200. The 1-char CARD sub-run survives
+    # only because of that lexicon declaration.
+    from sankhya import core
+    CARD_2 = C.CLASS_TO_ID["CARD_2"]
+    UNIT_SAU = C.CLASS_TO_ID["UNIT_SAU"]
+    text = "બસો"
+    spans = decode_spans(text, [1, 2, 2], [CARD_2, UNIT_SAU, UNIT_SAU])
+    assert _tok_names(spans[0]) == [("CARD_2", "બ"), ("UNIT_SAU", "સો")]
+    assert core.evaluate(_tok_names(spans[0])).value == 200
+
+
+def test_undeclared_one_char_subrun_is_still_smoothed():
+    # The same shape with an UNDECLARED 1-char head ("છ" is not in the
+    # pack's bound_forms) is still smoothed away by the majority vote.
+    CARD_6 = C.CLASS_TO_ID["CARD_6"]
+    UNIT_SAU = C.CLASS_TO_ID["UNIT_SAU"]
+    text = "છસો"
+    spans = decode_spans(text, [1, 2, 2], [CARD_6, UNIT_SAU, UNIT_SAU])
+    assert _tok_names(spans[0]) == [("UNIT_SAU", "છસો")]
+
+
+def test_three_part_fused_word_saadhatransau():
+    # "સાડાત્રણસો" = PFX_SAADHE "સાડા" + CARD_3 "ત્રણ" + UNIT_SAU "સો" = 350.
+    from sankhya import core
+    CARD_3 = C.CLASS_TO_ID["CARD_3"]
+    UNIT_SAU = C.CLASS_TO_ID["UNIT_SAU"]
+    text = "સાડાત્રણસો"
+    cls = [PFX_SAADHE] * 4 + [CARD_3] * 4 + [UNIT_SAU] * 2
+    spans = decode_spans(text, [1] + [2] * (len(text) - 1), cls)
+    assert _tok_names(spans[0]) == [
+        ("PFX_SAADHE", "સાડા"), ("CARD_3", "ત્રણ"), ("UNIT_SAU", "સો"),
+    ]
+    assert core.evaluate(_tok_names(spans[0])).value == 350
+
+
+def test_three_part_fused_word_rejects_out_of_order_kinds():
+    # UNIT before CARD is not the PFX? CARD? UNIT? shape -> smoothed as before
+    CARD_3 = C.CLASS_TO_ID["CARD_3"]
+    UNIT_SAU = C.CLASS_TO_ID["UNIT_SAU"]
+    raw = [UNIT_SAU] * 2 + [CARD_3] * 2
+    result = _repair_letters_run(raw, "abcd")
+    assert len(set(result)) == 1
+
+
+def test_bound_forms_are_verified_in_context():
+    from sankhya.verify import verify_tokens
+    assert verify_tokens([("CARD_2", "બ"), ("UNIT_SAU", "સો")]) is True
+    assert verify_tokens([("CARD_2", "બ")]) is False
+
+
+# ---------------------------------------------------------------------------
+# R9: lexicon-"O" gate
+# ---------------------------------------------------------------------------
+
+def test_lexicon_o_only_helper():
+    from sankhya.verify import is_lexicon_o_only
+    assert is_lexicon_o_only("karodon") is True
+    assert is_lexicon_o_only("करोडो") is True
+    assert is_lexicon_o_only("lakh") is False
+    assert is_lexicon_o_only("zzzz-not-a-word") is False
+
+
+def test_lexicon_o_gate_drops_indefinite_plural_span():
+    from sankhya import eval_gold
+    classes = C.CLASSES
+    decoded = [{"start": 5, "end": 12, "tokens": [(UNIT_CRORE, "karodon")]}]
+    assert eval_gold._apply_bare_digits_gate("usne karodon rupaye", decoded, classes) == []
+    keep = [{"start": 0, "end": 8, "tokens": [(DIGITS, "5"), (SEP, " "), (UNIT_CRORE, "crore")]}]
+    assert len(eval_gold._apply_bare_digits_gate("5 crore", keep, classes)) == 1

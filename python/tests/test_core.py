@@ -479,3 +479,14 @@ def test_r7_wins_over_r8_precedence():
     assert r.value == 3000, r.value
     assert r.range == (3000, 1000005), r.range
     assert r.unit == "hazaar"
+
+
+def test_r10_leading_zero_coefficient_gate():
+    from sankhya.core import has_leading_zero_coefficient as g
+    assert g([("DIGITS", "05"), ("SEP", " "), ("UNIT_CRORE", "CD")])
+    assert g([("DIGITS", "007"), ("SEP", " "), ("UNIT_LAKH", "lakh")])
+    assert not g([("DIGITS", "0"), ("DOT", "."), ("DIGITS", "5"), ("SEP", " "), ("UNIT_LAKH", "lakh")])  # single "0"
+    assert not g([("DIGITS", "1"), ("DOT", "."), ("DIGITS", "05"), ("SEP", " "), ("UNIT_LAKH", "lakh")])  # fractional part
+    assert not g([("DIGITS", "50000")])
+    assert not g([("CARD_5", "paanch"), ("SEP", " "), ("UNIT_LAKH", "lakh")])
+    assert g([("DIGITS", "०५"), ("SEP", " "), ("UNIT_HAZAAR", "हज़ार")])  # Devanagari ०५

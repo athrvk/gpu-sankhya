@@ -151,16 +151,31 @@ def _sep():
     return ("SEP", " ")
 
 
+def to_native_digits(s: str, table: str) -> str:
+    """Render the ASCII digits of `s` with a script's own digit glyphs.
+
+    `table` is the pack's `native_digits`: ten code points, "0".."9" in
+    order (Devanagari "०..९" U+0966-U+096F, Gujarati "૦..૯" U+0AE6-U+0AEF).
+    Non-digit characters (grouping commas, the decimal dot) pass through.
+    """
+    if not table:
+        return s
+    assert len(table) == 10, table
+    return "".join(table[int(ch)] if ch.isdigit() and ch.isascii() else ch for ch in s)
+
+
 def _num_tokens_from_digits_p(pack, rng, digit_str):
-    """Like _num_tokens_from_digits, but for packs that declare a
-    `deva_digit_prob` (hi_deva), renders the digit glyphs in Devanagari
-    with that probability. The token CLASS stays DIGITS/DOT/COMMA either
-    way -- only the surface text changes -- so label computation is
-    unaffected (it happens after normalize_text() maps them back to ASCII)."""
-    p = getattr(pack, "deva_digit_prob", 0.0)
-    if p and rng.random() < p:
-        from . import noise_deva as ND
-        digit_str = ND.to_deva_digits(digit_str)
+    """Like _num_tokens_from_digits, but for packs that declare a native
+    digit table (`native_digits` + `native_digit_prob`: Devanagari for
+    hi_deva/mr_deva, Gujarati for gu_gujr), renders the digit glyphs in
+    that script with that probability. The token CLASS stays
+    DIGITS/DOT/COMMA either way -- only the surface text changes -- so
+    label computation is unaffected (it happens after normalize_text()
+    maps them back to ASCII)."""
+    p = getattr(pack, "native_digit_prob", 0.0)
+    table = getattr(pack, "native_digits", "")
+    if p and table and rng.random() < p:
+        digit_str = to_native_digits(digit_str, table)
     return _num_tokens_from_digits(digit_str)
 
 
@@ -420,11 +435,19 @@ def _next_meaningful(toks, i):
 def _apply_pack_glue(pack, rng, toks):
     """Language-specific no-space word forms, driven by pack attributes:
 
-    * `glue_unit_forms` -- a BOUND unit form (Marathi's fused-hundreds "शे")
-      may only appear glued to the CARD_*/PFX_* word before it. When that
-      shape is available the intervening SEP is deleted ("दोन" + "शे" ->
-      "दोनशे"); when it is not (the unit stands alone, follows digits, or
-      follows another unit) the form is swapped for a free one (शंभर).
+    * `glue_unit_forms` -- a unit form that attaches to the CARD_*/PFX_*
+      word before it with no space. When that shape is available the
+      intervening SEP is deleted ("दोन" + "शे" -> "दोनशे", "અઢાર" + "સો"
+      -> "અઢારસો"); when it is not (the unit stands alone, follows digits,
+      or follows another unit) the form is swapped for a free one (शंभर),
+      unless it is listed in `glue_unit_forms_standalone` (Gujarati "સો"),
+      in which case standing alone is fine and it is left as it is.
+    * `bound_number_forms` -- a CARD_*/PFX_* surface that exists ONLY in
+      that glued position (Gujarati CARD_2 "બ", as in બસો = 200, never
+      *બેસો and never a standalone "બ"). Once a glue has been applied, the
+      head word is swapped for its bound form with the declared
+      probability. The class is unchanged, so labels and core.evaluate()
+      are unaffected -- only the surface spelling differs.
     * `fused_prefix_forms` -- a prefix that is usually typed as one word
       with its cardinal ("साडे" + "तीन" -> "साडेतीन") loses the SEP with
       the configured probability. Keys are either a surface form or a
@@ -435,6 +458,8 @@ def _apply_pack_glue(pack, rng, toks):
     core.evaluate() result -- are unchanged.
     """
     glue_units = {f for f in getattr(pack, "glue_unit_forms", []) or []}
+    free_glue = {f for f in getattr(pack, "glue_unit_forms_standalone", []) or []}
+    bound_nums = getattr(pack, "bound_number_forms", {}) or {}
     fused_pfx = getattr(pack, "fused_prefix_forms", {}) or {}
     if not glue_units and not fused_pfx:
         return toks
@@ -450,6 +475,19 @@ def _apply_pack_glue(pack, rng, toks):
             if left_ok:
                 if i - 1 >= 0 and toks[i - 1][0] == "SEP":
                     toks[i - 1] = None  # marked for removal
+                    # now that the head is glued to this unit, it may take
+                    # its bound-position spelling (Gujarati બે + સો -> બસો)
+                    head_cls = toks[p][0]
+                    for surface, spec in bound_nums.items():
+                        if spec["cls"] != head_cls:
+                            continue
+                        if text.lower() not in [u.lower() for u in spec.get("before", ())]:
+                            continue
+                        if rng.random() < spec.get("p", 1.0):
+                            toks[p] = (head_cls, surface)
+                        break
+            elif text in free_glue:
+                pass  # also a free word in this language: standalone is fine
             else:
                 free = [f for f in pack.lexicon.get(cls, []) if f not in glue_units]
                 if not free:

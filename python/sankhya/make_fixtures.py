@@ -39,6 +39,7 @@ from . import classes as C
 from . import core
 from .decode import decode_spans
 from .verify import verify_tokens
+from .eval_gold import _apply_bare_digits_gate
 from .langs.base import all_packs, get_pack
 from .train import MAX_LEN, build_char_to_id, load_jsonl
 from . import np_infer
@@ -73,14 +74,14 @@ def run(weights_path: str, examples: list, lang: str = "hi_latn"):
         parity_rows.append({"text": ex["text"], "bio": bio_pred, "cls": cls_pred})
 
         decoded = decode_spans(text, bio_pred, cls_pred, bio_probs=bio_probs)
+        # Apply exactly the post-decode gates the runtimes apply (R3 bare
+        # digits, R4 lone ambiguous unit, R9 lexicon-O, R10 leading zero) so
+        # the fixture matches src/index.ts decodeForward 1:1.
+        decoded = _apply_bare_digits_gate(text, decoded, class_names)
         spans = []
         for d in decoded:
             toks = [(class_names[cid], sub) for cid, sub in d["tokens"]]
             currency = core.detect_currency(text, d["start"], d["end"], pack)
-            # R3: drop a digits-only span (no UNIT_/PFX_/CARD_) unless a
-            # currency marker was found for it.
-            if core.should_drop_bare_digits(toks) and currency is None:
-                continue
             res = core.evaluate(toks)
             spans.append({
                 "start": d["start"],

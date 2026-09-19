@@ -1,9 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { evaluate, detectCurrency, mergeLangPacks, isBareDigits, shouldDropBareDigits, shouldDropLoneAmbiguousUnit } from "../src/core.ts";
+import { evaluate, detectCurrency, mergeLangPacks, isBareDigits, shouldDropBareDigits, shouldDropLoneAmbiguousUnit, hasLeadingZeroCoefficient } from "../src/core.ts";
 import { HI_LATN } from "../src/lang-hi-latn.ts";
 import { HI_DEVA } from "../src/lang-hi-deva.ts";
 import { MR_DEVA } from "../src/lang-mr-deva.ts";
+import { GU_GUJR } from "../src/lang-gu-gujr.ts";
 
 type Tok = [string, string];
 function ev(...toks: Tok[]) {
@@ -156,6 +157,16 @@ test("mr_deva currency detection: markers before and words after", () => {
   assert.equal(detectCurrency("दोन दिवसांत येतो", 0, 3, MR_DEVA), null);
 });
 
+test("gu_gujr currency detection: markers before and words after", () => {
+  assert.equal(detectCurrency("₹500 ફાઇનલ", 1, 4, GU_GUJR), "INR");
+  assert.equal(detectCurrency("રૂ. 1200 થયા", 4, 8, GU_GUJR), "INR");
+  assert.equal(detectCurrency("પચાસ રૂપિયા જોઈએ", 0, 4, GU_GUJR), "INR");
+  // singular/colloquial and case-inflected forms
+  assert.equal(detectCurrency("બાવીસ રૂપિયો કિલો", 0, 6, GU_GUJR), "INR");
+  assert.equal(detectCurrency("છ લાખ રૂપિયાનું નુકસાન", 0, 5, GU_GUJR), "INR");
+  assert.equal(detectCurrency("બે દિવસમાં આવું", 0, 2, GU_GUJR), null);
+});
+
 test("mergeLangPacks: adding mr_deva keeps the hi packs working", () => {
   // this is exactly the CURRENCY_PACK the parser builds in index.ts
   const pack = mergeLangPacks(HI_LATN, HI_DEVA, MR_DEVA);
@@ -170,6 +181,24 @@ test("mergeLangPacks: adding mr_deva keeps the hi packs working", () => {
   // and a non-currency context is still negative
   assert.equal(detectCurrency("do din baad", 0, 2, pack), null);
   assert.equal(detectCurrency("दोन दिवसांत येतो", 0, 3, pack), null);
+});
+
+test("mergeLangPacks: the four-pack CURRENCY_PACK keeps every pack working", () => {
+  // this is exactly the CURRENCY_PACK the parser builds in index.ts today
+  const pack = mergeLangPacks(HI_LATN, HI_DEVA, MR_DEVA, GU_GUJR);
+  assert.equal(detectCurrency("Rs 500 only", 3, 6, pack), "INR");
+  assert.equal(detectCurrency("pachas rupaye chahiye", 0, 6, pack), "INR");
+  assert.equal(detectCurrency("पचास रुपये चाहिए", 0, 4, pack), "INR");
+  assert.equal(detectCurrency("दोनशे रुपयांचे बिल", 0, 5, pack), "INR");
+  assert.equal(detectCurrency("બસો રૂપિયા આપ", 0, 3, pack), "INR");
+  assert.equal(detectCurrency("₹2,50,000 ભર્યા", 1, 9, pack), "INR");
+  // "રૂ" must not swallow the Marathi/Hindi markers or vice versa
+  assert.equal(detectCurrency("રૂ. 1200 થયા", 4, 8, pack), "INR");
+  assert.equal(detectCurrency("रु. 1200 झाले", 4, 8, pack), "INR");
+  // and non-currency contexts are still negative in every language
+  assert.equal(detectCurrency("do din baad", 0, 2, pack), null);
+  assert.equal(detectCurrency("दोन दिवसांत येतो", 0, 3, pack), null);
+  assert.equal(detectCurrency("બે દિવસમાં આવું", 0, 2, pack), null);
 });
 
 test("das hazaar crore", () => {
@@ -542,4 +571,33 @@ test("R7 wins over R8 precedence: 'teen hazaar paanch das lakh'", () => {
   assert.equal(r.value, 3000);
   assert.deepEqual(r.range, [3000, 1000005]);
   assert.equal(r.unit, "hazaar");
+});
+
+// --- R2c / R9 lexicon helpers --------------------------------------------
+
+test("bound forms verify only in context", async () => {
+  const { verifyTokens, isBoundForm, isLexiconOOnly } = await import("../src/verify.ts");
+  assert.equal(verifyTokens([["CARD_2", "બ"], ["UNIT_SAU", "સો"]]), true);
+  assert.equal(verifyTokens([["CARD_2", "બ"]]), false);
+  assert.equal(isBoundForm("CARD_2", "બ", "સો"), true);
+  assert.equal(isBoundForm("CARD_6", "છ", "સો"), false);
+  assert.equal(isBoundForm("CARD_2", "બ", null), false);
+});
+
+test("R9: isLexiconOOnly recognises lexicon-declared ordinary words", async () => {
+  const { isLexiconOOnly } = await import("../src/verify.ts");
+  assert.equal(isLexiconOOnly("karodon"), true);
+  assert.equal(isLexiconOOnly("करोडो"), true);
+  assert.equal(isLexiconOOnly("KARODON"), true); // NFC-lowercased
+  assert.equal(isLexiconOOnly("lakh"), false);
+  assert.equal(isLexiconOOnly("zzzz-not-a-word"), false);
+});
+
+test("R10: leading-zero digits coefficient is never an amount", () => {
+  assert.equal(hasLeadingZeroCoefficient([["DIGITS", "05"], ["SEP", " "], ["UNIT_CRORE", "CD"]]), true);
+  assert.equal(hasLeadingZeroCoefficient([["DIGITS", "007"], ["SEP", " "], ["UNIT_LAKH", "lakh"]]), true);
+  assert.equal(hasLeadingZeroCoefficient([["DIGITS", "0"], ["DOT", "."], ["DIGITS", "5"], ["SEP", " "], ["UNIT_LAKH", "lakh"]]), false);
+  assert.equal(hasLeadingZeroCoefficient([["DIGITS", "1"], ["DOT", "."], ["DIGITS", "05"], ["SEP", " "], ["UNIT_LAKH", "lakh"]]), false);
+  assert.equal(hasLeadingZeroCoefficient([["DIGITS", "50000"]]), false);
+  assert.equal(hasLeadingZeroCoefficient([["DIGITS", "०५"], ["SEP", " "], ["UNIT_HAZAAR", "हज़ार"]]), true);
 });
