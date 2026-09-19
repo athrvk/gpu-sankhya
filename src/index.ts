@@ -6,6 +6,7 @@ import { decodeSpans } from "./decode.ts";
 import { evaluate, detectCurrency, mergeLangPacks, shouldDropBareDigits, shouldDropLoneAmbiguousUnit } from "./core.ts";
 import { HI_LATN } from "./lang-hi-latn.ts";
 import { HI_DEVA } from "./lang-hi-deva.ts";
+import { MR_DEVA } from "./lang-mr-deva.ts";
 import { CLASSES } from "./classes.ts";
 import { WebGPUBackend, probeWebGPU } from "./infer-webgpu.ts";
 import defaultWeightsJson from "./data/default-weights.json" with { type: "json" };
@@ -316,8 +317,9 @@ export function createParser(opts: CreateParserOptions = {}): Parser {
   return new Parser(opts);
 }
 
-// Union of the hi_latn and hi_deva currency marker lists, longest-match
-// first (see core.mergeLangPacks) -- used for currency detection so a
-// mixed-script input ("₹2 lakh" or "2 लाख रुपये") is handled the same way
-// regardless of which script wrote the currency marker.
-const CURRENCY_PACK = mergeLangPacks(HI_LATN, HI_DEVA);
+// Union of every shipped language pack's currency marker list,
+// longest-match first (see core.mergeLangPacks) -- used for currency
+// detection so a mixed-script input ("₹2 lakh", "2 लाख रुपये", "दीड लाख
+// रुपयांचा") is handled the same way regardless of which script/language
+// wrote the currency marker. Adding a language pack means adding it here.
+const CURRENCY_PACK = mergeLangPacks(HI_LATN, HI_DEVA, MR_DEVA);
