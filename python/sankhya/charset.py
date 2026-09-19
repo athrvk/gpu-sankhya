@@ -56,7 +56,8 @@ def build_charset_multi(packs) -> list:
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--lang", default="hi_latn", help="comma-separated pack ids")
+    ap.add_argument("--lang", default="hi_latn",
+                    help="comma-separated pack ids (see sankhya.langs.base.KNOWN_PACKS)")
     ap.add_argument("--out", default="data/charset.json")
     args = ap.parse_args(argv)
     lang_ids = [x.strip() for x in args.lang.split(",") if x.strip()]
