@@ -248,6 +248,73 @@ function tryJuxtapositionRange(tokens: Tok[], allClasses: string[]): Result | nu
   return null;
 }
 
+/** R8: two directly-juxtaposed SPELLED cardinals with nothing but SEP
+ * between them, e.g. "teen paanch hazaar" (CARD_3 SEP CARD_5 SEP
+ * UNIT_HAZAAR, 3000..5000) or "tees paintees hazaar" (30000..35000).
+ *
+ * Unlike R7 (which splits at a boundary between two UNIT-closed terms),
+ * this fires when two CARD_* tokens sit back-to-back -- no unit, prefix or
+ * digits token between them -- and the second is strictly larger than the
+ * first. The low reading drops the larger cardinal, the high reading drops
+ * the smaller one; both are then evaluated normally (so any trailing unit,
+ * e.g. UNIT_HAZAAR, applies to each side).
+ *
+ * Must NOT fire on:
+ *   - "ek sau" (CARD_1 UNIT_SAU): sau is a UNIT, not a second cardinal.
+ *   - "do hazaar paanch" (CARD_2 UNIT_HAZAAR CARD_5): the cardinals are
+ *     separated by a unit token, not merely SEP -- additive, unchanged.
+ *   - descending "bees paanch" (CARD_20 CARD_5): second < first, so the
+ *     a < b guard fails and today's behaviour (additive) is kept.
+ *   - DIGITS-based juxtaposition: restricted to CARD_* (spelled) tokens.
+ *
+ * Only used when R7 does not already match (checked first by the caller),
+ * so unit-bearing juxtaposition terms (R7) take precedence.
+ *
+ * Returns a Result on a match, else null. */
+function tryCardinalJuxtapositionRange(tokens: Tok[], allClasses: string[]): Result | null {
+  const cardIdxs: number[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    if (C.isCard(tokens[i][0])) cardIdxs.push(i);
+  }
+  for (let k = 0; k < cardIdxs.length - 1; k++) {
+    const i = cardIdxs[k];
+    const j = cardIdxs[k + 1];
+    let onlySep = true;
+    for (let m = i + 1; m < j; m++) {
+      if (tokens[m][0] !== "SEP") {
+        onlySep = false;
+        break;
+      }
+    }
+    if (!onlySep) continue;
+    const clsA = tokens[i][0];
+    const clsB = tokens[j][0];
+    let aVal: number;
+    let bVal: number;
+    try {
+      aVal = C.cardValue(clsA);
+      bVal = C.cardValue(clsB);
+    } catch {
+      continue;
+    }
+    if (!(aVal < bVal)) continue;
+    const lowTokens = [...tokens.slice(0, j), ...tokens.slice(j + 1)];
+    const highTokens = [...tokens.slice(0, i), ...tokens.slice(i + 1)];
+    const lowRes = evaluate(lowTokens);
+    const highRes = evaluate(highTokens);
+    if (lowRes.range !== null || highRes.range !== null) continue;
+    if (!(lowRes.value < highRes.value)) continue;
+    return {
+      value: lowRes.value,
+      range: [lowRes.value, highRes.value],
+      unit: lowRes.unit,
+      classes: allClasses,
+      currency: null,
+    };
+  }
+  return null;
+}
+
 export function evaluate(rawTokens: Tok[]): Result {
   try {
     // `classes` in the Result reports the original (uncollapsed) token
@@ -276,6 +343,10 @@ export function evaluate(rawTokens: Tok[]): Result {
       // evaluation below.
       const r7 = tryJuxtapositionRange(parts[0], allClasses);
       if (r7 !== null) return r7;
+      // R8: no unit-bearing juxtaposition term boundary (R7) matched --
+      // check for two directly-adjacent spelled cardinals instead.
+      const r8 = tryCardinalJuxtapositionRange(parts[0], allClasses);
+      if (r8 !== null) return r8;
       const [value, unit] = amounts[0];
       return {
         value: num(value),

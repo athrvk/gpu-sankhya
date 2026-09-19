@@ -471,3 +471,75 @@ test("Gujarati digits: bare", () => {
   const r = ev(["DIGITS", "૭૫૦૦"]);
   assert.equal(r.value, 7500);
 });
+
+test("R8: 'tees paintees hazaar' juxtaposition range (no connector)", () => {
+  // CARD_30 SEP CARD_35 SEP UNIT_HAZAAR means 30,000-35,000, not
+  // 30 + 35*1000 = 35030.
+  const r = ev(
+    ["CARD_30", "tees"], ["SEP", " "], ["CARD_35", "paintees"], ["SEP", " "],
+    ["UNIT_HAZAAR", "hazaar"],
+  );
+  assert.equal(r.value, 30000);
+  assert.deepEqual(r.range, [30000, 35000]);
+  assert.equal(r.unit, "hazaar");
+});
+
+test("R8: 'paach ten hazar' juxtaposition range", () => {
+  const r = ev(
+    ["CARD_5", "paach"], ["SEP", " "], ["CARD_10", "ten"], ["SEP", " "],
+    ["UNIT_HAZAAR", "hazar"],
+  );
+  assert.equal(r.value, 5000);
+  assert.deepEqual(r.range, [5000, 10000]);
+  assert.equal(r.unit, "hazaar");
+});
+
+test("R8: 'do teen lakh' juxtaposition range at core level", () => {
+  // At core level (no RANGE token inserted, unlike the decoder path), two
+  // adjacent spelled cardinals before a unit form a range.
+  const r = ev(
+    ["CARD_2", "do"], ["SEP", " "], ["CARD_3", "teen"], ["SEP", " "],
+    ["UNIT_LAKH", "lakh"],
+  );
+  assert.equal(r.value, 200000);
+  assert.deepEqual(r.range, [200000, 300000]);
+  assert.equal(r.unit, "lakh");
+});
+
+test("R8: 'ek sau' is unaffected (sau is a UNIT, not a second cardinal)", () => {
+  const r = ev(["CARD_1", "ek"], ["SEP", " "], ["UNIT_SAU", "sau"]);
+  assert.equal(r.value, 100);
+  assert.equal(r.range, null);
+});
+
+test("R8: 'do hazaar paanch' additive is unaffected (cardinals separated by a unit)", () => {
+  const r = ev(
+    ["CARD_2", "do"], ["SEP", " "], ["UNIT_HAZAAR", "hazaar"], ["SEP", " "],
+    ["CARD_5", "paanch"],
+  );
+  assert.equal(r.value, 2005);
+  assert.equal(r.range, null);
+});
+
+test("R8: 'bees paanch' descending is unaffected", () => {
+  const r = ev(["CARD_20", "bees"], ["SEP", " "], ["CARD_5", "paanch"]);
+  assert.equal(r.value, 25);
+  assert.equal(r.range, null);
+});
+
+test("R7 wins over R8 precedence: 'teen hazaar paanch das lakh'", () => {
+  // R7 matches at the UNIT_HAZAAR / UNIT_LAKH term boundary (both terms
+  // have explicit coefficients and unitValue(lakh) >= unitValue(hazaar)).
+  // Within the second term, CARD_5 SEP CARD_10 is ALSO an R8-eligible
+  // adjacent-cardinal pair, but R7 is checked first and must win for the
+  // whole span.
+  const r = ev(
+    ["CARD_3", "teen"], ["SEP", " "], ["UNIT_HAZAAR", "hazaar"],
+    ["SEP", " "],
+    ["CARD_5", "paanch"], ["SEP", " "], ["CARD_10", "das"], ["SEP", " "],
+    ["UNIT_LAKH", "lakh"],
+  );
+  assert.equal(r.value, 3000);
+  assert.deepEqual(r.range, [3000, 1000005]);
+  assert.equal(r.unit, "hazaar");
+});

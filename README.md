@@ -394,6 +394,11 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   summed, when both terms carry an explicit coefficient and the second
   term's unit is the same size or larger — this is the same shape of
   arithmetic as an explicit range connector, just spoken without one.
+- **R8 — juxtaposed spelled cardinals**: two adjacent spelled cardinals
+  with nothing but a space between them and the smaller first (`"do teen
+  lakh"`, `"paach ten hazar"`, `"तीस पैंतीस हज़ार"`) are a `[low, high]`
+  range, evaluated once with each cardinal; digits are excluded and R7
+  takes precedence when it applies.
   Multiplicative stacking (`"das hazaar crore"`, second term has no
   coefficient), descending additive chains (`"ek lakh dus hazaar"`), and
   cardinal-only juxtaposition (`"do teen lakh"`, already repaired into an

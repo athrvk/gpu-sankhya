@@ -414,3 +414,68 @@ def test_devanagari_digits_mixed_ascii_and_deva():
 def test_gujarati_digits_bare():
     r = ev(("DIGITS", "૭૫૦૦"))
     assert r.value == 7500, r.value
+
+
+def test_r8_tees_paintees_hazaar_juxtaposition_range():
+    # "tees paintees hazaar" (CARD_30 SEP CARD_35 SEP UNIT_HAZAAR) means
+    # the range 30,000-35,000, not 30 + 35*1000 = 35030.
+    r = ev(("CARD_30", "tees"), ("SEP", " "), ("CARD_35", "paintees"), ("SEP", " "),
+           ("UNIT_HAZAAR", "hazaar"))
+    assert r.value == 30000, r.value
+    assert r.range == (30000, 35000), r.range
+    assert r.unit == "hazaar"
+
+
+def test_r8_paach_ten_hazar_juxtaposition_range():
+    r = ev(("CARD_5", "paach"), ("SEP", " "), ("CARD_10", "ten"), ("SEP", " "),
+           ("UNIT_HAZAAR", "hazar"))
+    assert r.value == 5000, r.value
+    assert r.range == (5000, 10000), r.range
+    assert r.unit == "hazaar"
+
+
+def test_r8_do_teen_lakh_juxtaposition_range_at_core_level():
+    # At core level (no RANGE token inserted, unlike the decoder path),
+    # two adjacent spelled cardinals before a unit form a range.
+    r = ev(("CARD_2", "do"), ("SEP", " "), ("CARD_3", "teen"), ("SEP", " "),
+           ("UNIT_LAKH", "lakh"))
+    assert r.value == 200000, r.value
+    assert r.range == (200000, 300000), r.range
+    assert r.unit == "lakh"
+
+
+def test_r8_ek_sau_unaffected():
+    # "sau" is a UNIT, not a second cardinal -- no adjacent CARD_ pair.
+    r = ev(("CARD_1", "ek"), ("SEP", " "), ("UNIT_SAU", "sau"))
+    assert r.value == 100, r.value
+    assert r.range is None
+
+
+def test_r8_do_hazaar_paanch_additive_unaffected():
+    # Cardinals are separated by a UNIT token, not merely SEP -- additive.
+    r = ev(("CARD_2", "do"), ("SEP", " "), ("UNIT_HAZAAR", "hazaar"), ("SEP", " "),
+           ("CARD_5", "paanch"))
+    assert r.value == 2005, r.value
+    assert r.range is None
+
+
+def test_r8_bees_paanch_descending_unaffected():
+    # second < first, so the a < b guard fails and today's additive
+    # behaviour is kept.
+    r = ev(("CARD_20", "bees"), ("SEP", " "), ("CARD_5", "paanch"))
+    assert r.value == 25, r.value
+    assert r.range is None
+
+
+def test_r7_wins_over_r8_precedence():
+    # "teen hazaar paanch das lakh": R7 matches at the UNIT_HAZAAR /
+    # UNIT_LAKH term boundary (both terms have explicit coefficients and
+    # unit_value(lakh) >= unit_value(hazaar)). Within the second term,
+    # CARD_5 SEP CARD_10 is ALSO an R8-eligible adjacent-cardinal pair, but
+    # R7 is checked first and must win for the whole span.
+    r = ev(("CARD_3", "teen"), ("SEP", " "), ("UNIT_HAZAAR", "hazaar"), ("SEP", " "),
+           ("CARD_5", "paanch"), ("SEP", " "), ("CARD_10", "das"), ("SEP", " "),
+           ("UNIT_LAKH", "lakh"))
+    assert r.value == 3000, r.value
+    assert r.range == (3000, 1000005), r.range
+    assert r.unit == "hazaar"
