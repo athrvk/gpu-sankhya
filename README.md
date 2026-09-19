@@ -46,8 +46,14 @@ parse("sava lakh");
 // [{
 //   span: "sava lakh", start: 0, end: 9,
 //   value: 125000, unit: "lakh", currency: null,
-//   confidence: 0.95, classes: ["PFX_SAVA", "SEP", "UNIT_LAKH"]
+//   confidence: 0.95, classes: ["PFX_SAVA", "SEP", "UNIT_LAKH"],
+//   verified: true, tokens: [["PFX_SAVA","sava"],["SEP"," "],["UNIT_LAKH","lakh"]]
 // }]
+
+// strict mode: only verified spans come back -- "the right number or
+// nothing" (see "Correct or abstains" below).
+parse("savaa lakhhh", { strict: true }); // []
+parse("savaa lakhhh");                   // [{ value: 125000, verified: false, ... }]
 
 parse("mera budget paune do lakh tak ka hai");
 // [{ span: "paune do lakh", value: 175000, unit: "lakh", ... }]
@@ -105,8 +111,27 @@ interface Sankhya {
   currency: "INR"|null;    // adjacent marker detected outside the span
   confidence: number;      // mean of span-tag softmax probs over the span
   classes: string[];       // normalised token classes, e.g. ["PFX_DHAI","UNIT_LAKH"]
+  verified: boolean;       // true iff every token in `tokens` is independently
+                           // justified by the lexicon -- see "Correct or abstains"
+  tokens: Array<[string, string]>; // (class, text) tokens the span decoded to,
+                                    // in order -- for explainability and verification
 }
 ```
+
+### Correct or abstains
+
+The CNN's job is only to *propose* a span and its token classes; a
+deterministic core (lexicon lookups + the arithmetic in `core.ts`) computes
+the value. A span is **verified** when every one of its `tokens` is
+independently justified by the lexicon — a digit run is all digits, a
+separator is whitespace, and every other token's exact (lowercased) text
+is the surface form the lexicon lists for that class — so a verified
+span's value is a pure function of the lexicon and the arithmetic core,
+neither of which is a black box: both are unit-tested (`test/verify.test.ts`,
+`test/core.test.ts`) independent of the model. `strict: true` uses this to
+give you the guarantee "the right number or nothing": it drops every span
+the model tagged but the lexicon didn't corroborate, rather than risk
+returning a value for a spelling the model merely guessed at.
 
 ### API
 
@@ -117,6 +142,11 @@ interface Sankhya {
   `{ backend: "auto" }` to use WebGPU automatically when it's available
   *and* the batch has at least 32 texts (otherwise CPU, since GPU
   dispatch overhead dominates for small batches).
+- **`{ strict: true }`** (on `parse`/`parseBatch`/`Parser.parse`/
+  `Parser.parseBatch`, CPU and WebGPU paths alike) — drop any span that
+  isn't `verified`, so you only ever get back a span whose value is
+  provably a pure function of the lexicon + arithmetic core. Default
+  `false` (unverified spans are still returned, with `verified: false`).
 - **`createParser({ weights?, backend? })`** — build a `Parser` instance
   around a custom weights JSON (float or int8 form, as written by
   `python/sankhya/export.py`), instead of the bundled default model. See
@@ -212,15 +242,16 @@ training): 0.925 value accuracy. This number is optimistic — it's testing
 the model on its own distribution.
 
 On two hand-written gold sets, written independently of the generator —
-`python/tests/gold.jsonl` (romanised Hindi, 225 sentences / 197 spans)
-and `python/tests/gold_deva.jsonl` (Devanagari Hindi, 185 sentences / 154
+`python/tests/gold.jsonl` (romanised Hindi, 227 sentences / 199 spans)
+and `python/tests/gold_deva.jsonl` (Devanagari Hindi, 186 sentences / 155
 spans) — evaluated against the shipped int8-quantized weights:
 
 | gold set | examples | spans | value accuracy | span precision | span recall | span F1 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| gold.jsonl (romanised) | 225 | 197 | 0.9543 | 0.9497 | 0.9594 | 0.9545 |
-| gold_deva.jsonl (Devanagari) | 185 | 154 | 0.9740 | 0.9805 | 0.9805 | 0.9805 |
-| combined | 410 | 351 | 0.9632 | 0.9632 | 0.9687 | 0.9659 |
+| gold.jsonl (romanised) | 227 | 199 | 0.9548 | 0.9502 | 0.9598 | 0.9550 |
+| gold_deva.jsonl (Devanagari) | 186 | 155 | 0.9806 | 0.9806 | 0.9806 | 0.9806 |
+| combined | 413 | 354 | 0.9661 | 0.9635 | 0.9689 | 0.9662 |
+| strict mode (verified spans only) | 413 | 320 covered (0.904) | 1.0000 | — | — | — |
 
 Negatives (zero-gold-span examples, 75 total): 0 false positives.
 Miss summary: missed 1, spurious 1, wrong value 2, wrong boundary 10.
@@ -356,6 +387,19 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   space) as one additive amount rather than a `[low, high]` range —
   genuine ranges (only one side has a unit, or both do but ascending) are
   unaffected.
+- **R7 — juxtaposed ranges with no connector word**: two adjacent
+  coefficient+unit terms with NO `RANGE` token between them at all (e.g.
+  `"teen hazaar paanch hazaar"`, `"bees lac pachees lac"`, `"तीन हज़ार
+  पाँच हज़ार"`) are evaluated as a `[low, high]` range rather than
+  summed, when both terms carry an explicit coefficient and the second
+  term's unit is the same size or larger — this is the same shape of
+  arithmetic as an explicit range connector, just spoken without one.
+  Multiplicative stacking (`"das hazaar crore"`, second term has no
+  coefficient), descending additive chains (`"ek lakh dus hazaar"`), and
+  cardinal-only juxtaposition (`"do teen lakh"`, already repaired into an
+  explicit `RANGE` upstream) are all unaffected; two equal terms
+  (`"paanch lakh paanch lakh"`) fall back to plain additive doubling
+  rather than a degenerate `[x, x]` range.
 
 An optional linear-chain CRF (`--crf`, see `python/README.md`) can replace
 the plain per-character argmax with Viterbi decoding, but experiments on

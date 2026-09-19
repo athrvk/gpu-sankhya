@@ -337,3 +337,81 @@ test("detectCurrency: glued symbol before digits ('₹85000')", () => {
   const text = "₹85000";
   assert.equal(detectCurrency(text, 1, 6, HI_LATN), "INR");
 });
+
+test("R7: 'teen hazaar paanch hazaar' juxtaposition range (no connector)", () => {
+  const r = ev(
+    ["CARD_3", "teen"], ["SEP", " "], ["UNIT_HAZAAR", "hazaar"],
+    ["SEP", " "],
+    ["CARD_5", "paanch"], ["SEP", " "], ["UNIT_HAZAAR", "hazaar"],
+  );
+  assert.equal(r.value, 3000);
+  assert.deepEqual(r.range, [3000, 5000]);
+  assert.equal(r.unit, "hazaar");
+});
+
+test("R7: 'bees lakh pachees lakh' juxtaposition range (no connector)", () => {
+  const r = ev(
+    ["CARD_20", "bees"], ["SEP", " "], ["UNIT_LAKH", "lakh"],
+    ["SEP", " "],
+    ["CARD_25", "pachees"], ["SEP", " "], ["UNIT_LAKH", "lakh"],
+  );
+  assert.equal(r.value, 2000000);
+  assert.deepEqual(r.range, [2000000, 2500000]);
+  assert.equal(r.unit, "lakh");
+});
+
+test("R7: '3 hazaar 5 hazaar' juxtaposition range with digits", () => {
+  const r = ev(
+    ["DIGITS", "3"], ["SEP", " "], ["UNIT_HAZAAR", "hazaar"],
+    ["SEP", " "],
+    ["DIGITS", "5"], ["SEP", " "], ["UNIT_HAZAAR", "hazaar"],
+  );
+  assert.equal(r.value, 3000);
+  assert.deepEqual(r.range, [3000, 5000]);
+});
+
+test("R7: 'paanch lakh paanch lakh' (low == high) falls back to additive, no range", () => {
+  // Deliberate choice: equal juxtaposed terms are ambiguous with plain
+  // repetition/emphasis, not a genuine [x, x] range, so R7 requires
+  // low < high strictly and this falls back to today's additive sum.
+  const r = ev(
+    ["CARD_5", "paanch"], ["SEP", " "], ["UNIT_LAKH", "lakh"],
+    ["SEP", " "],
+    ["CARD_5", "paanch"], ["SEP", " "], ["UNIT_LAKH", "lakh"],
+  );
+  assert.equal(r.value, 1000000);
+  assert.equal(r.range, null);
+});
+
+test("R7: 'das hazaar crore' multiplicative stacking is unaffected (no coefficient on crore)", () => {
+  const r = ev(
+    ["CARD_10", "das"], ["SEP", " "], ["UNIT_HAZAAR", "hazaar"],
+    ["SEP", " "],
+    ["UNIT_CRORE", "crore"],
+  );
+  assert.equal(r.value, 1e11);
+  assert.equal(r.range, null);
+});
+
+test("R7: 'ek lakh dus hazaar' descending additive chain is unaffected", () => {
+  const r = ev(
+    ["CARD_1", "ek"], ["SEP", " "], ["UNIT_LAKH", "lakh"],
+    ["SEP", " "],
+    ["CARD_10", "dus"], ["SEP", " "], ["UNIT_HAZAAR", "hazaar"],
+  );
+  assert.equal(r.value, 110000);
+  assert.equal(r.range, null);
+});
+
+test("R7: 'do teen lakh' cardinal-only juxtaposition is unaffected (already an explicit RANGE upstream)", () => {
+  // By the time this reaches evaluate(), decode-time repair has already
+  // inserted an explicit RANGE token between the two cardinals, so this
+  // exercises the existing RANGE-based path, not R7.
+  const r = ev(
+    ["CARD_2", "do"],
+    ["RANGE", " "],
+    ["CARD_3", "teen"], ["SEP", " "], ["UNIT_LAKH", "lakh"],
+  );
+  assert.deepEqual(r.range, [200000, 300000]);
+  assert.equal(r.unit, "lakh");
+});

@@ -1,0 +1,151 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { verifyTokens } from "../src/verify.ts";
+
+test("sava + lakh is verified", () => {
+  assert.equal(
+    verifyTokens([
+      ["PFX_SAVA", "sava"],
+      ["SEP", " "],
+      ["UNIT_LAKH", "lakh"],
+    ]),
+    true,
+  );
+});
+
+test("misspelt unit is not verified", () => {
+  assert.equal(
+    verifyTokens([
+      ["PFX_SAVA", "sava"],
+      ["SEP", " "],
+      ["UNIT_LAKH", "lakhhh"],
+    ]),
+    false,
+  );
+});
+
+test("Devanagari digits are verified as DIGITS", () => {
+  assert.equal(verifyTokens([["DIGITS", "१२३"]]), true);
+});
+
+test("DIGITS token with a non-digit char is not verified", () => {
+  assert.equal(verifyTokens([["DIGITS", "12a"]]), false);
+});
+
+test("SEP must be whitespace only", () => {
+  assert.equal(
+    verifyTokens([
+      ["PFX_SAVA", "sava"],
+      ["SEP", " "],
+      ["UNIT_LAKH", "lakh"],
+    ]),
+    true,
+  );
+  assert.equal(
+    verifyTokens([
+      ["PFX_SAVA", "sava"],
+      ["SEP", "x"],
+      ["UNIT_LAKH", "lakh"],
+    ]),
+    false,
+  );
+});
+
+test("RANGE accepts symbols and lexicon range words", () => {
+  assert.equal(
+    verifyTokens([
+      ["DIGITS", "2"],
+      ["RANGE", "-"],
+      ["DIGITS", "3"],
+    ]),
+    true,
+  );
+  assert.equal(
+    verifyTokens([
+      ["DIGITS", "2"],
+      ["RANGE", "se"],
+      ["DIGITS", "3"],
+    ]),
+    true,
+  );
+  assert.equal(
+    verifyTokens([
+      ["DIGITS", "2"],
+      ["RANGE", "xyz"],
+      ["DIGITS", "3"],
+    ]),
+    false,
+  );
+});
+
+test("O is verified only if the lexicon knows it as class O", () => {
+  // "लाखों" (indefinite plural) is a lexicon word mapped to class O.
+  assert.equal(
+    verifyTokens([
+      ["DIGITS", "2"],
+      ["O", "लाखों"],
+      ["DIGITS", "3"],
+    ]),
+    true,
+  );
+  assert.equal(
+    verifyTokens([
+      ["DIGITS", "2"],
+      ["O", "notaword"],
+      ["DIGITS", "3"],
+    ]),
+    false,
+  );
+});
+
+test("DOT and COMMA must be exactly '.' and ','", () => {
+  assert.equal(verifyTokens([["DOT", "."]]), false); // no content token -> false regardless
+  assert.equal(
+    verifyTokens([
+      ["DIGITS", "2"],
+      ["DOT", "."],
+      ["DIGITS", "5"],
+    ]),
+    true,
+  );
+  assert.equal(
+    verifyTokens([
+      ["DIGITS", "2"],
+      ["DOT", ","],
+      ["DIGITS", "5"],
+    ]),
+    false,
+  );
+  assert.equal(
+    verifyTokens([
+      ["DIGITS", "2"],
+      ["COMMA", ","],
+      ["DIGITS", "5"],
+    ]),
+    true,
+  );
+  assert.equal(
+    verifyTokens([
+      ["DIGITS", "2"],
+      ["COMMA", "x"],
+      ["DIGITS", "5"],
+    ]),
+    false,
+  );
+});
+
+test("multi-word english fraction phrase is looked up whole", () => {
+  assert.equal(verifyTokens([["PFX_SAADHE", "and a half"]]), true);
+});
+
+test("empty token list is not verified", () => {
+  assert.equal(verifyTokens([]), false);
+});
+
+test("a span with only SEP/RANGE/DOT (no content token) is not verified", () => {
+  assert.equal(verifyTokens([["SEP", " "]]), false);
+});
+
+test("unknown surface for a PFX/CARD/UNIT class is not verified", () => {
+  assert.equal(verifyTokens([["UNIT_LAKH", "notaword"]]), false);
+});

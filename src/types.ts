@@ -17,10 +17,21 @@ export interface Sankhya {
   currency: "INR" | null;
   confidence: number;
   classes: string[];
+  /** True when every decoded token is independently justified by the
+   * lexicon (or a structural rule for SEP/DOT/COMMA/RANGE/DIGITS) -- see
+   * verifyTokens() in verify.ts. A verified span's value is a pure
+   * function of the lexicon + arithmetic core. */
+  verified: boolean;
+  /** The (class, text) tokens the span decoded to, in order -- for
+   * explainability and for verifyTokens(). */
+  tokens: Array<[string, string]>;
 }
 
 export interface ParseOptions {
   backend?: "cpu" | "webgpu" | "auto";
+  /** When true, spans that are not verified() are dropped from the
+   * result. Default false. */
+  strict?: boolean;
 }
 
 /** Raw float weights JSON, as written by python/sankhya/export.py (float form). */

@@ -354,6 +354,27 @@
   .conf-pill.ok { background: var(--ok-bg); color: var(--ok); }
   .conf-pill.warn { background: var(--warn-soft); color: var(--warn); }
   .conf-pill.low { background: var(--border); color: var(--muted); }
+  .verified-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+  .verified-pill.yes { background: var(--ok-bg); color: var(--ok); }
+  .verified-pill.no { background: var(--border); color: var(--muted); }
+  .token-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; width: 100%; padding: 0.1rem 0.15rem 0.5rem; }
+  .token-chip {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.15rem 0.45rem;
+    color: var(--muted);
+  }
+  .token-chip b { color: var(--text); font-weight: 700; }
   .how-btn {
     all: unset;
     cursor: pointer;
@@ -585,6 +606,12 @@ lakhon log aaye</textarea>
             <option value="append">append line</option>
             <option value="replace">replace input</option>
           </select>
+        </div>
+        <div class="mode-row">
+          <label style="display:flex;align-items:center;gap:0.4rem;margin:0;">
+            <input type="checkbox" id="strict-toggle" />
+            strict mode &mdash; only verified spans
+          </label>
         </div>
         <p class="kbd-hint">
           <kbd>Ctrl/Cmd</kbd>+<kbd>Enter</kbd> runs the benchmark &middot; <kbd>Esc</kbd> clears the input
@@ -1038,6 +1065,7 @@ lakhon log aaye</textarea>
 
       const pct = Math.round((sp.confidence || 0) * 100);
       const band = confBand(sp.confidence || 0);
+      const verified = !!sp.verified;
 
       const valueZone = document.createElement("div");
       valueZone.className = "span-zone-value";
@@ -1103,6 +1131,14 @@ lakhon log aaye</textarea>
       pill.textContent = pct + "%";
       rightZone.appendChild(pill);
 
+      const vPill = document.createElement("span");
+      vPill.className = "verified-pill " + (verified ? "yes" : "no");
+      vPill.textContent = verified ? "verified" : "unverified";
+      vPill.title = verified
+        ? "every token was independently justified by the lexicon"
+        : "the model tagged this, but not every token matched the lexicon exactly";
+      rightZone.appendChild(vPill);
+
       const howBtn = document.createElement("button");
       howBtn.type = "button";
       howBtn.className = "how-btn";
@@ -1123,6 +1159,18 @@ lakhon log aaye</textarea>
         chip.textContent = t;
         howPanel.appendChild(chip);
       }
+      if (Array.isArray(sp.tokens) && sp.tokens.length) {
+        const tokenRow = document.createElement("div");
+        tokenRow.className = "token-chips";
+        for (const [cls, txt] of sp.tokens) {
+          const chip = document.createElement("span");
+          chip.className = "token-chip";
+          chip.innerHTML = `<b>${escapeHtml(cls)}</b>: ${escapeHtml(JSON.stringify(txt))}`;
+          tokenRow.appendChild(chip);
+        }
+        howPanel.appendChild(tokenRow);
+      }
+
       howBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         const open = howPanel.classList.toggle("open");
@@ -1155,11 +1203,12 @@ lakhon log aaye</textarea>
     const lines = input.value.split("\n");
     lastParseData = [];
     let spanCount = 0;
+    const strict = !!strictToggle.checked;
     const t0 = performance.now();
     lines.forEach((line, i) => {
       let spans = [];
       try {
-        spans = parse(line);
+        spans = parse(line, { strict });
       } catch (e) {
         spans = [];
       }
@@ -1183,6 +1232,8 @@ lakhon log aaye</textarea>
   }
 
   input.addEventListener("input", scheduleParse);
+  const strictToggle = document.getElementById("strict-toggle");
+  strictToggle.addEventListener("change", () => { scheduleParse(); runParse(); });
 
   // ---------- inside the model ----------
   const inspectToggle = document.getElementById("inspect-toggle");

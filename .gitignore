@@ -11,3 +11,4 @@ __pycache__/
 *.pyc
 isolate-*.log
 *.egg-info/
+.claude/worktrees/
