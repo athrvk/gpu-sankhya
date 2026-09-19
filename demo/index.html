@@ -613,6 +613,12 @@ lakhon log aaye</textarea>
             strict mode &mdash; only verified spans
           </label>
         </div>
+        <div class="mode-row">
+          <label for="minconf" style="margin:0;">min confidence:</label>
+          <input type="range" id="minconf" min="0" max="1" step="0.01" value="0"
+                 style="flex:1;min-width:6rem;" />
+          <b id="minconf-value" style="min-width:2.5rem;text-align:right;">0%</b>
+        </div>
         <p class="kbd-hint">
           <kbd>Ctrl/Cmd</kbd>+<kbd>Enter</kbd> runs the benchmark &middot; <kbd>Esc</kbd> clears the input
         </p>
@@ -1129,6 +1135,9 @@ lakhon log aaye</textarea>
       const pill = document.createElement("span");
       pill.className = "conf-pill " + band;
       pill.textContent = pct + "%";
+      pill.title = "calibrated confidence " + (sp.confidence || 0).toFixed(3) +
+        " (raw " + (sp.rawConfidence || 0).toFixed(3) + ") -- among spans reported at this level, " +
+        "about this share have the right value on held-out synthetic data";
       rightZone.appendChild(pill);
 
       const vPill = document.createElement("span");
@@ -1204,11 +1213,12 @@ lakhon log aaye</textarea>
     lastParseData = [];
     let spanCount = 0;
     const strict = !!strictToggle.checked;
+    const minConfidence = Number(minConfSlider.value) || 0;
     const t0 = performance.now();
     lines.forEach((line, i) => {
       let spans = [];
       try {
-        spans = parse(line, { strict });
+        spans = parse(line, { strict, minConfidence });
       } catch (e) {
         spans = [];
       }
@@ -1234,6 +1244,12 @@ lakhon log aaye</textarea>
   input.addEventListener("input", scheduleParse);
   const strictToggle = document.getElementById("strict-toggle");
   strictToggle.addEventListener("change", () => { scheduleParse(); runParse(); });
+  const minConfSlider = document.getElementById("minconf");
+  const minConfValue = document.getElementById("minconf-value");
+  minConfSlider.addEventListener("input", () => {
+    minConfValue.textContent = Math.round(Number(minConfSlider.value) * 100) + "%";
+    runParse();
+  });
 
   // ---------- inside the model ----------
   const inspectToggle = document.getElementById("inspect-toggle");

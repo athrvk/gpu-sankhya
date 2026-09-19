@@ -464,6 +464,49 @@ the core sums the two terms. Every token is genuinely lexicon-justified, so the
 verifier cannot catch it - it is a decoder/model gap, not a lexicon gap.
 The report also lists the top 20 misses grouped by gold class pattern.
 
+## Calibrate span confidence (`calibrate.py`)
+
+The decoder's raw span confidence (mean over the span's characters of
+max(p_B, p_I)) orders spans well but is squashed — 99% of predicted spans
+score above 0.9 — so a caller thresholding it gets no predictable
+precision. `calibrate.py` fixes that by measuring, then fitting:
+
+```bash
+python -m sankhya.calibrate --n 100000 --seed 13 --ckpt ../models/default/sankhya.pt \
+    --mix 0.32,0.26,0.21,0.21 --cross 0.10 \
+    --gold tests/gold.jsonl tests/gold_deva.jsonl tests/gold_mr.jsonl tests/gold_gu.jsonl
+```
+
+It generates fresh examples (a seed training never saw), runs the torch
+checkpoint batched like `proptest.py`, decodes with exactly `eval_gold`'s
+gates, and records for every PREDICTED span its raw confidence, whether it
+is `verified`, whether its value is right, and whether it is spurious. It
+then prints a reliability table (10 raw-confidence bins x count x
+empirical precision, separately for verified and unverified spans, for
+synthetic and for gold), fits a monotone isotonic
+(pool-adjacent-violators, implemented in `calibration.py` in plain numpy —
+no sklearn) map from raw confidence to empirical precision on the
+**synthetic** spans only, and writes it to `../src/data/calibration.json`:
+
+```json
+{"version": 1, "raw": [...], "calibrated": [...], "n_samples": 104805, "seed": 13}
+```
+
+At most 32 breakpoints, for piecewise-linear interpolation. Gold is the
+held-out check and is never fitted on. `python -m sankhya.eval_gold`
+prints (and writes under `"confidence_curve"` in `--json-out`) what each
+`minConfidence` threshold buys on gold; both runtimes load the same JSON
+and report the calibrated number as `confidence`, keeping the raw score as
+`rawConfidence`. Re-run this whenever the shipped weights change — the map
+is specific to a checkpoint. Useful flags: `--no-write` (print the tables
+only), `--json-out` (dump the measured tables), `--max-points`.
+
+The maths lives in `calibration.py` (`pav`, `fit_isotonic`,
+`fit_breakpoints`, `apply`), unit-tested in `tests/test_calibration.py`
+and mirrored 1:1 by `src/calibration.ts`. Regenerating the committed JSON
+takes a couple of minutes, so the test suite pins the shipped file's
+schema and monotonicity rather than re-fitting it.
+
 ## Ship to the npm package
 
 The JS package embeds the int8 weights directly, plus a fixed set of
@@ -475,7 +518,15 @@ fixtures that pin the JS forward pass and decoder to this exact model.
    cp models/sankhya.weights.int8.json ../src/data/default-weights.json
    ```
 
-2. Regenerate the two parity fixtures the JS test suite checks against:
+2. Re-fit the confidence calibration for the NEW weights (the map is
+   specific to a checkpoint — see "Calibrate span confidence" above), so
+   the fixtures below are generated against the map the runtimes will use:
+
+   ```bash
+   python -m sankhya.calibrate --n 100000 --seed 13 --ckpt models/sankhya.pt
+   ```
+
+3. Regenerate the two parity fixtures the JS test suite checks against:
 
    ```bash
    python -m sankhya.make_fixtures \
@@ -497,7 +548,10 @@ fixtures that pin the JS forward pass and decoder to this exact model.
      `bio_probs` for the confidence gate, then `core.evaluate` on the
      decoded tokens, plus `core.detect_currency` against the `hi_latn`
      pack), each span normalised to `{start, end, value, range, unit,
-     currency, classes}`. The JS `test/e2e-parity.test.ts` runs `parse()`
+     currency, rawConfidence, confidence, classes, verified, tokens}` —
+     `rawConfidence` is the decoder's uncalibrated score and `confidence`
+     is that score through `src/data/calibration.json`, the two numbers
+     the JS side compares within 1e-6. The JS `test/e2e-parity.test.ts` runs `parse()`
      on the same texts and checks it produces the same spans — this pins
      end-to-end behaviour (decode + arithmetic core), not just the raw
      model output.
@@ -509,7 +563,7 @@ fixtures that pin the JS forward pass and decoder to this exact model.
    pipeline `eval_gold.py` uses, factored out so it can write fixture files
    instead of computing a score.
 
-3. Verify from the repo root:
+4. Verify from the repo root:
 
    ```bash
    npm test
