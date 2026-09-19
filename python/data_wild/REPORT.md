@@ -8,6 +8,12 @@ the shipped int8 weights (`models/default/sankhya.weights.int8.json`) with the
 same gates `eval_gold` applies, plus a 400-line hand-labelled real-text gold
 set (`python/tests/gold_wild_<lang>.jsonl`).
 
+> Sections 1-5 are the original measurement, taken with the gates that
+> existed at the time (R1-R10). **Section 6** records what was then fixed on
+> the lexicon/decoder side without retraining, with the before/after table —
+> real-text FP 0.200 → 0.042 and strict FP 0.088 → 0.017, at no measurable
+> cost on the synthetic gold.
+
 Reproduce:
 
 ```bash
@@ -45,8 +51,10 @@ committed, with attribution in `python/tests/GOLD_WILD_SOURCES.md`.
 ### Source stats (seed 17)
 
 Lines are kept at 3-40 words **and** <=128 characters - `train.MAX_LEN` is 128,
-so a longer line is silently truncated before the model ever sees it
-(see failure #10).
+so at the time of this measurement a longer line was silently truncated before
+the model ever saw it (failure #10; fixed in §6 - both runtimes now window -
+but the sample cap stays, since a single window is what the model was trained
+on).
 
 | source | lines in 3-40 word band | of those, >128 chars | unique kept | amount-signal candidates | no-signal candidates |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -253,3 +261,77 @@ turns it straight into a gold line.
   in 1,774 sampled real lines. They live in chat and classifieds, which these
   corpora do not cover; a wild sample from that register is the obvious next
   source to add.
+
+## 6. Follow-up: what the decoder/lexicon fixed (no retrain)
+
+Everything above measures the shipped int8 weights with the gates that
+existed when this report was written (R1-R10). The failure taxonomy in §4
+was then worked through on the lexicon/decoder side only — same weights,
+same calibration, **no retraining** — adding eight rules, each mirrored 1:1
+in `python/sankhya` and `src/` and listed with its motivating sentence in
+the root `README.md`:
+
+| rule | what it drops | §4 shape |
+| --- | --- | --- |
+| R11 | a span whose only meaningful token is a `PFX_*` (`ढाई साल`) | 9 |
+| R12 | a span whose every lexicon-justified token is a pack `ambiguous_forms` surface (`so`, `sath`, `arab`, `अरब`, `એક`) | 2, 3 |
+| R13b | a bare cardinal that is not an exact lexicon form (`aavesh`, `chaahie`, `इ`) | 9 |
+| R14 | a pack `blocked_surfaces` entry — never verifies, always dropped (`हजारे`, `सवाई`, `अरबी`) | 1 |
+| R15 | suffix stripping restricted to the pack's own endings, stripped head ≥ 3 chars | 1 |
+| R16 | a 1-2 character symbol unit not glued to its digits (`1996 k`, `33 k. m.`) | 3, 4 |
+| R17 | a `UNIT_*` surface that is neither a lexicon form nor within edit distance 1 of one, with no justified coefficient (`3 hours`, `25वे`, `1980ના`) | 4 |
+| R18 | a trailing year (`दस हज़ार 1987`) and a leading digits restatement (`5 panch hajar`) | 8 |
+
+Failure #10 (the `IndexError` on any line over 128 characters) was a
+plumbing bug and is fixed: both runtimes now slide the same 128-character
+window with 16 characters of overlap (`charset.make_windows` ↔
+`src/charset.ts::makeWindows`), so `eval_gold` no longer truncates and
+`sankhya.wild` no longer works around it. Span offsets index into
+`normalize_text(text)`, which is 1:1 per character for every gold line.
+
+### Before → after, same weights
+
+| lang | set | value acc | strict cov | strict value acc | FP | strict FP |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| hi_latn | synthetic | 0.960 → 0.960 | 0.889 → 0.889 | 1.000 → 1.000 | 0.000 → 0.000 | 0.000 → 0.000 |
+| hi_deva | synthetic | 0.968 → 0.968 | 0.923 → 0.923 | 1.000 → 1.000 | 0.000 → 0.000 | 0.000 → 0.000 |
+| mr_deva | synthetic | 0.985 → 0.985 | 0.933 → 0.933 | 1.000 → 1.000 | 0.000 → 0.000 | 0.000 → 0.000 |
+| gu_gujr | synthetic | 0.932 → 0.932 | 0.898 → 0.898 | 1.000 → 1.000 | 0.000 → 0.000 | 0.000 → 0.000 |
+| **combined** | synthetic | **0.962 → 0.962** | **0.909 → 0.909** | **1.000 → 1.000** | **0.000 → 0.000** | **0.000 → 0.000** |
+| hi_latn | wild | 0.857 → **0.905** | 0.762 → **0.810** | 1.000 → 1.000 | 0.367 → **0.076** | 0.177 → **0.038** |
+| hi_deva | wild | 0.932 → **0.955** | 0.909 → **0.932** | 1.000 → 1.000 | 0.140 → **0.035** | 0.070 → **0.018** |
+| mr_deva | wild | 0.837 → 0.837 | 0.837 → 0.837 | 1.000 → 1.000 | 0.135 → **0.000** | 0.019 → **0.000** |
+| gu_gujr | wild | 0.944 → 0.944 | 0.907 → 0.907 | 1.000 → 1.000 | 0.077 → **0.038** | 0.038 → **0.000** |
+| **combined** | wild | **0.899 → 0.911** | **0.869 → 0.881** | **1.000 → 1.000** | **0.200 → 0.042** | **0.088 → 0.017** |
+
+Spurious spans on the wild gold: **63 → 15**. Nothing measurable was paid on
+the synthetic gold — value accuracy and strict coverage are identical to
+four decimal places in all four languages, so the recall cost of R17's
+typo'd-unit check (the rule with the clearest recall risk) is **0.0 points**
+there. The two wild value-accuracy gains are R18's boundary trims.
+
+The strict tier's promise still holds on real text: **all 148 verified spans
+have the right value**. `tests/test_gates.py` now gates that —
+`test_strict_false_positive_rate_on_real_text` at ≤ 0.02 (4/240 = 0.0167),
+the overall wild FP rate at ≤ 0.05 (10/240 = 0.0417), and strict value
+accuracy at 1.0 — and `tests/test_gold_wild.py` prints the per-language
+breakdown under `pytest -s`.
+
+### What is still wrong (needs the model, not the lexicon)
+
+The four remaining verified false positives on real negatives are all shapes
+a surface rule cannot separate from a genuine amount:
+
+- `gyarah mil` / `1405 mil` — miles. `mil` is a real `UNIT_MILLION` form
+  (`teen mil` = 3,000,000 is in the synthetic gold) and both of these have a
+  real number beside them, so R12 has nothing to go on. Telling them apart
+  needs the following noun (`dur`, `ki yatraa`).
+- `teen` in `teen movie hone k sath sath` — English "teen". Adding it to
+  `ambiguous_forms` would kill the gold span `teen mil`.
+- `हजार` in `हजारों-हजार` — R9 drops the lexicon-"O" `हजारों`, but the
+  decoder spans the second half of the hyphenated compound on its own.
+
+Also unchanged, and belonging with a retrain: prefix boundary loss (§4
+shape 7 — still 0.500 value accuracy on the 8 wild prefix spans) is a tagger
+problem, and the calibration's real-text over-confidence (§2) was
+deliberately left alone.
