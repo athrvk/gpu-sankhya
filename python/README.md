@@ -386,6 +386,53 @@ by a single seed); within the winning config, pick the **seed** by val
 value_acc within a 0.005 tie band, then higher int8 combined gold F1,
 then lower negatives false-positive rate.
 
+### Handling a wrong-parse report
+
+Reports filed with the "Wrong parse" GitHub issue template (or the
+demo's "Report" links, which prefill that template) land as an issue
+labelled `wrong-parse` with the input text, the language pack, what the
+parser returned, and what the reporter says the correct value/range/span
+should be. To turn one into a gold-set fix:
+
+1. **Reproduce it against the shipped weights** with
+   `sankhya.triage_issue`:
+
+   ```bash
+   cd python
+   python -m sankhya.triage_issue --text "<text from the report>" \
+     --lang hi_latn --expect-value 125000
+   # or: --expect-range LOW HIGH   for a range
+   # or: --negative                for a false-positive report (no amount)
+   ```
+
+   It prints what the shipped `models/default/sankhya.weights.int8.json`
+   currently returns for that text. If the output already matches what the
+   reporter says is correct, the report does not reproduce against the
+   shipped weights (stale report, already-fixed, or a misunderstanding) --
+   reply on the issue and close it rather than touching the gold set.
+
+2. **If it reproduces**, the tool prints the exact JSONL line to append to
+   the matching `tests/gold_<lang>.jsonl` (or `tests/gold.jsonl` for
+   `hi_latn`), with span offsets computed from the text. Append it, then
+   check it against the surrounding examples in that file for style
+   (`false` positives use `"spans": []`).
+
+3. **Run the gates** to make sure the new gold line doesn't reveal a wider
+   regression and passes with the current weights (it likely won't yet --
+   that's expected for a genuine bug):
+
+   ```bash
+   python -m pytest tests/test_gates.py -q
+   ```
+
+4. **Retrain if needed.** If the gold line is now failing (the usual case
+   for a real bug), fix the language pack, decoding rule, or training data
+   that caused it (see "Generate data" / "Adding a language pack" above),
+   regenerate synthetic data if the fix touches the generator, and retrain
+   (see "Train" and "Export" above) so the new gold example passes. Re-run
+   `python -m sankhya.eval_gold` and `pytest tests/test_gates.py -q` before
+   shipping the new weights.
+
 ## Verified spans and strict metrics
 
 The CNN only proposes spans; the value comes from the deterministic core.
