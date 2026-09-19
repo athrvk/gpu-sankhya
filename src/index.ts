@@ -8,6 +8,7 @@ import { verifyTokens } from "./verify.ts";
 import { HI_LATN } from "./lang-hi-latn.ts";
 import { HI_DEVA } from "./lang-hi-deva.ts";
 import { MR_DEVA } from "./lang-mr-deva.ts";
+import { GU_GUJR } from "./lang-gu-gujr.ts";
 import { CLASSES } from "./classes.ts";
 import { WebGPUBackend, probeWebGPU } from "./infer-webgpu.ts";
 import defaultWeightsJson from "./data/default-weights.json" with { type: "json" };
@@ -327,4 +328,4 @@ export function createParser(opts: CreateParserOptions = {}): Parser {
 // detection so a mixed-script input ("₹2 lakh", "2 लाख रुपये", "दीड लाख
 // रुपयांचा") is handled the same way regardless of which script/language
 // wrote the currency marker. Adding a language pack means adding it here.
-const CURRENCY_PACK = mergeLangPacks(HI_LATN, HI_DEVA, MR_DEVA);
+const CURRENCY_PACK = mergeLangPacks(HI_LATN, HI_DEVA, MR_DEVA, GU_GUJR);
