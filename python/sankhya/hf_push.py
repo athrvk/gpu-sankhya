@@ -150,8 +150,8 @@ datasets:
 # gpu-sankhya
 
 A small char-level CNN that extracts Indian informal number/currency
-shorthand -- Hinglish (romanised Hindi), Devanagari Hindi, and
-Indian-English amount phrases like `sava lakh`, `dedh crore`, `डेढ़ लाख`,
+shorthand -- Hinglish (romanised Hindi), Devanagari Hindi, Devanagari
+Marathi, and Indian-English amount phrases like `sava lakh`, `dedh crore`, `डेढ़ लाख`,
 `सवा करोड़`, `2.5L`, `20k`, `2-3 lakh` -- from free text, and turns each
 match into a clean numeric value via a deterministic arithmetic core (the
 model never predicts the value directly).
@@ -173,7 +173,7 @@ A dilated/residual char-CNN over per-character embeddings:
 - conv channels: {channels}
 - {n_layers} conv layers:
 {chr(10).join(layer_lines)}
-- vocab: {vocab} characters (union of the `hi_latn` and `hi_deva` packs)
+- vocab: {vocab} characters (union of every shipped language pack)
 - output classes: {n_classes} (BIO span tag + semantic token class)
 - parameters: {n_params:,}
 
@@ -203,9 +203,8 @@ units, and range handling.
 ## Accuracy
 
 Evaluated with the int8-quantized weights (what ships in the npm package)
-against two hand-written gold sets (`gold_hi_latn.jsonl`,
-`gold_hi_deva.jsonl` -- see the [dataset
-card]({DATASET_REPO})):
+against the hand-written gold sets (`gold_<lang>.jsonl` -- see the
+[dataset card]({DATASET_REPO})):
 
 | gold set | examples | spans | value_acc | precision | recall | F1 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -262,9 +261,10 @@ pipeline and `sankhya.eval_gold` for a ready-made evaluation CLI.
 
 ## Training
 
-Trained 20 epochs on 200,000 synthetic examples generated from both the
-`hi_latn` (romanised Hindi) and `hi_deva` (Devanagari Hindi) grammar
-packs, mixed 0.55/0.45 with a 10% cross-pack share, plus out-of-vocab
+Trained 20 epochs on 200,000 synthetic examples generated from the
+`hi_latn` (romanised Hindi), `hi_deva` (Devanagari Hindi), and `mr_deva`
+(Devanagari Marathi) grammar packs, mixed 0.40/0.33/0.27 with a 10%
+cross-pack share, plus out-of-vocab
 "unk noise" augmentation (emoji, CJK, Cyrillic, other symbols inserted as
 O-labelled context) so the `<unk>` embedding actually gets gradient
 signal. Batch size 128, lr 3e-3. Architecture and channel count (`v2`,
@@ -287,9 +287,9 @@ commands: `python/README.md` in the source repo.
 - Long multi-term/mixed-numeral constructs and multi-number range phrases
   ("तीस पैंतीस हज़ार", "three n half lakh") are the weakest category
   (`long`/`range` value_acc above).
-- Scoped to Indian languages: currently Hinglish and Devanagari Hindi
-  only; other Indian languages are planned (see the source repo's
-  roadmap).
+- Scoped to Indian languages: currently Hinglish, Devanagari Hindi, and
+  Devanagari Marathi only; other Indian languages are planned (see the
+  source repo's roadmap).
 """
     return card
 
@@ -309,7 +309,7 @@ pinned: false
 license: mit
 ---
 
-Interactive demo of [gpu-sankhya](https://huggingface.co/{MODEL_REPO}) -- parses Hinglish and Devanagari Hindi number/currency shorthand in the browser (CPU + WebGPU backends). Source: https://github.com/athrvk/gpu-sankhya
+Interactive demo of [gpu-sankhya](https://huggingface.co/{MODEL_REPO}) -- parses Hinglish, Devanagari Hindi, and Devanagari Marathi number/currency shorthand in the browser (CPU + WebGPU backends). Source: https://github.com/athrvk/gpu-sankhya
 """
 
 
@@ -322,16 +322,58 @@ def _count_jsonl_lines(path: Path) -> int:
         return sum(1 for line in f if line.strip())
 
 
+# One blurb per pack for the dataset card; a pack with no entry here still
+# gets listed, just with a generic description.
+_GOLD_BLURBS = {
+    "hi_latn": 'romanised Hindi / Hinglish\n  ("bhai sava lakh mein ho jayega kya")',
+    "hi_deva": 'Devanagari Hindi\n  ("सवा लाख मिलेगा")',
+    "mr_deva": 'Devanagari Marathi\n  ("दीड लाख मिळतील")',
+}
+
+
+def gold_sets():
+    """Every `tests/gold*.jsonl` file, as (local_path, repo_name, lang_id).
+
+    Derived from what is on disk plus the pack registry, so adding a
+    language (and its gold file) needs no edit here: `gold.jsonl` is
+    hi_latn for historical reasons, `gold_<suffix>.jsonl` resolves through
+    eval_gold._get_pack (which knows the suffix aliases).
+    """
+    from . import eval_gold
+
+    out = []
+    for path in sorted(GOLD_DIR.glob("gold*.jsonl")):
+        suffix = path.stem[len("gold_"):] if path.stem.startswith("gold_") else ""
+        pack = eval_gold._get_pack(suffix)
+        lang_id = pack.id if pack is not None else (suffix or "hi_latn")
+        out.append((path, f"gold_{lang_id}.jsonl", lang_id))
+    # stable, human-friendly order: hi_latn, hi_deva, then the rest
+    order = {"hi_latn": 0, "hi_deva": 1}
+    out.sort(key=lambda row: (order.get(row[2], 2), row[2]))
+    return out
+
+
 def build_dataset_card() -> str:
-    latn_path = GOLD_DIR / "gold.jsonl"
-    deva_path = GOLD_DIR / "gold_deva.jsonl"
-    n_latn = _count_jsonl_lines(latn_path)
-    n_deva = _count_jsonl_lines(deva_path)
+    sets = gold_sets()
+    lines = []
+    for path, repo_name, lang_id in sets:
+        blurb = _GOLD_BLURBS.get(lang_id, f"`{lang_id}` gold examples")
+        lines.append(f"- `{repo_name}` ({_count_jsonl_lines(path)} examples) -- {blurb}")
+    gold_list = "\n".join(lines)
+    lang_ids = ", ".join(f"`{lang_id}`" for _, _, lang_id in sets)
+    eval_cmd = " ".join(repo_name for _, repo_name, _ in sets)
+    # ISO-639-1 codes for the front matter, derived from the pack ids
+    iso = []
+    for _, _, lang_id in sets:
+        code = lang_id.split("_")[0]
+        if code not in iso:
+            iso.append(code)
+    language_block = "\n".join(f"  - {code}" for code in iso)
 
     return f"""---
 license: mit
 language:
-  - hi
+{language_block}
 task_categories:
   - token-classification
 size_categories:
@@ -340,15 +382,12 @@ size_categories:
 
 # gpu-sankhya gold evaluation sets
 
-Two hand-written gold sets used to evaluate the
+Hand-written gold sets used to evaluate the
 [gpu-sankhya](https://huggingface.co/{MODEL_REPO}) model, written
 independently of the synthetic data generator so they measure real-world
 quality rather than in-distribution accuracy.
 
-- `gold_hi_latn.jsonl` ({n_latn} examples) -- romanised Hindi / Hinglish
-  ("bhai sava lakh mein ho jayega kya")
-- `gold_hi_deva.jsonl` ({n_deva} examples) -- Devanagari Hindi
-  ("सवा लाख मिलेगा")
+{gold_list}
 
 ## Format
 
@@ -359,7 +398,7 @@ One JSON object per line:
 ```
 
 - `text` -- the input sentence.
-- `lang` -- `hi_latn` or `hi_deva`.
+- `lang` -- one of {lang_ids}.
 - `spans` -- zero or more amount spans (an empty list is a "negative"
   example, used to measure false-positive rate). Each span has:
   - `start`, `end` -- code-point offsets into the *normalized* text
@@ -374,7 +413,7 @@ One JSON object per line:
 ## Usage
 
 These files are consumed by `python -m sankhya.eval_gold --gold
-gold_hi_latn.jsonl gold_hi_deva.jsonl --weights-json <weights>.json
+{eval_cmd} --weights-json <weights>.json
 [--int8]` in the source repo, which decodes each text with the model,
 matches predicted spans to gold spans, and reports precision/recall/F1,
 value accuracy, a per-category breakdown, and the negatives false-positive
@@ -483,14 +522,13 @@ def push_space(dry_run: bool) -> None:
 
 def push_dataset(dry_run: bool) -> None:
     card = build_dataset_card()
-    latn_src = GOLD_DIR / "gold.jsonl"
-    deva_src = GOLD_DIR / "gold_deva.jsonl"
+    sets = gold_sets()
 
     if dry_run:
         out = OUT_DIR / "dataset"
         out.mkdir(parents=True, exist_ok=True)
         (out / "README.md").write_text(card, encoding="utf-8")
-        files = ["gold_hi_latn.jsonl", "gold_hi_deva.jsonl"]
+        files = [repo_name for _, repo_name, _ in sets]
         (out / "files.json").write_text(json.dumps(files, indent=2), encoding="utf-8")
         print(f"[dry-run] dataset card + file list written to {out}")
         return
@@ -508,18 +546,13 @@ def push_dataset(dry_run: bool) -> None:
             repo_type="dataset",
         )
 
-    api.upload_file(
-        path_or_fileobj=str(latn_src),
-        path_in_repo="gold_hi_latn.jsonl",
-        repo_id=DATASET_REPO,
-        repo_type="dataset",
-    )
-    api.upload_file(
-        path_or_fileobj=str(deva_src),
-        path_in_repo="gold_hi_deva.jsonl",
-        repo_id=DATASET_REPO,
-        repo_type="dataset",
-    )
+    for path, repo_name, _lang_id in sets:
+        api.upload_file(
+            path_or_fileobj=str(path),
+            path_in_repo=repo_name,
+            repo_id=DATASET_REPO,
+            repo_type="dataset",
+        )
     print(f"pushed gold sets to {DATASET_REPO}")
 
 

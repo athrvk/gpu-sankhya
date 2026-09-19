@@ -39,7 +39,7 @@ from . import classes as C
 from . import core
 from .decode import decode_spans
 from .verify import verify_tokens
-from .langs.base import get_pack
+from .langs.base import all_packs, get_pack
 from .train import MAX_LEN, build_char_to_id, load_jsonl
 from . import np_infer
 from .charset import normalize_text
@@ -105,7 +105,8 @@ def main(argv=None):
                      help="one or more gold jsonl files, concatenated")
     ap.add_argument("--out-parity", default="../test/fixtures/parity.jsonl")
     ap.add_argument("--out-decoded", default="../test/fixtures/decoded.jsonl")
-    ap.add_argument("--lang", default="hi_latn,hi_deva")
+    ap.add_argument("--lang", default=",".join(p.id for p in all_packs()),
+                     help="comma-separated pack ids (default: every registered pack)")
     args = ap.parse_args(argv)
 
     gold_files = args.gold if isinstance(args.gold, list) else [args.gold]

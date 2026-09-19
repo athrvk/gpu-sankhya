@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { evaluate, detectCurrency, mergeLangPacks, isBareDigits, shouldDropBareDigits, shouldDropLoneAmbiguousUnit } from "../src/core.ts";
 import { HI_LATN } from "../src/lang-hi-latn.ts";
 import { HI_DEVA } from "../src/lang-hi-deva.ts";
+import { MR_DEVA } from "../src/lang-mr-deva.ts";
 
 type Tok = [string, string];
 function ev(...toks: Tok[]) {
@@ -144,6 +145,31 @@ test("mergeLangPacks: union of hi_latn + hi_deva, longest-match first", () => {
   assert.equal(detectCurrency("Rs.500 only", 3, 6, pack), "INR");
   // negative case still negative through the merged pack
   assert.equal(detectCurrency("do din baad", 0, 2, pack), null);
+});
+
+test("mr_deva currency detection: markers before and words after", () => {
+  assert.equal(detectCurrency("₹500 फक्त", 1, 4, MR_DEVA), "INR");
+  assert.equal(detectCurrency("रु. 1200 झाले", 4, 8, MR_DEVA), "INR");
+  assert.equal(detectCurrency("पन्नास रुपये हवेत", 0, 6, MR_DEVA), "INR");
+  // the oblique stem covers every case-inflected form
+  assert.equal(detectCurrency("सहा लाख रुपयांचा तोटा", 0, 7, MR_DEVA), "INR");
+  assert.equal(detectCurrency("दोन दिवसांत येतो", 0, 3, MR_DEVA), null);
+});
+
+test("mergeLangPacks: adding mr_deva keeps the hi packs working", () => {
+  // this is exactly the CURRENCY_PACK the parser builds in index.ts
+  const pack = mergeLangPacks(HI_LATN, HI_DEVA, MR_DEVA);
+  // every pack's markers are still recognised through the merged pack
+  assert.equal(detectCurrency("Rs 500 only", 3, 6, pack), "INR");
+  assert.equal(detectCurrency("pachas rupaye chahiye", 0, 6, pack), "INR");
+  assert.equal(detectCurrency("पचास रुपये चाहिए", 0, 4, pack), "INR");
+  assert.equal(detectCurrency("दोनशे रुपयांचे बिल", 0, 5, pack), "INR");
+  assert.equal(detectCurrency("₹2,50,000 भरले", 1, 9, pack), "INR");
+  // longest-match ordering survives the third pack
+  assert.equal(detectCurrency("Rs.500 only", 3, 6, pack), "INR");
+  // and a non-currency context is still negative
+  assert.equal(detectCurrency("do din baad", 0, 2, pack), null);
+  assert.equal(detectCurrency("दोन दिवसांत येतो", 0, 3, pack), null);
 });
 
 test("das hazaar crore", () => {
@@ -414,4 +440,106 @@ test("R7: 'do teen lakh' cardinal-only juxtaposition is unaffected (already an e
   );
   assert.deepEqual(r.range, [200000, 300000]);
   assert.equal(r.unit, "lakh");
+});
+
+test("Devanagari digits: pachees hazaar", () => {
+  const r = ev(["DIGITS", "२५"], ["SEP", " "], ["UNIT_HAZAAR", "हजार"]);
+  assert.equal(r.value, 25000);
+});
+
+test("Devanagari digits: bare", () => {
+  const r = ev(["DIGITS", "७५००"]);
+  assert.equal(r.value, 7500);
+});
+
+test("Devanagari digits: grouped", () => {
+  const r = ev(["DIGITS", "२"], ["COMMA", ","], ["DIGITS", "५०"], ["COMMA", ","], ["DIGITS", "०००"]);
+  assert.equal(r.value, 250000);
+});
+
+test("Devanagari digits: decimal", () => {
+  const r = ev(["DIGITS", "१"], ["DOT", "."], ["DIGITS", "५"]);
+  assert.equal(r.value, 1.5);
+});
+
+test("Devanagari digits: mixed ASCII and Devanagari", () => {
+  const r = ev(["DIGITS", "1"], ["DOT", "."], ["DIGITS", "५"]);
+  assert.equal(r.value, 1.5);
+});
+
+test("Gujarati digits: bare", () => {
+  const r = ev(["DIGITS", "૭૫૦૦"]);
+  assert.equal(r.value, 7500);
+});
+
+test("R8: 'tees paintees hazaar' juxtaposition range (no connector)", () => {
+  // CARD_30 SEP CARD_35 SEP UNIT_HAZAAR means 30,000-35,000, not
+  // 30 + 35*1000 = 35030.
+  const r = ev(
+    ["CARD_30", "tees"], ["SEP", " "], ["CARD_35", "paintees"], ["SEP", " "],
+    ["UNIT_HAZAAR", "hazaar"],
+  );
+  assert.equal(r.value, 30000);
+  assert.deepEqual(r.range, [30000, 35000]);
+  assert.equal(r.unit, "hazaar");
+});
+
+test("R8: 'paach ten hazar' juxtaposition range", () => {
+  const r = ev(
+    ["CARD_5", "paach"], ["SEP", " "], ["CARD_10", "ten"], ["SEP", " "],
+    ["UNIT_HAZAAR", "hazar"],
+  );
+  assert.equal(r.value, 5000);
+  assert.deepEqual(r.range, [5000, 10000]);
+  assert.equal(r.unit, "hazaar");
+});
+
+test("R8: 'do teen lakh' juxtaposition range at core level", () => {
+  // At core level (no RANGE token inserted, unlike the decoder path), two
+  // adjacent spelled cardinals before a unit form a range.
+  const r = ev(
+    ["CARD_2", "do"], ["SEP", " "], ["CARD_3", "teen"], ["SEP", " "],
+    ["UNIT_LAKH", "lakh"],
+  );
+  assert.equal(r.value, 200000);
+  assert.deepEqual(r.range, [200000, 300000]);
+  assert.equal(r.unit, "lakh");
+});
+
+test("R8: 'ek sau' is unaffected (sau is a UNIT, not a second cardinal)", () => {
+  const r = ev(["CARD_1", "ek"], ["SEP", " "], ["UNIT_SAU", "sau"]);
+  assert.equal(r.value, 100);
+  assert.equal(r.range, null);
+});
+
+test("R8: 'do hazaar paanch' additive is unaffected (cardinals separated by a unit)", () => {
+  const r = ev(
+    ["CARD_2", "do"], ["SEP", " "], ["UNIT_HAZAAR", "hazaar"], ["SEP", " "],
+    ["CARD_5", "paanch"],
+  );
+  assert.equal(r.value, 2005);
+  assert.equal(r.range, null);
+});
+
+test("R8: 'bees paanch' descending is unaffected", () => {
+  const r = ev(["CARD_20", "bees"], ["SEP", " "], ["CARD_5", "paanch"]);
+  assert.equal(r.value, 25);
+  assert.equal(r.range, null);
+});
+
+test("R7 wins over R8 precedence: 'teen hazaar paanch das lakh'", () => {
+  // R7 matches at the UNIT_HAZAAR / UNIT_LAKH term boundary (both terms
+  // have explicit coefficients and unitValue(lakh) >= unitValue(hazaar)).
+  // Within the second term, CARD_5 SEP CARD_10 is ALSO an R8-eligible
+  // adjacent-cardinal pair, but R7 is checked first and must win for the
+  // whole span.
+  const r = ev(
+    ["CARD_3", "teen"], ["SEP", " "], ["UNIT_HAZAAR", "hazaar"],
+    ["SEP", " "],
+    ["CARD_5", "paanch"], ["SEP", " "], ["CARD_10", "das"], ["SEP", " "],
+    ["UNIT_LAKH", "lakh"],
+  );
+  assert.equal(r.value, 3000);
+  assert.deepEqual(r.range, [3000, 1000005]);
+  assert.equal(r.unit, "hazaar");
 });

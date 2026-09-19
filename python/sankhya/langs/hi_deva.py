@@ -102,8 +102,11 @@ FILLER_WORDS = [
     "आएंगे", "पक्का", "शायद", "ज़्यादा", "कम", "बहुत", "थोड़ा", "थोड़ी", "काफ़ी", "इतना",
     "इतनी", "जितना", "जितनी", "सब", "सबसे", "कोई", "किसी", "कुछ", "हमें", "उनको",
     "उसको", "मुझे", "तुम्हें", "आपको", "उन्हें", "हमारा", "तुम्हारा", "उनका", "मेरा", "मेरी",
-    "तेरा", "तेरी", "उसका", "उसकी", "इसका", "इसकी", "यह", "वह", "ये", "वो",
+    "तेरी", "उसका", "उसकी", "इसका", "इसकी", "यह", "वह", "ये", "वो",
     "budget", "salary", "offer", "ok", "bro",
+    # NOTE: "तेरा" was removed from this list when mr_deva was added - it is
+    # CARD_13 in Marathi, and a surface shared by two packs must not mean
+    # two different things (tests/test_mr.py::test_no_cross_pack_conflicts).
 ]
 FILLER_WORDS = list(dict.fromkeys(FILLER_WORDS))
 

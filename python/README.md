@@ -14,7 +14,7 @@ pip install torch numpy onnx onnxruntime
 ```
 
 CPU-only torch is fine — training the current shipped multi-pack default
-model (arch `v2`, channels 48, 39,579 params) takes roughly 2x as long as
+model (arch `v2`, channels 48, 39,687 params) takes roughly 2x as long as
 the previous `v1:32` model's ~12 minutes on 4 CPU cores for 200k examples
 (a Kaggle GPU run of the same config is ~3 minutes).
 
@@ -27,28 +27,37 @@ python -m sankhya.generator --n 150000 --seed 3 --out data/train.jsonl --lang hi
 python -m sankhya.generator --n 5000 --seed 4 --out data/val.jsonl --lang hi_latn
 ```
 
-Multi-pack (romanised + Devanagari Hindi, the recipe used for the bundled
-default weights):
+Multi-pack (romanised + Devanagari Hindi + Devanagari Marathi, the recipe
+used for the bundled default weights):
 
 ```bash
 python -m sankhya.generator --n 200000 --seed 5 --out data/train.jsonl \
-  --lang hi_latn,hi_deva --mix 0.55,0.45 --cross 0.10
+  --lang hi_latn,hi_deva,mr_deva --mix 0.40,0.33,0.27 --cross 0.10
 python -m sankhya.generator --n 6000 --seed 6 --out data/val.jsonl \
-  --lang hi_latn,hi_deva --mix 0.55,0.45 --cross 0.10
+  --lang hi_latn,hi_deva,mr_deva --mix 0.40,0.33,0.27 --cross 0.10
 ```
 
 Paths are relative to `python/`. `--lang` takes a comma-separated list of
-registered `LanguagePack` ids (`hi_latn` Latin-script/romanised Hindi,
-`hi_deva` Devanagari Hindi). `--mix` gives per-pack sampling weights
-(defaults to uniform); `--cross` is the share of examples that mix a
-template/phrase across packs (0 disables cross-mixing).
+registered `LanguagePack` ids; the shipped packs are
+
+| id | language / script | in the bundled weights? |
+| --- | --- | --- |
+| `hi_latn` | romanised Hindi / Hinglish | yes |
+| `hi_deva` | Devanagari Hindi | yes |
+| `mr_deva` | Devanagari Marathi | yes |
+
+(`sankhya.langs.base.KNOWN_PACKS` is the authoritative list; every tool
+that needs "all packs" iterates `base.all_packs()` rather than hard-coding
+ids). `--mix` gives per-pack sampling weights (defaults to uniform);
+`--cross` is the share of examples that mix a template/phrase across
+packs (0 disables cross-mixing).
 
 You can also regenerate the charset file directly if you need it standalone
 — pass the same comma-separated `--lang` list used for the data so the
 vocab is the union of every pack present (`build_charset_multi`):
 
 ```bash
-python -m sankhya.charset --lang hi_latn,hi_deva --out data/charset.json
+python -m sankhya.charset --lang hi_latn,hi_deva,mr_deva --out data/charset.json
 ```
 
 Every generated example also has a `P_UNK` (default 0.12) chance of getting
@@ -70,7 +79,7 @@ python -m sankhya.train \
   --train data/train.jsonl --val data/val.jsonl \
   --epochs 20 --batch 128 --lr 3e-3 \
   --arch v2 --channels 48 --seed 0 \
-  --lang hi_latn,hi_deva \
+  --lang hi_latn,hi_deva,mr_deva \
   --out models/
 ```
 
@@ -78,7 +87,7 @@ This is the exact recipe used for the bundled default weights: arch `v2`
 (`sankhya.model.ARCHS["v2"]`) is 5 conv layers over 16-dim char
 embeddings — a plain kernel-5 layer, then four residual kernel-3 layers
 (`y = relu(conv(x)) + x`) with dilations 1/2/4/8 — at 48 channels, over
-the 114-character `hi_latn,hi_deva` union vocab: 39,579 parameters total.
+the 119-character `hi_latn,hi_deva,mr_deva` union vocab: 39,687 parameters total.
 Writes `models/sankhya.pt` (a torch checkpoint carrying `vocab`,
 `classes`, `arch`, `channels`, `state_dict`).
 
@@ -232,25 +241,23 @@ remove both the instability and the extra training cost.
 
 ## Evaluate on gold
 
-The hand-written gold sets (`tests/gold.jsonl`, 225 sentences / 197 spans,
-romanised; `tests/gold_deva.jsonl`, 185 sentences / 154 spans, Devanagari
-— this round added conjunction-joined multi-span sentences,
-trailing-cardinal chains, new negative families, possessive noise,
-in-context typos, and curated romanised cardinal variants 11-99) are the
-only numbers to trust for real-world quality — synthetic validation
-accuracy is optimistic because it's drawn from the same generator/templates
-the model was trained on. `--gold` accepts multiple files; per-file and
-combined metrics are printed.
+The hand-written gold sets (`tests/gold.jsonl`, 227 sentences / 199 spans,
+romanised; `tests/gold_deva.jsonl`, 186 sentences / 155 spans, Devanagari
+Hindi; `tests/gold_mr.jsonl`, 173 sentences / 135 spans, Devanagari
+Marathi) are the only numbers to trust for real-world quality — synthetic
+validation accuracy is optimistic because it's drawn from the same
+generator/templates the model was trained on. `--gold` accepts multiple
+files; per-file and combined metrics are printed.
 
 ```bash
-python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl --ckpt models/sankhya.pt
+python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl tests/gold_mr.jsonl --ckpt models/sankhya.pt
 ```
 
 or against the exported JSON weights directly (what the JS runtime actually
 runs):
 
 ```bash
-python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl \
+python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl tests/gold_mr.jsonl \
   --weights-json models/sankhya.weights.json
 # add --int8 with --weights-json models/sankhya.weights.int8.json
 # to check the quantized weights specifically
@@ -298,30 +305,29 @@ python -m sankhya.eval_matrix compare --runs output/run_seed0.json output/run_se
 ### Gold results (bundled `v2`/48-channel model, int8 JSON weights — what the JS runtime ships)
 
 ```
-python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl \
+python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl tests/gold_mr.jsonl \
   --weights-json ../src/data/default-weights.json --int8
 ```
 
 | gold set          | examples | spans | precision | recall | F1     | value_acc |
 |--------------------|---------:|------:|----------:|-------:|-------:|----------:|
-| gold.jsonl          |      225 |   197 |    0.9497 | 0.9594 | 0.9545 |    0.9543 |
-| gold_deva.jsonl      |      185 |   154 |    0.9805 | 0.9805 | 0.9805 |    0.9740 |
-| combined             |      410 |   351 |    0.9632 | 0.9687 | 0.9659 |    0.9630 |
+| gold.jsonl          |      227 |   199 |    0.9550 | 0.9598 | 0.9574 |    0.9548 |
+| gold_deva.jsonl      |      186 |   155 |    0.9739 | 0.9613 | 0.9675 |    0.9613 |
+| gold_mr.jsonl        |      173 |   135 |    0.9565 | 0.9778 | 0.9670 |    0.9778 |
+| combined             |      586 |   489 |    0.9613 | 0.9652 | 0.9633 |    0.9632 |
+| strict (verified only) |    586 |   427 covered (0.8732) | — | — | — | 1.0000 |
 
-Negatives: 75 examples, 0 false positives. Miss summary: missed 1,
-spurious 1, wrong value 2, wrong boundary 10. Per-category value_acc:
-digits 0.967, words 0.961, prefix 0.963, range 0.889, currency 1.0,
-multi_unit 0.917, symbol_unit 1.0, mixed_script 1.0, long 0.667.
+Negatives: 120 examples, 0 false positives. Miss summary: missed 3,
+spurious 0, wrong value 1, wrong boundary 14. Per-category value_acc:
+digits 0.967, words 0.962, prefix 0.971, range 0.929, currency 0.987,
+multi_unit 0.964, symbol_unit 0.976, mixed_script 1.0, long 0.813.
 
-For comparison, the previous shipped weights scored, on this same
-enlarged gold set, 0.9096 (romanised) / 0.9603 (Devanagari) / 0.9322
-(combined) value_acc, 0.9258 combined F1, 4/73 (5.5%) negatives false
-positives. Their numbers on the older, smaller 353-example gold set were
-0.9515 / 0.9861 / 0.9676 combined value_acc — the new gold set is
-deliberately harder: it adds conjunction-joined multi-span sentences,
-trailing-cardinal chains, possessives, in-context typos, cardinal
-spelling variants, and 18 more negative examples. See the sweep evidence
-below for why `v2`/48 seed 2 is the currently shipped run.
+For comparison, the previous shipped weights (0.4.0, Hindi only, 413
+examples) scored 0.9548 (romanised) / 0.9806 (Devanagari) / 0.9661
+(combined) value_acc, strict coverage 0.904 at 1.000 value accuracy. See
+`models/default/matrix.md` for the seed comparison behind this release's
+`v2:48` seed 0 weights (trained locally on CPU, 200k synthetic + the
+three verified LLM corpora at 20%).
 
 Known miss categories: wrong span boundaries on multi-span/range/
 connector phrases (the largest category this round), wrong value on a
@@ -348,7 +354,7 @@ before the `<unk>`-noise generator change):
 `<unk>`-noise augmentation, `v2:48` seeds 0-2 on the newer 353-example
 gold set scored 0.968 / 0.948 / 0.951.
 
-**Currently shipped:** a 3-seed `v2:48` sweep run on the enriched
+**As of 0.4.0 (Hindi only):** a 3-seed `v2:48` sweep run on the enriched
 generator (conjunction multi-span family, trailing-cardinal chains, new
 negative families, possessive noise, in-context typos, curated cardinal
 variants), scored int8 combined gold value_acc / F1 / negatives
@@ -361,9 +367,11 @@ false-positive rate:
 | 2    | 0.947     | 0.949 | 0.0%          |
 
 Seeds 0/1 tie on val value_acc within the 0.005 band ahead of seed 2, so
-the winner is picked by the tie-break rule below: seed 2 has the lowest
+the winner is picked by the tie-break rule below: seed 2 had the lowest
 negatives false-positive rate (0.0%) of the tied/near-tied set and a
-competitive F1, so **seed 2 is the shipped weights**.
+competitive F1, so **seed 2 was the 0.4.0 shipped weights**. The 0.5.0
+three-language retrain (`v2:48`, seed 0 vs. seed 2) is a separate sweep —
+see `models/default/matrix.md`.
 
 **The rule this implies, and what `eval_matrix.select_matrix_winner` /
 the Kaggle MATRIX kernel actually do:** pick the winning **config**
@@ -419,7 +427,7 @@ strict coverage >= 0.85. It runs one int8 numpy pass (~2 s).
 ## Property test
 
 `proptest.py` runs the same pipeline over freshly generated examples instead of
-the 410 hand-written gold ones - the generator's labels are the ground truth,
+the 586 hand-written gold ones - the generator's labels are the ground truth,
 the torch checkpoint runs batched, and decoding uses exactly `eval_gold`'s gates:
 
 ```bash
@@ -617,8 +625,9 @@ above, runs fine on Colab's CPU runtime).
 ## Training on Kaggle (GPU)
 
 `python/kaggle_train/` wraps a Kaggle "script" kernel that runs the full
-multi-pack recipe above (`--lang hi_latn,hi_deva --mix 0.55,0.45 --cross
-0.10`, 200k train / 6k val, 20 epochs, batch 128, lr 3e-3) on a Kaggle
+multi-pack recipe above (`--lang hi_latn,hi_deva,mr_deva --mix
+0.40,0.33,0.27 --cross 0.10`, 200k train / 6k val, 20 epochs, batch 128,
+lr 3e-3) on a Kaggle
 GPU, then evaluates on both gold sets and stages `models/` +
 `metrics.json` for download. The default `MATRIX` (below) trains
 `arch:channels:seed` configs — the shipped default is `v2:48`; legacy
@@ -734,7 +743,7 @@ below).
 - `space` — the built `site/` directory (run `npm run build && npm run
   site` from the repo root first), to
   https://huggingface.co/spaces/athrvk/gpu-sankhya-demo
-- `dataset` — `python/tests/gold.jsonl` / `gold_deva.jsonl`, to
+- `dataset` — `python/tests/gold.jsonl` / `gold_deva.jsonl` / `gold_mr.jsonl`, to
   https://huggingface.co/datasets/athrvk/gpu-sankhya-gold
 
 Requires an `HF_TOKEN` env var (a write-scoped Hugging Face token); repos
@@ -781,9 +790,13 @@ full example) with:
 - `noise_fn(word, rng) -> str` — typo/spelling-variance injection for that
   script/language
 
+plus, if the language needs them, the morphology hooks
+`glue_unit_forms` / `fused_prefix_forms` / `word_suffixes` +
+`word_oblique_endings` (see the Marathi notes in the checklist below).
+
 then `sankhya.langs.base.register(pack)` it and give it a unique `id`
-(register in `sankhya/langs/__init__.py` alongside the existing packs so
-`--lang <id>` resolves it). Regenerate the charset for the new pack
+(add that id to `sankhya/langs/base.py`'s `KNOWN_PACKS` so `--lang <id>`,
+`base.all_packs()` and every tool built on them resolve it). Regenerate the charset for the new pack
 (`python -m sankhya.charset --lang <id> --out data/charset.json`) — the
 model's char vocab is per-language. `sankhya/classes.py`'s class inventory
 (the BIO/semantic token classes) is shared across all languages and should
@@ -796,3 +809,64 @@ A Devanagari pack (e.g. Hindi in Devanagari script, डेढ़ लाख) addi
 needs a new noise module for script-specific variance (matra/nukta
 elision or substitution) since `noise_latn.py`'s typo model is
 Latin-script-specific; the class inventory and core still don't change.
+(A second Devanagari language can reuse `noise_deva.py`, as `mr_deva`
+does.)
+
+### Checklist: what adding `mr_deva` (Marathi) actually took
+
+In order, with the commands used:
+
+1. **Write the pack** — `sankhya/langs/mr_deva.py`, mirroring
+   `hi_deva.py`: cardinals 1-99 with the spelling variants people
+   actually type (तेहेतीस/तेहतीस, शहात्तर/सहात्तर, ऐंशी/अंशी,
+   चौऱ्याऐंशी/चौर्याऐंशी), units (शंभर/शे, हजार, लाख, कोटी + करोड, अब्ज),
+   prefixes (सव्वा, दीड, अडीच, साडे, पावणे, अर्धा, पाव), currency markers,
+   `" ते "`/`" किंवा "` range connectors, `" आणि "` conjunctions,
+   approximators, duration nouns, filler words, ~25 templates per register
+   and ~50 negatives, `deva_digit_prob = 0.25`.
+2. **Register it** in `base.KNOWN_PACKS`.
+3. **Model the language's morphology through the generic hooks**, never
+   with per-language code in the generator/tokenizer:
+   - `glue_unit_forms = ["शे"]` — a BOUND unit form that only ever appears
+     glued to the number before it (दोनशे = `CARD_2 UNIT_SAU`). The
+     generator glues it (and swaps in शंभर when the shape doesn't allow
+     gluing); `llm_corpus._word_tokens` splits such a word back into two
+     tokens; `decode._is_bound_unit_tail` keeps the 2-char unit tail from
+     being smoothed into the cardinal at decode time.
+   - `fused_prefix_forms = {"PFX_SAADHE": 0.75, "PFX_PAUNE": 0.45}` —
+     prefixes usually typed as one word with their cardinal (साडेतीन), keyed
+     by class so noised spellings fuse too. Both spellings parse.
+   - `word_suffixes` + `word_oblique_endings` — case endings that attach
+     to a unit/cardinal (हजारात, लाखांचा, कोटींची, तीसच). The whole word
+     keeps the head word's class.
+4. **Check cross-pack collisions.** A surface shared by two packs must map
+   to the same class (the charset/training data unions every pack).
+   `tests/test_mr.py::test_no_cross_pack_conflicts` enforces this; adding
+   Marathi turned up exactly one — Hindi's O-labelled filler "तेरा" is
+   CARD_13 in Marathi — resolved by dropping it from `hi_deva`'s fillers.
+5. **Verify the LLM corpus**:
+
+   ```bash
+   python -m sankhya.llm_corpus verify --lang mr_deva \
+     --in data_llm/raw/mr_deva.sonnet.jsonl --out data_llm/mr_deva.jsonl \
+     --rejects data_llm/rejects/mr_deva.jsonl --manifest data_llm/manifest.json
+   ```
+
+   Iterate on the lexicon until the rejects are only genuine LLM
+   arithmetic errors or truly unusual phrasing (Marathi landed at 591/600
+   accepted: 4 wrong values, 5 "negatives" that really do contain a unit
+   word). Rejects that reveal real spellings belong in the lexicon.
+6. **Write a gold set by hand** — `tests/gold_mr.jsonl`, same schema as
+   `gold_deva.jsonl`, ~150+ examples, ~30% negatives, covering every
+   prefix, the fused hundreds, ranges, currency, Latin-mixed lines and
+   digits. Check every positive value with `core.evaluate` on the tokens
+   your lexicon implies, and keep it disjoint from the corpus.
+7. **Mirror the currency markers on the JS side** — `src/lang-<id>.ts`,
+   merged into `CURRENCY_PACK` in `src/index.ts`.
+8. **Tests** — `tests/test_mr.py` (lexicon sanity, cross-pack collisions,
+   generator round-trips at n=2000, fused-hundreds label boundaries,
+   corpus verification, gold re-evaluation) and a JS currency-pack test.
+9. **Retrain** with the new pack in `--lang`/`--mix` and regenerate the
+   charset; only then do the bundled weights understand the language.
+   `test/fixtures/*.jsonl` and `models/default` stay untouched until that
+   retrain happens.

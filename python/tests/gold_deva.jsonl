@@ -26,10 +26,10 @@
 {"text": "पैकेज 12LPA का ऑफर आया", "lang": "hi_deva", "spans": [{"start": 6, "end": 11, "value": 1200000}]}
 {"text": "रेट 1.5cr के आसपास है", "lang": "hi_deva", "spans": [{"start": 4, "end": 9, "value": 15000000}]}
 {"text": "फ्लैट 45L का है", "lang": "hi_deva", "spans": [{"start": 6, "end": 9, "value": 4500000}]}
-{"text": "बजट २.५ लाख है", "lang": "hi_deva", "spans": [{"start": 4, "end": 11, "value": 0}]}
-{"text": "५० हज़ार का लोन है", "lang": "hi_deva", "spans": [{"start": 0, "end": 8, "value": 0}]}
-{"text": "₹२०० का सामान", "lang": "hi_deva", "spans": [{"start": 1, "end": 4, "value": 0}]}
-{"text": "१२५००० रुपये चाहिए", "lang": "hi_deva", "spans": [{"start": 0, "end": 6, "value": 0}]}
+{"text": "बजट २.५ लाख है", "lang": "hi_deva", "spans": [{"start": 4, "end": 11, "value": 250000}]}
+{"text": "५० हज़ार का लोन है", "lang": "hi_deva", "spans": [{"start": 0, "end": 8, "value": 50000}]}
+{"text": "₹२०० का सामान", "lang": "hi_deva", "spans": [{"start": 1, "end": 4, "value": 200}]}
+{"text": "१२५००० रुपये चाहिए", "lang": "hi_deva", "spans": [{"start": 0, "end": 6, "value": 125000}]}
 {"text": "₹500 दे दो", "lang": "hi_deva", "spans": [{"start": 1, "end": 4, "value": 500}]}
 {"text": "रु 1200 जमा किए", "lang": "hi_deva", "spans": [{"start": 3, "end": 7, "value": 1200}]}
 {"text": "Rs. 999 फाइनल", "lang": "hi_deva", "spans": [{"start": 4, "end": 7, "value": 999}]}
@@ -109,8 +109,8 @@
 {"text": "साढे पाँच लाख का लोन है", "lang": "hi_deva", "spans": [{"start": 0, "end": 13, "value": 550000}]}
 {"text": "सवा करोड़ की डील हुई", "lang": "hi_deva", "spans": [{"start": 0, "end": 9, "value": 12500000}]}
 {"text": "पौने पाँच लाख का बजट है", "lang": "hi_deva", "spans": [{"start": 0, "end": 13, "value": 475000}]}
-{"text": "१०० रुपये चाहिए अभी", "lang": "hi_deva", "spans": [{"start": 0, "end": 3, "value": 0}]}
-{"text": "₹१,२५,००० का ऑर्डर है", "lang": "hi_deva", "spans": [{"start": 1, "end": 9, "value": 0}]}
+{"text": "१०० रुपये चाहिए अभी", "lang": "hi_deva", "spans": [{"start": 0, "end": 3, "value": 100}]}
+{"text": "₹१,२५,००० का ऑर्डर है", "lang": "hi_deva", "spans": [{"start": 1, "end": 9, "value": 125000}]}
 {"text": "3.5L का स्कूटर है", "lang": "hi_deva", "spans": [{"start": 0, "end": 4, "value": 350000}]}
 {"text": "8bn डॉलर की कंपनी है", "lang": "hi_deva", "spans": [{"start": 0, "end": 3, "value": 8000000000}]}
 {"text": "50M व्यूज़ आए हैं", "lang": "hi_deva", "spans": [{"start": 0, "end": 3, "value": 50000000}]}
@@ -123,8 +123,8 @@
 {"text": "ढाई तीन लाख के बीच", "lang": "hi_deva", "spans": [{"start": 0, "end": 11, "value": 250000, "range": [250000, 300000]}]}
 {"text": "साढ़े तीन लाख", "lang": "hi_deva", "spans": [{"start": 0, "end": 13, "value": 350000}]}
 {"text": "पौने लाख", "lang": "hi_deva", "spans": [{"start": 0, "end": 8, "value": 75000}]}
-{"text": "५ लाख", "lang": "hi_deva", "spans": [{"start": 0, "end": 5, "value": 0}]}
-{"text": "₹५००", "lang": "hi_deva", "spans": [{"start": 1, "end": 4, "value": 0}]}
+{"text": "५ लाख", "lang": "hi_deva", "spans": [{"start": 0, "end": 5, "value": 500000}]}
+{"text": "₹५००", "lang": "hi_deva", "spans": [{"start": 1, "end": 4, "value": 500}]}
 {"text": "सत्रह लाख का टर्नओवर हुआ", "lang": "hi_deva", "spans": [{"start": 0, "end": 9, "value": 1700000}]}
 {"text": "तेरह हज़ार वेतन मिलता है", "lang": "hi_deva", "spans": [{"start": 0, "end": 10, "value": 13000}]}
 {"text": "चौदह लाख का घर लिया", "lang": "hi_deva", "spans": [{"start": 0, "end": 8, "value": 1400000}]}

@@ -60,8 +60,10 @@ export function verifyTokens(tokens: Array<[string, string]>): boolean {
         break;
       }
       case "RANGE": {
-        const stripped = text.replace(/\s+/g, "");
-        const lower = text.toLowerCase();
+        // Mirrors python verify._verify_token: strip surrounding whitespace,
+        // then symbol match or NFC-lowercased range-word match.
+        const stripped = text.trim();
+        const lower = stripped.normalize("NFC").toLowerCase();
         if (!RANGE_SYMBOLS.has(stripped) && !RANGE_WORDS.has(lower)) return false;
         break;
       }

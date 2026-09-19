@@ -20,6 +20,23 @@ class Result:
     currency: Optional[str] = None
 
 
+# Devanagari (U+0966-U+096F) and Gujarati (U+0AE6-U+0AEF) digits -> ASCII
+# "0"-"9", 1:1. Callers normally run text through charset.normalize_text()
+# before labelling, which already maps Devanagari digits to ASCII -- but
+# core.evaluate() is also called directly with raw (unnormalised) token
+# text in tests and some callers, so DIGITS text reaching _merge_numbers is
+# normalised here too, defensively, rather than assumed to already be ASCII.
+_DIGIT_MAP = {}
+for _i in range(10):
+    _DIGIT_MAP[chr(0x0966 + _i)] = str(_i)
+    _DIGIT_MAP[chr(0x0AE6 + _i)] = str(_i)
+del _i
+
+
+def _normalize_digits(text: str) -> str:
+    return "".join(_DIGIT_MAP.get(ch, ch) for ch in text)
+
+
 def _merge_numbers(tokens):
     """Drop SEP, merge consecutive DIGITS/DOT/COMMA runs into ('NUM', float)."""
     out = []
@@ -42,12 +59,8 @@ def _merge_numbers(tokens):
         if cls == "SEP":
             continue
         if cls in ("DIGITS", "DOT", "COMMA"):
-            # defensive: labels are computed on normalize_text()'d text, so
-            # DIGITS tokens must already be ASCII 0-9 (Devanagari digits are
-            # mapped before char encoding / labelling ever happens).
             if cls == "DIGITS":
-                assert text and all(ch in "0123456789" for ch in text), \
-                    f"non-ASCII digit reached core: {text!r}"
+                text = _normalize_digits(text)
             buf += text
             have_num = True
         else:
@@ -242,6 +255,62 @@ def _try_juxtaposition_range(tokens):
     return None
 
 
+def _try_cardinal_juxtaposition_range(tokens):
+    """R8: two directly-juxtaposed SPELLED cardinals with nothing but SEP
+    between them, e.g. "teen paanch hazaar" (CARD_3 SEP CARD_5 SEP
+    UNIT_HAZAAR, 3000..5000) or "tees paintees hazaar" (30000..35000).
+
+    Unlike R7 (which splits at a boundary between two UNIT-closed terms),
+    this fires when two CARD_* tokens sit back-to-back -- no unit, prefix
+    or digits token between them -- and the second is strictly larger than
+    the first. The low reading drops the larger cardinal, the high reading
+    drops the smaller one; both are then evaluated normally (so any
+    trailing unit, e.g. UNIT_HAZAAR, applies to each side).
+
+    Must NOT fire on:
+      - "ek sau" (CARD_1 UNIT_SAU): sau is a UNIT, not a second cardinal.
+      - "do hazaar paanch" (CARD_2 UNIT_HAZAAR CARD_5): the cardinals are
+        separated by a unit token, not merely SEP -- additive, unchanged.
+      - descending "bees paanch" (CARD_20 CARD_5): second < first, so the
+        a < b guard fails and today's behaviour (additive) is kept.
+      - DIGITS-based juxtaposition: restricted to CARD_* (spelled) tokens.
+
+    Only used when R7 does not already match (checked first by the
+    caller), so unit-bearing juxtaposition terms (R7) take precedence.
+
+    Returns a Result on a match, else None.
+    """
+    card_idxs = [i for i, (cls, _) in enumerate(tokens) if C.is_card(cls)]
+    for k in range(len(card_idxs) - 1):
+        i, j = card_idxs[k], card_idxs[k + 1]
+        if not all(tokens[m][0] == "SEP" for m in range(i + 1, j)):
+            continue
+        cls_a = tokens[i][0]
+        cls_b = tokens[j][0]
+        try:
+            a_val = C.card_value(cls_a)
+            b_val = C.card_value(cls_b)
+        except Exception:
+            continue
+        if not (a_val < b_val):
+            continue
+        low_tokens = tokens[:j] + tokens[j + 1:]
+        high_tokens = tokens[:i] + tokens[i + 1:]
+        low_res = evaluate(low_tokens)
+        high_res = evaluate(high_tokens)
+        if low_res.range is not None or high_res.range is not None:
+            continue
+        if not (low_res.value < high_res.value):
+            continue
+        return Result(
+            value=low_res.value,
+            range=(low_res.value, high_res.value),
+            unit=low_res.unit,
+            classes=[c for c, _ in tokens],
+        )
+    return None
+
+
 def evaluate(tokens: List[Tuple[str, str]]) -> Result:
     """Evaluate a class-token sequence for one span. Never raises."""
     try:
@@ -267,6 +336,11 @@ def evaluate(tokens: List[Tuple[str, str]]) -> Result:
             r7 = _try_juxtaposition_range(parts[0])
             if r7 is not None:
                 return r7
+            # R8: no unit-bearing juxtaposition term boundary (R7) matched
+            # -- check for two directly-adjacent spelled cardinals instead.
+            r8 = _try_cardinal_juxtaposition_range(parts[0])
+            if r8 is not None:
+                return r8
             value, unit = amounts[0]
             return Result(value=_num(value), range=None, unit=(C.UNIT_NAME.get(unit) if unit else None), classes=all_classes)
 

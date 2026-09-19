@@ -5,7 +5,7 @@ These pin the promises the strict ("verified") tier makes to users:
   b) every verified prediction on a gold span has the right value,
   c) the strict tier still covers most gold spans.
 
-One int8 numpy pass over the 410-example gold set (~5 s).
+One int8 numpy pass over the 586-example gold set (~5 s).
 """
 import functools
 import os
@@ -19,7 +19,7 @@ from sankhya.eval_gold import run_eval
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 WEIGHTS = os.path.join(HERE, "..", "..", "models", "default", "sankhya.weights.int8.json")
-GOLD = [os.path.join(HERE, "gold.jsonl"), os.path.join(HERE, "gold_deva.jsonl")]
+GOLD = [os.path.join(HERE, f) for f in ("gold.jsonl", "gold_deva.jsonl", "gold_mr.jsonl")]
 
 STRICT_COVERAGE_FLOOR = 0.85
 

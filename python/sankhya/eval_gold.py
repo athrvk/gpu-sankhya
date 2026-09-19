@@ -31,23 +31,26 @@ CATEGORY_NAMES = [
 ]
 
 
-_BOTH_PACKS = None
+_ALL_PACKS = None
+
+# gold files are named `gold.jsonl` / `gold_<suffix>.jsonl`; these map the
+# suffix to a pack id where they differ (see eval_matrix._lang_label).
+_GOLD_SUFFIX_ALIASES = {"": "hi_latn", "deva": "hi_deva", "latn": "hi_latn", "mr": "mr_deva"}
 
 
-def _both_packs():
-    """hi_latn + hi_deva packs, used for the R3 bare-digits currency gate
-    below regardless of an individual example's declared `lang` (mirrors
-    make_fixtures.py, which always scans the union of both)."""
-    global _BOTH_PACKS
-    if _BOTH_PACKS is None:
-        packs = []
-        for lang_id in ("hi_latn", "hi_deva"):
-            try:
-                packs.append(langs_base.get_pack(lang_id))
-            except KeyError:
-                pass
-        _BOTH_PACKS = packs
-    return _BOTH_PACKS
+def _all_packs():
+    """EVERY registered language pack, used for the R3 bare-digits currency
+    gate below regardless of an individual example's declared `lang`
+    (mirrors make_fixtures.py, which always scans the union of all packs).
+    """
+    global _ALL_PACKS
+    if _ALL_PACKS is None:
+        _ALL_PACKS = list(langs_base.all_packs())
+    return _ALL_PACKS
+
+
+# backwards-compatible alias for the old two-pack helper
+_both_packs = _all_packs
 
 
 def _apply_bare_digits_gate(text, decoded, classes):
@@ -57,26 +60,34 @@ def _apply_bare_digits_gate(text, decoded, classes):
     kept = []
     for d in decoded:
         toks = [(classes[cid], sub) for cid, sub in d["tokens"]]
-        if core.should_drop_bare_digits(toks) and core.detect_currency_multi(text, d["start"], d["end"], _both_packs()) is None:
+        if core.should_drop_bare_digits(toks) and core.detect_currency_multi(text, d["start"], d["end"], _all_packs()) is None:
             continue
-        if core.should_drop_lone_ambiguous_unit(toks) and core.detect_currency_multi(text, d["start"], d["end"], _both_packs()) is None:
+        if core.should_drop_lone_ambiguous_unit(toks) and core.detect_currency_multi(text, d["start"], d["end"], _all_packs()) is None:
             continue
         kept.append(d)
     return kept
 
 
 def _get_pack(lang_id):
-    if lang_id in langs_base.registry:
-        return langs_base.registry[lang_id]
-    try:
-        return langs_base.get_pack(lang_id)
-    except KeyError:
-        for fallback in ("hi_latn", "hi_deva"):
-            try:
-                return langs_base.get_pack(fallback)
-            except KeyError:
-                continue
-    return None
+    """Resolve an example's `lang` (or a gold-file suffix) to a pack.
+
+    Tries the id itself, then the `gold_<suffix>.jsonl` aliases, then any
+    registered pack whose id ends with that suffix - so a new pack is
+    picked up with no code change here. Falls back to the first registered
+    pack (categorisation is best-effort, never fatal).
+    """
+    packs = langs_base.load_all()
+    if lang_id in packs:
+        return packs[lang_id]
+    alias = _GOLD_SUFFIX_ALIASES.get(lang_id or "")
+    if alias and alias in packs:
+        return packs[alias]
+    if lang_id:
+        matches = [p for k, p in packs.items() if k.endswith(f"_{lang_id}") or k.startswith(f"{lang_id}_")]
+        if len(matches) == 1:
+            return matches[0]
+    ordered = langs_base.all_packs()
+    return ordered[0] if ordered else None
 
 
 def categorize_span(text, span, pack):

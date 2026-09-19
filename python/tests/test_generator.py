@@ -69,8 +69,7 @@ def test_unk_pool_outside_every_charset():
     charset built over every registered pack, individually and combined."""
     from sankhya import charset as CS  # lazy import, avoids cycles
 
-    ids = ["hi_latn", "hi_deva"]
-    packs = [base.get_pack(i) for i in ids]
+    packs = base.all_packs()  # every registered pack, not a fixed list
     combined = set(CS.build_charset_multi(packs))
     for p in packs:
         combined |= set(CS.build_charset_multi([p]))

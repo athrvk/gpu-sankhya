@@ -40,6 +40,24 @@ class LanguagePack:
     # immediately preceded by a number-ish token (CARD_*/DIGITS/PFX_* or a
     # digit run) - see _negative_has_quantity in llm_corpus.py.
     ambiguous_units: List[str] = field(default_factory=list)
+    # UNIT_* surface forms that are BOUND morphemes: they only ever occur
+    # glued (no space) to the number word before them. Marathi's fused
+    # hundreds suffix "शे" (दोनशे = CARD_2 + UNIT_SAU) is the motivating
+    # case. The generator never emits one standalone or space-separated
+    # (generator._apply_pack_glue), and the corpus tokenizer splits such a
+    # word back into its two tokens (llm_corpus._word_tokens).
+    glue_unit_forms: List[str] = field(default_factory=list)
+    # PFX_* surface forms commonly typed as ONE word with the cardinal that
+    # follows ("साडेतीन", "पावणेदोन"): surface -> probability the generator
+    # glues them. Both spellings stay valid input for the tokenizer.
+    fused_prefix_forms: Dict[str, float] = field(default_factory=dict)
+    # Case endings that attach directly to a unit/cardinal word in this
+    # language ("हजारात", "लाखांचा", "तीसच"). The corpus tokenizer strips
+    # them (longest first, repeatedly) to recognise the head word; the
+    # suffix characters stay part of that word's token.
+    word_suffixes: List[str] = field(default_factory=list)
+    # Oblique stem endings tried after a suffix strip ("हजारा-", "कोटीं-").
+    word_oblique_endings: List[str] = field(default_factory=list)
 
     def noise(self, word: str, rng) -> str:
         if self.noise_fn is not None:
@@ -72,11 +90,31 @@ def register(pack: LanguagePack) -> None:
     registry[pack.id] = pack
 
 
+# every pack module shipped in this package, in a stable order; importing
+# one registers its PACK. `load_all()` is what lets callers iterate
+# `registry` instead of hard-coding pack ids.
+KNOWN_PACKS = ("hi_latn", "hi_deva", "mr_deva")
+
+
+def load_all() -> Dict[str, LanguagePack]:
+    """Import every known pack module and return the registry."""
+    import importlib
+
+    for lang_id in KNOWN_PACKS:
+        if lang_id not in registry:
+            importlib.import_module(f"{__package__}.{lang_id}")
+    return registry
+
+
+def all_packs() -> List[LanguagePack]:
+    """Every registered pack, in KNOWN_PACKS order (loading them first)."""
+    load_all()
+    return [registry[k] for k in KNOWN_PACKS if k in registry]
+
+
 def get_pack(lang_id: str) -> LanguagePack:
-    if lang_id not in registry:
-        # lazy-load known packs
-        if lang_id == "hi_latn":
-            from . import hi_latn  # noqa: F401
-        elif lang_id == "hi_deva":
-            from . import hi_deva  # noqa: F401
+    if lang_id not in registry and lang_id in KNOWN_PACKS:
+        import importlib
+
+        importlib.import_module(f"{__package__}.{lang_id}")
     return registry[lang_id]

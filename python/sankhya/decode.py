@@ -82,6 +82,45 @@ def _majority_vote_run(raw_ids: List[int]) -> int:
     return best_cid
 
 
+def _is_bound_unit_tail(sub_runs, idx) -> bool:
+    """R2c: a word-final sub-run of length >= 2 that directly follows a
+    CARD_*/PFX_* sub-run of length >= 2 is kept as its own class instead of
+    being smoothed into the sub-run before it, when the two-sub-run split
+    is one of:
+
+      - tail UNIT_*, head CARD_*/PFX_* -- a BOUND unit suffix written with
+        no space -- Marathi's fused hundreds ("दोनशे" = CARD_2 + UNIT_SAU,
+        "अठराशे", "दीडशे"), and equally "दोसौ" in Devanagari Hindi.
+      - tail CARD_*, head PFX_* -- a fused prefix+cardinal word --
+        Marathi "पावणेचार" (PFX_PAUNE + CARD_4 = 3.75), "साडेआठ"
+        (PFX_SAADHE + CARD_8 = 8.5).
+
+    Without this the sub-run smoothing below would absorb the tail
+    sub-run into the head and evaluate e.g. "दोनशे" as 2 instead of 200,
+    or "पावणेचार" as just PFX_PAUNE (0.75) instead of 3.75.
+
+    Deliberately narrow: only the LAST sub-run of the run, only these two
+    head/tail class-pair shapes, and only when both sub-runs stand on
+    their own evidence (length >= 2, i.e. unanimous, not a stray 1-char
+    misprediction) -- anything else is still smoothed away as before.
+    """
+    if idx != len(sub_runs) - 1 or idx == 0:
+        return False
+    c, s, e = sub_runs[idx]
+    if e - s < 2:
+        return False
+    cname = C.CLASSES[c]
+    pc, ps, pe = sub_runs[idx - 1]
+    if pe - ps < 2:
+        return False
+    pname = C.CLASSES[pc]
+    if cname.startswith("UNIT_") and (pname.startswith("CARD_") or pname.startswith("PFX_")):
+        return True
+    if cname.startswith("CARD_") and pname.startswith("PFX_"):
+        return True
+    return False
+
+
 def _repair_letters_run(raw_ids: List[int]) -> List[int]:
     """Sub-run smoothing within one letters run.
 
@@ -108,7 +147,7 @@ def _repair_letters_run(raw_ids: List[int]) -> List[int]:
     fallback_positions = []
 
     for idx, (c, s, e) in enumerate(sub_runs):
-        if e - s >= 3:
+        if e - s >= 3 or _is_bound_unit_tail(sub_runs, idx):
             continue  # keep as-is
         prev_run = sub_runs[idx - 1] if idx > 0 else None
         next_run = sub_runs[idx + 1] if idx < len(sub_runs) - 1 else None
@@ -209,7 +248,7 @@ def _run_unanimous_class(raw_run: List[int]) -> Optional[int]:
 
     resolved = []
     for idx, (c, s, e) in enumerate(sub_runs):
-        if e - s >= 3:
+        if e - s >= 3 or _is_bound_unit_tail(sub_runs, idx):
             resolved.append(c)
             continue
         prev_run = sub_runs[idx - 1] if idx > 0 else None

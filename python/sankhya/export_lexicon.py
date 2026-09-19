@@ -18,7 +18,9 @@ import json
 import unicodedata
 
 from .langs import base  # noqa: F401
-from .langs import hi_latn, hi_deva  # noqa: F401  (registers packs)
+from .langs.base import load_all
+
+load_all()  # registers every known pack
 
 
 def _is_letters(s: str) -> bool:
@@ -27,7 +29,7 @@ def _is_letters(s: str) -> bool:
 
 def build() -> dict:
     packs = {}
-    for pid, pack in sorted(base.registry.items()):
+    for pid, pack in sorted(base.load_all().items()):
         forms = dict(sorted(pack.all_forms().items()))
         range_words = sorted({w.strip().lower() for w in pack.range_connectors if _is_letters(w.strip())})
         packs[pid] = {"forms": forms, "range_words": range_words}
