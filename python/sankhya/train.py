@@ -61,6 +61,30 @@ def tensorize(examples, char_to_id, max_len=MAX_LEN):
     )
 
 
+def negatives_to_examples(rows, max_len=MAX_LEN):
+    """Turn `{"text", "lang"}` lines into all-O training examples.
+
+    A real sentence with no amount in it is a perfectly good labelled
+    example: every character is BIO `O` (0) and class `O` (index 0 in
+    `classes.CLASSES`). Labels are built at the normalized/truncated length
+    the tensorizer will actually use, so a long line cannot carry labels
+    past the model's window.
+    """
+    out = []
+    o_cls = C.CLASSES.index("O")
+    for r in rows:
+        text = r["text"]
+        L = min(len(normalize_text(text)), max_len)
+        out.append({
+            "text": text,
+            "lang": r.get("lang"),
+            "bio": [0] * L,
+            "cls": [o_cls] * L,
+            "spans": [],
+        })
+    return out
+
+
 def span_f1(gold_spans_list, pred_spans_list):
     tp = fp = fn = 0
     for gold, pred in zip(gold_spans_list, pred_spans_list):
@@ -200,6 +224,17 @@ def main(argv=None):
     ap.add_argument("--extra-ratio", type=float, default=0.2,
                      help="target share of each epoch's examples drawn from --extra (0 disables mixing); "
                           "--extra is oversampled (with replacement) or subsampled each epoch to hit it")
+    ap.add_argument("--extra-negatives", nargs="+", default=None,
+                     help="jsonl file(s) of real no-amount lines ({\"text\", \"lang\"}); "
+                          "mixed in as all-O examples at --extra-negative-ratio "
+                          "(see sankhya.wild negatives)")
+    ap.add_argument("--extra-negative-ratio", type=float, default=0.15,
+                     help="target share of each epoch's examples drawn from "
+                          "--extra-negatives (0 disables mixing)")
+    ap.add_argument("--init-from", default=None,
+                     help="checkpoint (e.g. sankhya.pretrain output) to initialise the "
+                          "trunk (embedding + conv stack) from; the BIO/class heads stay "
+                          "freshly initialised")
     args = ap.parse_args(argv)
 
     if os.environ.get("SANKHYA_ANOMALY"):
@@ -251,12 +286,24 @@ def main(argv=None):
                     f"they map to <unk>. Top 20: " + " ".join(f"{c!r}={n}" for c, n in top)
                 )
 
+    neg_ex = []
+    if args.extra_negatives:
+        neg_rows = []
+        for np_path in args.extra_negatives:
+            neg_rows.extend(load_jsonl(np_path))
+        neg_ex = negatives_to_examples(neg_rows)
+        print(f"loaded {len(neg_ex)} real-negative lines from "
+              f"{len(args.extra_negatives)} file(s) (labelled all-O)")
+
     t0 = time.time()
     tr_chars, tr_bio, tr_cls, tr_mask = tensorize(train_ex, char_to_id)
     va_chars, va_bio, va_cls, va_mask = tensorize(val_ex, char_to_id)
     ex_chars = ex_bio = ex_cls = ex_mask = None
     if extra_ex:
         ex_chars, ex_bio, ex_cls, ex_mask = tensorize(extra_ex, char_to_id)
+    ng_chars = ng_bio = ng_cls = ng_mask = None
+    if neg_ex:
+        ng_chars, ng_bio, ng_cls, ng_mask = tensorize(neg_ex, char_to_id)
     print(f"tensorized in {time.time()-t0:.1f}s")
 
     if args.device == "auto" and torch.cuda.is_available():
@@ -271,6 +318,24 @@ def main(argv=None):
         vocab_size=len(vocab), n_cls=len(C.CLASSES), arch=arch, dilation=args.dilation,
         channels=args.channels, layers=args.layers, embed_dim=args.embed_dim, crf=args.crf,
     ).to(device)
+    if args.init_from:
+        ck = torch.load(args.init_from, map_location="cpu")
+        sd = ck.get("state_dict", ck)
+        trunk = {k: v for k, v in sd.items()
+                  if k.startswith("embed.") or k.startswith("conv")}
+        model_sd = model.state_dict()
+        missing = [k for k in model_sd
+                    if (k.startswith("embed.") or k.startswith("conv")) and k not in trunk]
+        if missing:
+            raise SystemExit(
+                f"--init-from {args.init_from}: trunk mismatch, missing {missing}")
+        bad = [k for k, v in trunk.items()
+                if k in model_sd and model_sd[k].shape != v.shape]
+        if bad:
+            raise SystemExit(f"--init-from {args.init_from}: shape mismatch on {bad}")
+        model.load_state_dict(trunk, strict=False)
+        print(f"initialised trunk ({len(trunk)} tensors) from {args.init_from}; heads are fresh")
+
     n_params = count_params(model)
     print(f"param count: {n_params} (arch={args.arch or 'legacy'} channels={args.channels} layers={len(model.arch)})")
 
@@ -293,7 +358,20 @@ def main(argv=None):
             f"{n_extra_pool} (target ratio={ratio:.2f}, "
             f"{'oversampled' if n_extra_per_epoch > n_extra_pool else 'subsampled'})"
         )
-    n = n_main + n_extra_per_epoch
+    n_neg_pool = ng_chars.shape[0] if ng_chars is not None else 0
+    n_neg_per_epoch = 0
+    if n_neg_pool and args.extra_negative_ratio > 0:
+        nratio = min(max(args.extra_negative_ratio, 0.0), 0.95)
+        # same "share of the combined epoch" arithmetic as --extra, computed
+        # against the main + extra base so the two ratios compose.
+        base = n_main + n_extra_per_epoch
+        n_neg_per_epoch = int(round(base * nratio / (1 - nratio)))
+        print(
+            f"mixing in {n_neg_per_epoch} real negatives/epoch from a pool of "
+            f"{n_neg_pool} (target ratio={nratio:.2f}, "
+            f"{'oversampled' if n_neg_per_epoch > n_neg_pool else 'subsampled'})"
+        )
+    n = n_main + n_extra_per_epoch + n_neg_per_epoch
 
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
     n_batches_per_epoch = math.ceil(n / args.batch)
@@ -335,6 +413,14 @@ def main(argv=None):
             ep_mask = torch.cat([tr_mask, ex_mask[extra_idx]], dim=0)
         else:
             ep_chars, ep_bio, ep_cls, ep_mask = tr_chars, tr_bio, tr_cls, tr_mask
+        if n_neg_per_epoch:
+            replace = n_neg_per_epoch > n_neg_pool
+            neg_idx = torch.from_numpy(
+                np.random.choice(n_neg_pool, size=n_neg_per_epoch, replace=replace))
+            ep_chars = torch.cat([ep_chars, ng_chars[neg_idx]], dim=0)
+            ep_bio = torch.cat([ep_bio, ng_bio[neg_idx]], dim=0)
+            ep_cls = torch.cat([ep_cls, ng_cls[neg_idx]], dim=0)
+            ep_mask = torch.cat([ep_mask, ng_mask[neg_idx]], dim=0)
         perm = torch.randperm(n)
         epoch_loss = 0.0
         nb = 0

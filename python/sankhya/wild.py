@@ -402,6 +402,123 @@ def load_samples(sample_dir, langs=LANGS):
 
 
 # --------------------------------------------------------------------------
+# real-negative pool for training (`negatives`)
+# --------------------------------------------------------------------------
+
+GOLD_WILD_GLOB = "gold_wild_{lang}.jsonl"
+DEFAULT_NEGATIVES = os.path.join(DATA_WILD, "negatives.jsonl")
+
+
+def gold_wild_keys(tests_dir=None, langs=LANGS):
+    """Dedup keys for every hand-labelled wild-gold line, so the training
+    negatives can be asserted disjoint from the evaluation set."""
+    tests_dir = tests_dir or os.path.join(_PY_ROOT, "tests")
+    keys = set()
+    for lang in langs:
+        path = os.path.join(tests_dir, GOLD_WILD_GLOB.format(lang=lang))
+        if not os.path.exists(path):
+            continue
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                keys.add(_dedup_key(json.loads(line)["text"]))
+    return keys
+
+
+def _reservoir_no_signal(lang, k, seed, limit=None, verbose=True):
+    """Uniform reservoir sample of k no-signal lines for one language.
+
+    "No signal" is the same bar `sample` uses for its negatives: the lexicon
+    scorer returns score 0, i.e. not a unit word, prefix, cardinal, currency
+    marker or digit anywhere in the line. Reservoir sampling keeps the pass
+    single and the memory bounded even over the 929k-line Hindi wiki file.
+    """
+    rng = random.Random(f"neg:{seed}:{lang}")
+    seen_keys = set()
+    res = []
+    n_seen = 0
+    for src in sources_for(lang):
+        for text, score, signals in scan_source(src, limit=limit):
+            if score != 0 or _is_amount_signal(signals):
+                continue
+            key = _dedup_key(text)
+            if not key or key in seen_keys:
+                continue
+            seen_keys.add(key)
+            row = {"text": text, "lang": lang, "source": src.id}
+            n_seen += 1
+            if len(res) < k:
+                res.append(row)
+            else:
+                j = rng.randrange(n_seen)
+                if j < k:
+                    res[j] = row
+    if verbose:
+        print(f"  [{lang}] {n_seen} unique no-signal lines -> reservoir of {len(res)}")
+    rng.shuffle(res)
+    return res
+
+
+def build_negatives(n=20000, seed=23, weights_json=None, int8=True, limit=None,
+                    oversample=2.0, langs=LANGS, verbose=True):
+    """Real lines with no amount signal that the SHIPPED model also leaves
+    alone, balanced across languages.
+
+    Two filters, deliberately both: the lexicon scorer (cheap, and the same
+    definition of "no signal" the wild sampling uses) and the shipped weights
+    (so a line the current model spans -- which might be a real amount the
+    lexicon missed -- never becomes an all-O training label). Lines that
+    appear in the hand-labelled wild gold are excluded, and the caller
+    asserts the disjointness.
+    """
+    if weights_json is None:
+        weights_json = os.path.join(_PY_ROOT, "..", "models", "default",
+                                     "sankhya.weights.int8.json")
+    gold_keys = gold_wild_keys(langs=langs)
+    per_lang = int(round(n / len(langs)))
+    out = []
+    stats = {}
+    for lang in langs:
+        k = int(round(per_lang * oversample))
+        cand = _reservoir_no_signal(lang, k, seed, limit=limit, verbose=verbose)
+        cand = [r for r in cand if _dedup_key(r["text"]) not in gold_keys]
+        results = predict(cand, weights_json, int8=int8)
+        kept = []
+        n_spanned = 0
+        for r, res in zip(cand, results):
+            if res["spans"]:
+                n_spanned += 1
+                continue
+            kept.append(r)
+            if len(kept) >= per_lang:
+                break
+        stats[lang] = {"candidates": len(cand), "model_spanned": n_spanned,
+                        "kept": len(kept), "target": per_lang}
+        if verbose:
+            print(f"  [{lang}] candidates={len(cand)} model-spanned={n_spanned} "
+                  f"kept={len(kept)} (target {per_lang})")
+        out.extend(kept)
+
+    keys = {_dedup_key(r["text"]) for r in out}
+    assert not (keys & gold_keys), (
+        "negatives pool overlaps the hand-labelled wild gold -- these lines "
+        "would leak evaluation text into training"
+    )
+    return out, stats
+
+
+def write_negatives(path, rows):
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        for r in rows:
+            f.write(json.dumps({"text": r["text"], "lang": r["lang"],
+                                 "source": r["source"]}, ensure_ascii=False) + "\n")
+    print(f"wrote {len(rows)} negatives to {path}")
+
+
+# --------------------------------------------------------------------------
 # running the shipped weights, with eval_gold's gates
 # --------------------------------------------------------------------------
 
@@ -536,6 +653,19 @@ def main(argv=None):
     sp.add_argument("--limit", type=int, default=None, help="cap lines read per source")
     sp.add_argument("--stats-out", default=os.path.join(DATA_WILD, "source_stats.json"))
 
+    np_ = sub.add_parser("negatives", help="build an all-O real-negative pool for training")
+    np_.add_argument("--out", default=DEFAULT_NEGATIVES)
+    np_.add_argument("--n", type=int, default=20000)
+    np_.add_argument("--seed", type=int, default=23)
+    np_.add_argument("--oversample", type=float, default=2.0,
+                      help="how many candidates to draw per kept negative (the shipped "
+                           "model spans a few percent of no-signal lines)")
+    np_.add_argument("--limit", type=int, default=None, help="cap lines read per source")
+    np_.add_argument("--weights-json",
+                      default=os.path.join(_PY_ROOT, "..", "models", "default", "sankhya.weights.int8.json"))
+    np_.add_argument("--int8", action="store_true", default=True)
+    np_.add_argument("--float32", dest="int8", action="store_false")
+
     rp = sub.add_parser("run", help="run shipped weights over the samples")
     rp.add_argument("--samples", default=os.path.join(DATA_WILD, "samples"))
     rp.add_argument("--weights-json",
@@ -566,6 +696,14 @@ def main(argv=None):
             with open(args.stats_out, "w", encoding="utf-8") as f:
                 json.dump(stats, f, indent=2, ensure_ascii=False)
             print(f"wrote {args.stats_out}")
+        return
+
+    if args.cmd == "negatives":
+        rows, stats = build_negatives(n=args.n, seed=args.seed,
+                                       weights_json=args.weights_json, int8=args.int8,
+                                       limit=args.limit, oversample=args.oversample)
+        write_negatives(args.out, rows)
+        print(json.dumps(stats, indent=2))
         return
 
     if args.cmd == "run":

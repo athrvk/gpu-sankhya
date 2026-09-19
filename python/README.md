@@ -156,6 +156,94 @@ production input would — `train.py` prints a warning listing the 20 most
 frequent such characters (and how many extra examples they came from) so
 you can see whether an unexpected script slipped in.
 
+### Real negatives (`--extra-negatives`)
+
+```bash
+# regenerate the pool (gitignored: it is derived from CC BY-SA corpus text)
+python -m sankhya.wild negatives --out data_wild/negatives.jsonl --n 20000
+
+python -m sankhya.train \
+  --train data/train.jsonl --val data/val.jsonl \
+  --extra data_llm/hi_latn.jsonl data_llm/hi_deva.jsonl \
+          data_llm/mr_deva.jsonl data_llm/gu_gujr.jsonl --extra-ratio 0.2 \
+  --extra-negatives data_wild/negatives.jsonl --extra-negative-ratio 0.15 \
+  --lang hi_latn,hi_deva,mr_deva,gu_gujr --out models/
+```
+
+`data_wild/REPORT.md` measured a **20% false-positive rate on real sentences
+with no amount in them** (8.8% of them produce a *verified* span) against 0%
+on the hand-written negatives — the model has never seen real non-amount text,
+so names (`अण्णा हजारे`), ethnonyms (`अरब`, `અરબ`), measurements and years look
+like amounts to it. `--extra-negatives` is the data-side answer: real
+sentences, labelled all-`O`.
+
+`--extra-negatives` takes jsonl file(s) of `{"text": ..., "lang": ...}` lines
+(no `bio`/`cls`/`spans` — they are *derived*: BIO all 0, class all `O`, for the
+normalized, `MAX_LEN`-truncated text). They are mixed per epoch exactly like
+`--extra`: `n_neg_per_epoch = round(base * r / (1 - r))` where `base` is
+`--train` plus that epoch's `--extra` draw, so `--extra-negative-ratio 0.15`
+makes real negatives ~15% of the combined epoch and the two ratios compose.
+The pool is redrawn each epoch (without replacement when it is big enough,
+with replacement otherwise). `--extra-negative-ratio 0` disables it.
+
+**Building the pool** — `python -m sankhya.wild negatives`:
+
+- draws a uniform reservoir sample of real lines per language from the same
+  corpora and filters `sankhya.wild sample` uses (3–40 words, ≤ 128 chars,
+  deduplicated);
+- keeps only lines the **lexicon scorer** gives no amount signal at all
+  (score 0: no unit word, prefix, cardinal, currency marker or digit);
+- *and* only lines the **currently shipped int8 weights leave alone** — a line
+  the model spans might be a real amount the lexicon missed, and training on
+  it as all-`O` would teach the wrong thing. About 1–4% of no-signal lines are
+  dropped this way (worst in `hi_latn`);
+- excludes every text in `tests/gold_wild_*.jsonl` and asserts the result is
+  disjoint from it, so the evaluation set cannot leak into training;
+- balances the kept lines across the four languages (`--n 20000` → 5,000 each).
+
+The output is **derived from CC BY-SA corpus text**, so like `data_wild/raw/`
+and `data_wild/samples/` it is **gitignored**; only the tool is committed.
+Regenerate it with the command at the top of this section (seeded, so it is
+reproducible).
+
+## Masked-character pretraining (`pretrain.py`)
+
+```bash
+python -m sankhya.pretrain --out models/pretrain --n 500000 --epochs 6 \
+  --arch v2 --channels 48 --lang hi_latn,hi_deva,mr_deva,gu_gujr \
+  --cache data_wild/pretrain_corpus.jsonl
+
+python -m sankhya.train ... --init-from models/pretrain/pretrain.pt
+```
+
+The same "the model has never seen real text" problem as above, attacked
+unsupervised instead: take the **same `SankhyaCNN` trunk** (char embedding +
+conv stack), put a temporary `channels -> vocab_size` head on it, mask 15% of
+the characters of real sentences and train it to reconstruct **only the masked
+positions** (`CrossEntropyLoss(ignore_index=-100)`, so padding and unmasked
+characters contribute nothing to the loss). The head is then thrown away.
+
+- Corpus: `--n` real sentences pulled through `sankhya.wild`'s loaders and
+  filters (3–40 words, ≤ 128 chars, deduplicated), balanced across the four
+  languages by water-filling (a language with fewer lines than its equal share
+  hands the remainder to the ones that have more — `hi_latn` only has ~12k
+  usable lines, `hi_deva` has 716k). Every `tests/gold_wild_*.jsonl` text is
+  excluded, so pretraining cannot memorise the evaluation set. `--cache PATH`
+  writes/reads the collected sentences so a re-run skips the corpus scan.
+- Charset: the **shipped** one, built from `--lang` exactly as `train.py`
+  builds it. Real characters outside it map to `<unk>`, as production input
+  does. The mask token is `<unk>` too, which keeps the embedding table the
+  exact shape the tagger expects.
+- Budget: ~40k parameters; on 4 CPU cores one epoch over 500k sentences is a
+  few minutes, so pick `--epochs` after timing the first one.
+
+`train.py --init-from CKPT` then loads **only the trunk** tensors
+(`embed.*`, `conv*.*`) out of that checkpoint and leaves the BIO and class
+heads at their fresh torch init; a shape or key mismatch is fatal rather than
+silently partial. It composes with everything else (`--extra`,
+`--extra-negatives`, `--arch`, `--channels`), which is how experiment B in
+`data_wild/REPORT.md` was run.
+
 ## Export
 
 ```bash
@@ -702,7 +790,12 @@ mismatches, unknown tokens, bad phrase substrings, hidden-quantity
 negatives, duplicates) against inline fixtures. `test_verify.py` covers the
 strict-tier predicate and the freshness of `src/data/lexicon.json`;
 `test_gates.py` is the release gate on the shipped int8 weights (see
-"Verified spans and strict metrics"). `tests/gold.jsonl` is the
+"Verified spans and strict metrics"). `test_pretrain_negatives.py` covers the
+data plumbing of the two model-side experiments: `--extra-negatives` lines
+become all-`O` examples and are mixed at the requested ratio,
+`sankhya.pretrain`'s masking hits 15% of real characters with the loss ignoring
+every unmasked position, and `--init-from` loads the trunk while leaving the
+heads fresh. `tests/gold.jsonl` is the
 hand-written gold set used by `eval_gold.py`, not a generator round-trip
 test.
 
