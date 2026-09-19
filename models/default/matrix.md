@@ -1,10 +1,11 @@
-| arch | channels | seed | data | val_value_acc | gold_int8_hi_latn | gold_int8_hi_deva | gold_int8_f1 | winner |
-|---|---|---|---|---|---|---|---|---|
-| v2 | 48 | 2 | glued | 0.9243 | 0.9442 | 0.9545 | 0.9656 |  |
-| v2 | 48 | 2 | no glue (SANKHYA_JOIN_WORDS_P=0) | 0.9158 | 0.9340 | 0.9545 | — |  |
-| v2 | 48 | 0 | glued | 0.9242 | 0.9543 | 0.9740 | 0.9805 | <-- winner (shipped 0.3.4) |
-| (0.3.3 shipped, Kaggle seed 2) | 48 | 2 | pre-glue data | 0.9190 | 0.9492 | 0.9740 | 0.9740 |  |
+| arch | channels | seed | val_value_acc | gold_int8_hi_latn | gold_int8_hi_deva | gold_int8_mr_deva | gold_int8_combined | gold_int8_f1 | winner |
+|---|---|---|---|---|---|---|---|---|---|
+| v2 | 48 | 0 | 0.9086 | 0.9548 | 0.9613 | 0.9778 | 0.9632 | 0.9633 | <-- winner (shipped 0.5.0) |
+| v2 | 48 | 2 | 0.9048 | 0.9447 | 0.9742 | 0.9185 | 0.9468 | — |  |
 
-Gold = 410 examples (225 Hinglish + 185 Devanagari, incl. the 8 lexicon-gap cases added in 0.3.4).
-All 0.3.4 runs trained locally on CPU (~75 s/epoch, 20 epochs, 200k synthetic + LLM corpora at 20%); no Kaggle quota used.
-winning config: **v2:48**
+Gold = 586 examples (227 Hinglish + 186 Devanagari Hindi + 173 Devanagari Marathi), 120 negatives.
+Both 0.5.0 runs trained locally on CPU (20 epochs, 200k synthetic with
+`--lang hi_latn,hi_deva,mr_deva --mix 0.40,0.33,0.27 --cross 0.10`, plus
+the three verified LLM corpora at 20%); no Kaggle quota used.
+winning config: **v2:48**, seed 0 (seed 2's mix 0.36,0.34,0.30 scored
+lower on every gold split and was not adopted).

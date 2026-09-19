@@ -205,7 +205,7 @@ returning a value for a spelling the model merely guessed at.
 ### Why CPU by default
 
 One inference is small — a 5-layer, 48-channel dilated/residual char
-CNN, 39,579 parameters — and `parse()` runs in about 3.6 ms p50 (60-char
+CNN, 39,687 parameters — and `parse()` runs in about 3.6 ms p50 (60-char
 input) in plain JS; `parseBatch` on CPU averages about 4.0 ms/string over
 500 strings. A WebGPU dispatch has fixed overhead of a few milliseconds
 (device/pipeline setup, buffer upload, queue submit, readback), which
@@ -224,49 +224,49 @@ count rather than a silent wrong answer.
 
 ## Accuracy
 
-The bundled default model (arch `v2`): 39,579 parameters, 5 conv layers
+The bundled default model (arch `v2`): 39,687 parameters, 5 conv layers
 over 16-dim char embeddings — a plain kernel-5 layer, then four residual
 kernel-3 layers with dilations 1/2/4/8 (`y = relu(conv(x)) + x`), 48
-channels, ±17-character receptive field — over a 114-character vocab
-(union of the `hi_latn` and `hi_deva` packs), 120 output classes. Trained
-20 epochs on 200,000 synthetic examples generated from both language
-packs' grammars, mixed 0.55/0.45 with a 10% cross-pack share, plus
-out-of-vocab "unk noise" augmentation so the model has actually seen
-`<unk>` characters (emoji, CJK, Cyrillic, other symbols) during training
-(see `python/README.md`). An older `v1` preset (the previously shipped
-4-layer, non-residual, 32-channel stack) is still loadable by both the
-Python and JS runtimes for anyone using older exported weights.
+channels, ±17-character receptive field — over a 119-character vocab
+(union of the `hi_latn`, `hi_deva`, and `mr_deva` packs), 120 output
+classes. Trained 20 epochs on 200,000 synthetic examples generated from
+all three language packs' grammars, mixed 0.40/0.33/0.27 with a 10%
+cross-pack share, plus out-of-vocab "unk noise" augmentation so the
+model has actually seen `<unk>` characters (emoji, CJK, Cyrillic, other
+symbols) during training (see `python/README.md`). An older `v1` preset
+(the previously shipped 4-layer, non-residual, 32-channel stack) is
+still loadable by both the Python and JS runtimes for anyone using
+older exported weights.
 
 On synthetic validation data (drawn from the same generator/templates as
-training): 0.925 value accuracy. This number is optimistic — it's testing
+training): 0.9086 value accuracy. This number is optimistic — it's testing
 the model on its own distribution.
 
-On two hand-written gold sets, written independently of the generator —
-`python/tests/gold.jsonl` (romanised Hindi, 227 sentences / 199 spans)
-and `python/tests/gold_deva.jsonl` (Devanagari Hindi, 186 sentences / 155
-spans) — evaluated against the shipped int8-quantized weights:
+On three hand-written gold sets, written independently of the generator —
+`python/tests/gold.jsonl` (romanised Hindi, 227 sentences / 199 spans),
+`python/tests/gold_deva.jsonl` (Devanagari Hindi, 186 sentences / 155
+spans), and `python/tests/gold_mr.jsonl` (Devanagari Marathi, 173
+sentences / 135 spans) — evaluated against the shipped int8-quantized
+weights:
 
 | gold set | examples | spans | value accuracy | span precision | span recall | span F1 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| gold.jsonl (romanised) | 227 | 199 | 0.9548 | 0.9502 | 0.9598 | 0.9550 |
-| gold_deva.jsonl (Devanagari) | 186 | 155 | 0.9806 | 0.9806 | 0.9806 | 0.9806 |
-| combined | 413 | 354 | 0.9661 | 0.9635 | 0.9689 | 0.9662 |
-| strict mode (verified spans only) | 413 | 320 covered (0.904) | 1.0000 | — | — | — |
+| gold.jsonl (romanised) | 227 | 199 | 0.9548 | 0.9550 | 0.9598 | 0.9574 |
+| gold_deva.jsonl (Devanagari) | 186 | 155 | 0.9613 | 0.9739 | 0.9613 | 0.9675 |
+| gold_mr.jsonl (Marathi) | 173 | 135 | 0.9778 | 0.9565 | 0.9778 | 0.9670 |
+| combined | 586 | 489 | 0.9632 | 0.9613 | 0.9652 | 0.9633 |
+| strict mode (verified spans only) | 586 | 427 covered (0.8732) | 1.0000 | — | — | — |
 
-Negatives (zero-gold-span examples, 75 total): 0 false positives.
-Miss summary: missed 1, spurious 1, wrong value 2, wrong boundary 10.
-Per-category value accuracy: digits 0.967, words 0.961, prefix 0.963,
-range 0.889, currency 1.0, multi_unit 0.917, symbol_unit 1.0,
-mixed_script 1.0, long 0.667.
+Negatives (zero-gold-span examples, 120 total): 0 false positives.
+Miss summary: missed 3, spurious 0, wrong value 1, wrong boundary 14.
+Per-category value accuracy: digits 0.967, words 0.962, prefix 0.971,
+range 0.929, currency 0.987, multi_unit 0.964, symbol_unit 0.976,
+mixed_script 1.0, long 0.813.
 
-For comparison, the previous shipped weights scored, on this same
-enlarged gold set: 0.9096 (romanised) / 0.9603 (Devanagari) / 0.9322
-combined value acc, F1 0.9258, 4/73 negatives false positives (5.5%).
-(Their numbers on the older, smaller 353-example gold set were 0.952 /
-0.986 / 0.968 — the new gold set is deliberately harder: it adds
-conjunction-joined multi-span sentences, trailing-cardinal chains,
-possessive noise, in-context typos, cardinal spelling variants, and 18
-more negative examples.) This round also ran a 198-case hand-written
+For comparison, the previous shipped weights (0.4.0, Hindi only, 413
+examples) scored 0.9548 (romanised) / 0.9806 (Devanagari) / 0.9661
+combined value acc, strict coverage 0.904 at 1.000 value accuracy.
+This round also ran a 198-case hand-written
 edge-case probe across 12 categories (whitespace/short input, long
 input, Unicode, numeric forms, prefix semantics, compound units,
 currency, negatives, multi-span strings, noise/typos, Devanagari
@@ -288,7 +288,7 @@ order of frequency:
   context
 
 Reproduce these numbers yourself with
-`python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl --weights-json src/data/default-weights.json --int8`
+`python -m sankhya.eval_gold --gold tests/gold.jsonl tests/gold_deva.jsonl tests/gold_mr.jsonl --weights-json src/data/default-weights.json --int8`
 from `python/` (see `python/README.md`).
 
 ## How it works
@@ -436,12 +436,11 @@ outputs are discarded; only the real characters' predictions are used.
   | --- | --- | --- |
   | `hi_latn` | Romanised Hindi / Hinglish (`sava lakh`) | shipped, in the bundled weights |
   | `hi_deva` | Devanagari Hindi (`डेढ़ लाख`, `सवा करोड़`) | shipped, in the bundled weights |
-  | `mr_deva` | Devanagari Marathi (`दीड लाख`, `साडेतीनशे`) | pack + data + gold set landed; **not yet in the bundled weights** |
+  | `mr_deva` | Devanagari Marathi (`दीड लाख`, `साडेतीनशे`) | shipped, in the bundled weights |
 
   A pack's accuracy depends on the bundled weights having been trained on
-  it: `mr_deva` text is only parsed correctly once a checkpoint trained
-  with `--lang hi_latn,hi_deva,mr_deva` ships. Gujarati, Bengali and
-  Tamil/Telugu/Kannada are planned the same way — see Roadmap.
+  it. Gujarati, Bengali and Tamil/Telugu/Kannada are planned the same
+  way — see Roadmap.
 - **Offsets are into the normalized string.** `parse()`'s `start`/`end`
   index `normalizeText(text)`, not the raw input, in the rare case NFC
   normalization changes the string's length (see `normalizeText` in the
@@ -508,15 +507,15 @@ support non-Indian numbering/currency shorthand.
    normalization (NFC + Devanagari-digit mapping) are all in place, and
    mixed Latin/Devanagari input is supported. See `python/README.md` for
    the training-side status and gold-set numbers.
-2. **Other Indian languages as packs.** Marathi (`mr_deva`) is **in
-   progress**: the pack (cardinals 1-99 with phone-typed variants, fused
-   hundreds `दोनशे`, prefixes सव्वा/दीड/अडीच/साडे/पावणे/अर्धा/पाव, case
-   endings), a verified 591-line LLM corpus and a 173-example gold set
-   (`python/tests/gold_mr.jsonl`) have landed; the shipped weights do not
-   include it yet. Gujarati (સવા, દોઢ), Bengali (দেড়, আড়াই) and
-   Tamil/Telugu/Kannada number words are next. Same shape each time — a
-   new pack, currency markers, a charset rebuild and a retrain; see the
-   "adding a language" checklist in `python/README.md`.
+2. ~~**Other Indian languages as packs.**~~ Marathi (`mr_deva`) **Done.**
+   The pack (cardinals 1-99 with phone-typed variants, fused hundreds
+   `दोनशे`, prefixes सव्वा/दीड/अडीच/साडे/पावणे/अर्धा/पाव, case endings), a
+   verified 591-line LLM corpus and a 173-example gold set
+   (`python/tests/gold_mr.jsonl`) are in the shipped weights. Gujarati
+   (સવા, દોઢ), Bengali (দেড়, আড়াই) and Tamil/Telugu/Kannada number words
+   are next. Same shape each time — a new pack, currency markers, a
+   charset rebuild and a retrain; see the "adding a language" checklist
+   in `python/README.md`.
 3. **A WASM SIMD kernel**, if sub-millisecond latency is ever needed
    beyond what the plain-JS CPU path already gives.
 
