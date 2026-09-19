@@ -21,6 +21,12 @@ interface LexiconPack {
    * sit under one ("लाख" -> "लाखां-"). Absent for packs with none. */
   word_suffixes?: string[];
   word_oblique_endings?: string[];
+  /** Lexicon surfaces that are also ordinary words in this language
+   * ("so", "sath", "arab", "अरब", "એક") -- R12. */
+  ambiguous_forms?: string[];
+  /** Surfaces that must never verify or decode as a number word: proper
+   * nouns built on number words ("हजारे", "अरबी", "સવાઈ") -- R14. */
+  blocked_surfaces?: string[];
 }
 interface LexiconJson {
   version: number;
@@ -47,6 +53,20 @@ const BOUND_FORMS: Map<string, Map<string, Set<string>>> = new Map();
 // Union of every pack's declared case endings / oblique stem endings.
 const WORD_SUFFIXES: Set<string> = new Set();
 const WORD_OBLIQUE_ENDINGS: Set<string> = new Set();
+// R12/R14: surfaces that are also ordinary words, and surfaces that must
+// never count as a number word at all.
+const AMBIGUOUS_FORMS: Set<string> = new Set();
+const BLOCKED_SURFACES: Set<string> = new Set();
+/** Per-pack view of forms + that pack's OWN case endings. R15: a suffix
+ * strip must stay inside one language -- a union of every pack's endings
+ * lets Marathi morphology justify a Hindi-only head. Mirrors
+ * python/sankhya/verify.py::pack_views. */
+interface PackView {
+  forms: Map<string, Set<string>>;
+  suffixes: string[];
+  obliques: string[];
+}
+const PACK_VIEWS: PackView[] = [];
 for (const pack of Object.values(lexicon.packs)) {
   for (const [surface, cls] of Object.entries(pack.forms)) {
     if (!FORMS.has(surface)) FORMS.set(surface, cls);
@@ -66,11 +86,35 @@ for (const pack of Object.values(lexicon.packs)) {
   }
   for (const suf of pack.word_suffixes ?? []) WORD_SUFFIXES.add(norm(suf));
   for (const obl of pack.word_oblique_endings ?? []) WORD_OBLIQUE_ENDINGS.add(norm(obl));
+  for (const a of pack.ambiguous_forms ?? []) AMBIGUOUS_FORMS.add(norm(a));
+  for (const b of pack.blocked_surfaces ?? []) BLOCKED_SURFACES.add(norm(b));
 }
 
 const byLengthDesc = (a: string, b: string): number => b.length - a.length || (a < b ? -1 : a > b ? 1 : 0);
-const SUFFIXES_SORTED: string[] = [...WORD_SUFFIXES].sort(byLengthDesc);
-const OBLIQUES_SORTED: string[] = [...WORD_OBLIQUE_ENDINGS].sort(byLengthDesc);
+
+for (const pack of Object.values(lexicon.packs)) {
+  const forms = new Map<string, Set<string>>();
+  for (const [surface, cls] of Object.entries(pack.forms)) {
+    const key = norm(surface);
+    let set = forms.get(key);
+    if (!set) forms.set(key, (set = new Set()));
+    set.add(cls);
+  }
+  PACK_VIEWS.push({
+    forms,
+    suffixes: [...new Set((pack.word_suffixes ?? []).map(norm))].sort(byLengthDesc),
+    obliques: [...new Set((pack.word_oblique_endings ?? []).map(norm))].sort(byLengthDesc),
+  });
+}
+
+/** R15: the minimum length a suffix-stripped head must still have before it
+ * may be accepted as an inflected lexicon form. Mirrors
+ * python/sankhya/verify.py::MIN_SUFFIX_HEAD_LEN. */
+const MIN_SUFFIX_HEAD_LEN = 3;
+/** R16: ambiguous SYMBOL unit surfaces at most this long ("k", "l", "m",
+ * "b") only count when glued straight onto their digits ("20k"). Mirrors
+ * python/sankhya/verify.py::MAX_GLUED_SYMBOL_LEN. */
+const MAX_GLUED_SYMBOL_LEN = 2;
 
 /** A PFX_, CARD_ or UNIT_ token whose exact surface is unknown may still be
  * an inflected form of a known head: Marathi "लाखांचं" is UNIT_LAKH (लाख +
@@ -81,22 +125,85 @@ const OBLIQUES_SORTED: string[] = [...WORD_OBLIQUE_ENDINGS].sort(byLengthDesc);
  * python/sankhya/verify.py::_verify_suffixed. */
 function isSuffixedForm(cls: string, text: string): boolean {
   const surface = norm(text);
-  if (SUFFIXES_SORTED.length === 0) return false;
   if (ALL_CLASSES.has(surface)) return false;
-  for (const suf of SUFFIXES_SORTED) {
-    if (surface.length <= suf.length || !surface.endsWith(suf)) continue;
-    const stem = surface.slice(0, surface.length - suf.length);
-    const heads = [stem];
-    for (const obl of OBLIQUES_SORTED) {
-      if (stem.length > obl.length && stem.endsWith(obl)) {
-        heads.push(stem.slice(0, stem.length - obl.length));
+  // R14: a blocked surface is never explained away as an inflected number
+  // word -- "हजारे" (the surname) does not become हजार + "-े".
+  if (BLOCKED_SURFACES.has(surface)) return false;
+  for (const view of PACK_VIEWS) {
+    if (view.suffixes.length === 0) continue;
+    for (const suf of view.suffixes) {
+      if (surface.length <= suf.length || !surface.endsWith(suf)) continue;
+      const stem = surface.slice(0, surface.length - suf.length);
+      const heads = [stem];
+      for (const obl of view.obliques) {
+        if (stem.length > obl.length && stem.endsWith(obl)) {
+          heads.push(stem.slice(0, stem.length - obl.length));
+        }
       }
-    }
-    for (const head of heads) {
-      if (ALL_CLASSES.get(head)?.has(cls)) return true;
+      for (const head of heads) {
+        // R15: per-pack strip, and the head must survive at a real length.
+        if (head.length >= MIN_SUFFIX_HEAD_LEN && view.forms.get(head)?.has(cls)) return true;
+      }
     }
   }
   return false;
+}
+
+/** True when `text` is an exact lexicon form of `cls`, or an inflected one
+ * (R15 per-pack suffix strip). A blocked surface never is. Mirrors
+ * python/sankhya/verify.py::is_known_form. */
+export function isKnownForm(cls: string, text: string): boolean {
+  const surface = norm(text);
+  if (BLOCKED_SURFACES.has(surface)) return false;
+  if (ALL_CLASSES.get(surface)?.has(cls)) return true;
+  return isSuffixedForm(cls, text);
+}
+
+/** Edit distance between `a` and `b` is at most `k`. A tiny bounded
+ * implementation -- the lexicon is a few hundred surfaces per class.
+ * Mirrors python/sankhya/verify.py::levenshtein_le. */
+export function levenshteinLE(a: string, b: string, k = 1): boolean {
+  if (Math.abs(a.length - b.length) > k) return false;
+  if (a === b) return true;
+  let prev = Array.from({ length: b.length + 1 }, (_v, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    let best = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      const v = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+      cur.push(v);
+      if (v < best) best = v;
+    }
+    if (best > k) return false;
+    prev = cur;
+  }
+  return prev[b.length] <= k;
+}
+
+/** R17: `text` is a known form of `cls`, or within `maxDistance` edits of
+ * one -- the typo tolerance that keeps a noised unit word working after
+ * digits. Mirrors python/sankhya/verify.py::is_near_known_form. */
+export function isNearKnownForm(cls: string, text: string, maxDistance = 1): boolean {
+  if (isKnownForm(cls, text)) return true;
+  const surface = norm(text);
+  if (BLOCKED_SURFACES.has(surface)) return false;
+  for (const [form, classes] of ALL_CLASSES) {
+    if (classes.has(cls) && levenshteinLE(surface, form, maxDistance)) return true;
+  }
+  return false;
+}
+
+/** R12: `text` is a surface some pack declares an ambiguous form. Mirrors
+ * python/sankhya/verify.py::is_ambiguous_form. */
+export function isAmbiguousForm(text: string): boolean {
+  return AMBIGUOUS_FORMS.has(norm(text));
+}
+
+/** R14: `text` is a surface some pack declares blocked. Mirrors
+ * python/sankhya/verify.py::is_blocked_surface. */
+export function isBlockedSurface(text: string): boolean {
+  return BLOCKED_SURFACES.has(norm(text));
 }
 
 /** A BOUND number form is justified only by what follows it: the very next
@@ -186,6 +293,9 @@ export function verifyTokens(tokens: Array<[string, string]>): boolean {
         break;
       }
       default: {
+        // R14: a surface a pack declares BLOCKED (a proper noun built on a
+        // number word: "हजारे", "अरबी", "સવાઈ") never verifies as a number.
+        if (BLOCKED_SURFACES.has(norm(text))) return false;
         // PFX_*/CARD_*/UNIT_*, or a bound form justified by the next token
         if (
           !ALL_CLASSES.get(norm(text))?.has(cls) &&
@@ -201,4 +311,109 @@ export function verifyTokens(tokens: Array<[string, string]>): boolean {
   }
 
   return hasContentToken;
+}
+
+// --- span-level drop rules that need the lexicon -------------------------
+//
+// Each is mirrored 1:1 by python/sankhya/verify.py and applied by the same
+// gate in both runtimes (Parser.decodeForward /
+// eval_gold._apply_bare_digits_gate). They exist because the tagger, on real
+// text, happily labels ordinary words as number words -- see
+// python/data_wild/REPORT.md section 4.
+
+type Tok = [string, string];
+
+function isMeaningfulClass(cls: string): boolean {
+  return cls === "DIGITS" || cls.startsWith("PFX_") || cls.startsWith("CARD_") || cls.startsWith("UNIT_");
+}
+
+/** (index, cls, text) for the PFX_/CARD_/UNIT_/DIGITS tokens of a span. */
+function meaningfulTokens(tokens: Tok[]): Array<[number, string, string]> {
+  const out: Array<[number, string, string]> = [];
+  for (let i = 0; i < tokens.length; i++) {
+    if (isMeaningfulClass(tokens[i][0])) out.push([i, tokens[i][0], tokens[i][1]]);
+  }
+  return out;
+}
+
+/** R14: the span carries a meaningful token whose surface a pack declares
+ * blocked -- a proper noun built on a number word ("अण्णा हजारे",
+ * "सवाई तुकोजीराव", "अरबी समुद्र"). Dropped outright. Mirrors
+ * python/sankhya/verify.py::has_blocked_surface. */
+export function hasBlockedSurface(tokens: Tok[]): boolean {
+  return meaningfulTokens(tokens).some(([, , text]) => BLOCKED_SURFACES.has(norm(text)));
+}
+
+/** R12: the span rests entirely on surfaces that are also ordinary words.
+ *
+ * A meaningful token is *justified* when it is DIGITS or a known lexicon
+ * form of its own class. If the span has at least one justified token and
+ * EVERY justified token's surface is an ambiguous form, nothing but an
+ * ordinary-word reading is holding the span up: "so", "sath", "arab",
+ * "अरब", "peti" standing alone, or "सऊदी अरब" where the only lexicon-backed
+ * word is the ethnonym. One non-ambiguous justified token anywhere keeps
+ * the span ("ek arab", "100 अरब", "do peti", "unnis sau sath"). Callers
+ * exempt a span with a currency marker. Mirrors
+ * python/sankhya/verify.py::should_drop_ambiguous_form. */
+export function shouldDropAmbiguousForm(tokens: Tok[]): boolean {
+  const justified = meaningfulTokens(tokens).filter(
+    ([, cls, text]) => cls === "DIGITS" || isKnownForm(cls, text),
+  );
+  if (justified.length === 0) return false;
+  return justified.every(([, cls, text]) => cls !== "DIGITS" && isAmbiguousForm(text));
+}
+
+/** R16: a 1-2 character ambiguous SYMBOL unit ("k", "l", "m", "b") only
+ * counts when GLUED to the digits it scales. "20k"/"2.5L" keep their unit;
+ * "1996 k" (the ke/ki clitic after a year) and "33 k. m." (kilometres) lose
+ * theirs and the span goes. Longer symbol forms ("lac", "cr", "bn", "LPA")
+ * are commonly written with a space and are untouched. Mirrors
+ * python/sankhya/verify.py::should_drop_loose_symbol_unit. */
+export function shouldDropLooseSymbolUnit(tokens: Tok[]): boolean {
+  for (const [i, cls, text] of meaningfulTokens(tokens)) {
+    if (!cls.startsWith("UNIT_")) continue;
+    const s = norm(text);
+    if (s.length > MAX_GLUED_SYMBOL_LEN || !isAmbiguousForm(s)) continue;
+    if (!isKnownForm(cls, s)) continue;
+    const prevCls = i > 0 ? tokens[i - 1][0] : null;
+    if (prevCls === "DIGITS" || prevCls === "DOT" || prevCls === "COMMA") continue;
+    return true;
+  }
+  return false;
+}
+
+/** R13b: a span whose ONLY meaningful token is a spelled cardinal is kept
+ * only when its surface is an EXACT lexicon form of that class. "पचास" (50)
+ * and "બાવીસ" (22) are real bare-cardinal gold spans; "aavesh", "chaahie",
+ * "barabar", "इ" are ordinary words the tagger guessed a cardinal for. No
+ * suffix stripping and no edit-distance tolerance: a bare cardinal has
+ * nothing else in the span to corroborate it. Mirrors
+ * python/sankhya/verify.py::should_drop_unsupported_bare_cardinal. */
+export function shouldDropUnsupportedBareCardinal(tokens: Tok[]): boolean {
+  const meaningful = meaningfulTokens(tokens);
+  if (meaningful.length !== 1) return false;
+  const [, cls, text] = meaningful[0];
+  if (!cls.startsWith("CARD_")) return false;
+  return !ALL_CLASSES.get(norm(text))?.has(cls);
+}
+
+/** R17: a unit word that is not a unit word, next to bare digits.
+ *
+ * "3 hours" -> 3,000, "25वे" (an ordinal) -> 2,500,000, "1980ના" -> 1.98e8,
+ * "chori"/"thought"/"oooh"/"खोड" alone: the tagger invents a unit class for
+ * whatever letters sit next to (or instead of) a number. When a span's
+ * UNIT_* token's surface is neither a lexicon form of that class (after one
+ * declared case ending, R15) nor within edit distance 1 of one, and the
+ * span has no independently justified CARD_ / PFX_ coefficient to
+ * corroborate it, the unit is a guess and the span is dropped. The
+ * edit-distance-1 tolerance keeps the synthetic set's noised unit words
+ * working after digits. Mirrors
+ * python/sankhya/verify.py::should_drop_unknown_unit. */
+export function shouldDropUnknownUnit(tokens: Tok[]): boolean {
+  const meaningful = meaningfulTokens(tokens);
+  const hasJustifiedCoef = meaningful.some(
+    ([, cls, text]) => (cls.startsWith("CARD_") || cls.startsWith("PFX_")) && isKnownForm(cls, text),
+  );
+  if (hasJustifiedCoef) return false;
+  return meaningful.some(([, cls, text]) => cls.startsWith("UNIT_") && !isNearKnownForm(cls, text, 1));
 }

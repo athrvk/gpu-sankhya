@@ -1,6 +1,22 @@
 {
 "packs": {
 "gu_gujr": {
+"ambiguous_forms": [
+"k",
+"l",
+"lac",
+"m",
+"અરબ",
+"એક",
+"ખરબ"
+],
+"blocked_surfaces": [
+"અરબી",
+"રાજકોટ",
+"સવાઈ",
+"સુરત",
+"હજારે"
+],
 "bound_forms": {
 "છસ્": {
 "before": [
@@ -277,6 +293,22 @@
 ]
 },
 "hi_deva": {
+"ambiguous_forms": [
+"k",
+"l",
+"m",
+"अरब",
+"एक",
+"खरब"
+],
+"blocked_surfaces": [
+"अरबी",
+"लखन",
+"लखनऊ",
+"सवाई",
+"हज़ारे",
+"हजारे"
+],
 "forms": {
 "bn": "UNIT_BILLION",
 "cr": "UNIT_CRORE",
@@ -426,6 +458,31 @@
 ]
 },
 "hi_latn": {
+"ambiguous_forms": [
+"arab",
+"b",
+"bees",
+"char",
+"k",
+"kharab",
+"l",
+"lac",
+"m",
+"mil",
+"peti",
+"saath",
+"sad",
+"sade",
+"sath",
+"so"
+],
+"blocked_surfaces": [
+"hajare",
+"hazare",
+"pune",
+"savai",
+"sawai"
+],
 "forms": {
 "1": "CARD_1",
 "aadh": "PFX_AADHA",
@@ -860,6 +917,22 @@
 ]
 },
 "mr_deva": {
+"ambiguous_forms": [
+"k",
+"l",
+"lac",
+"m",
+"अरब",
+"एक"
+],
+"blocked_surfaces": [
+"अरबी",
+"लातूर",
+"सवाई",
+"सातारा",
+"हज़ारे",
+"हजारे"
+],
 "forms": {
 "bn": "UNIT_BILLION",
 "cr": "UNIT_CRORE",

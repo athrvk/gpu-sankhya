@@ -20,8 +20,20 @@ class LanguagePack:
     templates: Dict[str, List[str]] = field(default_factory=dict)
     noise_fn: Callable = None  # noise(word, rng) -> str
     # surface forms that must never be emitted even if noise produces them
-    # (e.g. they collide with a real-world proper noun / place name)
+    # (e.g. they collide with a real-world proper noun / place name), and
+    # which the VERIFIER and the decoder gate also refuse: a blocked surface
+    # never verifies as a number word, and a span carrying one is dropped
+    # (R14). Motivated by real text: "अण्णा हजारे" / "सवाई तुकोजीराव" /
+    # "अरबी समुद्र" are names, never amounts -- see data_wild/REPORT.md §4.1.
     blocked_surfaces: List[str] = field(default_factory=list)
+    # Lexicon SURFACES (not classes) that are real number words in this
+    # language AND common ordinary words: hi_latn "so" (English "so" /
+    # UNIT_SAU), "sath" ("with" / CARD_60), "mil" ("meet"/"mile" /
+    # UNIT_MILLION), "arab"/"अरब"/"અરબ" (the ethnonym / UNIT_ARAB). They
+    # stay in the lexicon -- "ek so", "das arab" are genuine amounts -- but
+    # R12 drops a span in which such a surface stands with no independently
+    # justified number word beside it. See data_wild/REPORT.md §4.2/§4.3.
+    ambiguous_forms: List[str] = field(default_factory=list)
     # common chat/English words used as O-labelled filler around spans, so
     # the model learns unknown words outside a span are not part of it
     filler_words: List[str] = field(default_factory=list)

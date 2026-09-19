@@ -462,6 +462,23 @@ def should_drop_lone_ambiguous_unit(tokens: List[Tuple[str, str]]) -> bool:
     return True
 
 
+def should_drop_lone_prefix(tokens: List[Tuple[str, str]]) -> bool:
+    """R11: a span whose ONLY meaningful token is a PFX_* is not an amount.
+
+    A prefix scales something: "ढाई लाख" is 250,000, but "ढाई साल" is two
+    and a half YEARS and "आधा दिन" is half a day -- a quantity of a noun,
+    not of money or of a scale unit. Real text is full of these
+    ("दीड तास", "અડધો કલાક", "sade hue tamatar"), and the hand-written gold
+    has no bare-prefix span at all, so the convention is: a prefix needs a
+    number or a unit beside it to make an amount.
+
+    Structural and class-level (no lexicon), like R3/R4/R10. Mirrors
+    src/core.ts shouldDropLonePrefix.
+    """
+    meaningful = [(cls, text) for cls, text in tokens if cls not in _IGNORED_GLUE_CLASSES]
+    return len(meaningful) == 1 and meaningful[0][0].startswith("PFX_")
+
+
 def detect_currency(text: str, start: int, end: int, pack) -> Optional[str]:
     """Scan up to 8 chars before/after [start,end) for a currency marker.
 

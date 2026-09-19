@@ -3,8 +3,16 @@ import { loadWeights, type LoadedWeights } from "./weights.ts";
 import { buildCharToId, encodeChars, makeWindows, normalizeText, MAX_LEN, PADDED_MAX, paddedLength } from "./charset.ts";
 import { forward, softmaxRow, argmaxRow, viterbi, Scratch } from "./infer-cpu.ts";
 import { decodeSpans } from "./decode.ts";
-import { evaluate, detectCurrency, mergeLangPacks, shouldDropBareDigits, shouldDropLoneAmbiguousUnit, hasLeadingZeroCoefficient } from "./core.ts";
-import { verifyTokens, isLexiconOOnly } from "./verify.ts";
+import { evaluate, detectCurrency, mergeLangPacks, shouldDropBareDigits, shouldDropLoneAmbiguousUnit, shouldDropLonePrefix, hasLeadingZeroCoefficient } from "./core.ts";
+import {
+  verifyTokens,
+  isLexiconOOnly,
+  hasBlockedSurface,
+  shouldDropAmbiguousForm,
+  shouldDropLooseSymbolUnit,
+  shouldDropUnsupportedBareCardinal,
+  shouldDropUnknownUnit,
+} from "./verify.ts";
 import { calibrateConfidence } from "./calibration.ts";
 import { HI_LATN } from "./lang-hi-latn.ts";
 import { HI_DEVA } from "./lang-hi-deva.ts";
@@ -148,6 +156,20 @@ export class Parser {
       // preceding number) unless a currency marker was found for it -- see
       // shouldDropLoneAmbiguousUnit().
       if (shouldDropLoneAmbiguousUnit(tokens) && currency === null) continue;
+      // R11: a lone prefix ("ढाई साल", "sade hue tamatar") is not an amount.
+      if (shouldDropLonePrefix(tokens) && currency === null) continue;
+      // R12: the span rests entirely on surfaces that are also ordinary
+      // words ("so", "sath", "arab", "अरब") -- see shouldDropAmbiguousForm().
+      if (shouldDropAmbiguousForm(tokens) && currency === null) continue;
+      // R13b: a bare cardinal that is not an exact lexicon form.
+      if (shouldDropUnsupportedBareCardinal(tokens)) continue;
+      // R14: a blocked surface ("हजारे", "अरबी", "સવાઈ") is a proper noun.
+      if (hasBlockedSurface(tokens)) continue;
+      // R16: a 1-2 char symbol unit not glued to its digits ("1996 k").
+      if (shouldDropLooseSymbolUnit(tokens)) continue;
+      // R17: a unit word that is not a unit word, next to bare digits
+      // ("3 hours", "25वे", "1980ના").
+      if (shouldDropUnknownUnit(tokens)) continue;
       // R10: a leading-zero digits coefficient ("GJ05 CD") is never an amount.
       if (hasLeadingZeroCoefficient(tokens)) continue;
       // R9: drop a span carrying a meaningful token whose surface a language

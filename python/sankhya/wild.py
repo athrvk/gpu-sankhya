@@ -281,11 +281,11 @@ def _is_amount_signal(signals):
 
 MIN_WORDS = 3
 MAX_WORDS = 40
-# the char-CNN training/eval path tensorizes at `train.MAX_LEN` characters, so
-# a longer line is silently truncated (and `eval_gold.run_json_weights` then
-# hands decode_spans a prediction shorter than the text). Real sentences are
-# routinely longer than this -- we count how many, and sample only lines the
-# model can actually see end to end.
+# the char-CNN sees `train.MAX_LEN` characters at a time. Longer lines are
+# no longer truncated -- both runtimes slide a MAX_LEN window over them
+# (charset.make_windows) -- but a line that fits in ONE window is still what
+# the model was trained on, so the sample stays capped here and the source
+# stats keep counting how many real sentences exceed it.
 MAX_CHARS = 128
 
 
@@ -422,15 +422,10 @@ def predict(rows, weights_json, int8=True):
     knots_x = calib["raw"] if calib else []
     knots_y = calib["calibrated"] if calib else []
 
-    from .charset import normalize_text
-    from .train import MAX_LEN
-
-    # `run_json_weights` predicts over `normalize_text(text)[:MAX_LEN]` but
-    # hands back the ORIGINAL text, so anything longer would make decode_spans
-    # index past the prediction. Sampling already caps line length; normalize
-    # here too so offsets line up with what the model saw.
-    examples = [{"text": normalize_text(r["text"])[:MAX_LEN], "lang": r["lang"], "spans": []}
-                for r in rows]
+    # `run_json_weights` now predicts over the WHOLE text, sliding a
+    # MAX_LEN window exactly as the JS runtime's parse() does, so no
+    # truncation workaround is needed here any more (REPORT.md failure #10).
+    examples = [{"text": r["text"], "lang": r["lang"], "spans": []} for r in rows]
     preds, classes = run_json_weights(weights_json, examples, int8=int8)
 
     out = []

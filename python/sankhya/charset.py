@@ -36,6 +36,32 @@ def normalize_text(s: str) -> str:
     return s
 
 
+MAX_LEN = 128
+WINDOW_OVERLAP = 16
+
+
+def make_windows(n: int, max_len: int = MAX_LEN, overlap: int = WINDOW_OVERLAP):
+    """[(offset, length), ...]: split a length-`n` text into windows of at
+    most `max_len` characters overlapping by `overlap`.
+
+    Byte-for-byte the same scheme as `src/charset.ts::makeWindows`, so a
+    Python evaluation of a long line sees exactly the windows the JS
+    runtime's `parse()` would. A text that fits is one window.
+    """
+    if n <= max_len:
+        return [(0, n)]
+    windows = []
+    stride = max_len - overlap
+    offset = 0
+    while offset < n:
+        length = min(max_len, n - offset)
+        windows.append((offset, length))
+        if offset + length >= n:
+            break
+        offset += stride
+    return windows
+
+
 def build_charset(pack) -> list:
     chars = set()
     forms = pack.all_forms()
