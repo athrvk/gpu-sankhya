@@ -654,6 +654,31 @@ On Kaggle, set `EXTRA` (comma-separated repo-relative paths under
 EXTRA=data_llm/hi_latn.jsonl --set EXTRA_RATIO=0.2` — see "Training on
 Kaggle" below.
 
+## Real-text measurement (`sankhya.wild`)
+
+Everything above measures the model on data we made: the generator, or gold
+lines we wrote. `sankhya.wild` measures it on **sentences other people wrote**
+— openly licensed corpora (Dakshina romanised/native-script Wikipedia, CMU DoG
+Hinglish), filtered to 3–40 words and ≤128 chars, scored for amount-likelihood
+with the pack lexicon (never the model), and sampled seeded/deduplicated:
+
+```bash
+python -m sankhya.wild sources   # registry + URLs + licences (fetch by hand)
+python -m sankhya.wild sample    # -> data_wild/samples/, seed 17
+python -m sankhya.wild run       # shipped int8 weights + eval_gold's gates
+```
+
+Raw corpora and samples live under `python/data_wild/` and are gitignored (the
+sources are share-alike). 100 lines per language were hand-labelled into
+`tests/gold_wild_<lang>.jsonl` — same schema as the other gold files, with
+attribution in `tests/GOLD_WILD_SOURCES.md`. They are deliberately **not** part
+of `tests/test_gates.py`; `tests/test_gold_wild.py` only checks that they load,
+that `core.evaluate` reproduces every labelled value, and that the shipped
+weights still evaluate over them.
+
+The measured numbers, the failure taxonomy and what real text contains that the
+generator never produces are in **`python/data_wild/REPORT.md`**.
+
 ## Tests
 
 ```bash
