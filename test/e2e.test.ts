@@ -133,6 +133,45 @@ test("R1: parseBatch() tolerates non-string entries in the batch", async () => {
   assert.equal(r[1][0].value, 125000);
 });
 
+test("minConfidence drops low-confidence spans; the default keeps a clear one", () => {
+  // Default (minConfidence 0): a clean, unambiguous phrase parses, and its
+  // calibrated confidence sits well above the decoder's own raw 0.5 gate.
+  const clear = parse("sava lakh");
+  assert.equal(clear.length, 1);
+  assert.equal(clear[0].value, 125000);
+  assert.ok(clear[0].confidence > 0.9, `expected a high calibrated confidence, got ${clear[0].confidence}`);
+  assert.ok(clear[0].rawConfidence > 0.5);
+
+  // A ragged mixed-numeral construct the model is much less sure about
+  // still parses by default...
+  const shaky = parse("teen n half lakh");
+  assert.equal(shaky.length, 1);
+  assert.ok(
+    shaky[0].confidence < clear[0].confidence,
+    `expected 'teen n half lakh' (${shaky[0].confidence}) below 'sava lakh' (${clear[0].confidence})`,
+  );
+  // ...and is dropped once the caller asks for near-certainty.
+  assert.deepEqual(parse("teen n half lakh", { minConfidence: 0.99 }), []);
+
+  // The gate is on the CALIBRATED score, so a threshold just under a span's
+  // reported confidence keeps it and one just over drops it.
+  assert.equal(parse("sava lakh", { minConfidence: clear[0].confidence - 1e-9 }).length, 1);
+  assert.equal(parse("sava lakh", { minConfidence: clear[0].confidence + 1e-9 }).length, 0);
+});
+
+test("minConfidence composes with strict and flows through parseBatch", async () => {
+  assert.equal(parse("sava lakh", { strict: true, minConfidence: 0.9 }).length, 1);
+  assert.equal(parse("sava lakh", { strict: true, minConfidence: 0.999 }).length, 0);
+
+  // parseBatch passes the option down the CPU path: the clear phrase clears
+  // a 0.96 bar, the ragged one does not.
+  const batch = await parseBatch(["sava lakh", "teen n half lakh"], { minConfidence: 0.96 });
+  assert.equal(batch[0].length, 1);
+  assert.deepEqual(batch[1], []);
+  // 0.99 is above everything this model reports, so nothing survives it.
+  assert.deepEqual(await parseBatch(["sava lakh"], { minConfidence: 0.99 }), [[]]);
+});
+
 test("R9: indefinite plurals ('karodon'/'करोडो') are not amounts", () => {
   // Both surfaces are declared lexicon class "O" (and nothing else), so the
   // lexicon-"O" gate drops any span the model tags UNIT_CRORE over them.
