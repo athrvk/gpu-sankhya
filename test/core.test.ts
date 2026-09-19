@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { evaluate, detectCurrency, mergeLangPacks, isBareDigits, shouldDropBareDigits, shouldDropLoneAmbiguousUnit } from "../src/core.ts";
+import { evaluate, detectCurrency, mergeLangPacks, isBareDigits, shouldDropBareDigits, shouldDropLoneAmbiguousUnit, hasLeadingZeroCoefficient } from "../src/core.ts";
 import { HI_LATN } from "../src/lang-hi-latn.ts";
 import { HI_DEVA } from "../src/lang-hi-deva.ts";
 import { MR_DEVA } from "../src/lang-mr-deva.ts";
@@ -591,4 +591,13 @@ test("R9: isLexiconOOnly recognises lexicon-declared ordinary words", async () =
   assert.equal(isLexiconOOnly("KARODON"), true); // NFC-lowercased
   assert.equal(isLexiconOOnly("lakh"), false);
   assert.equal(isLexiconOOnly("zzzz-not-a-word"), false);
+});
+
+test("R10: leading-zero digits coefficient is never an amount", () => {
+  assert.equal(hasLeadingZeroCoefficient([["DIGITS", "05"], ["SEP", " "], ["UNIT_CRORE", "CD"]]), true);
+  assert.equal(hasLeadingZeroCoefficient([["DIGITS", "007"], ["SEP", " "], ["UNIT_LAKH", "lakh"]]), true);
+  assert.equal(hasLeadingZeroCoefficient([["DIGITS", "0"], ["DOT", "."], ["DIGITS", "5"], ["SEP", " "], ["UNIT_LAKH", "lakh"]]), false);
+  assert.equal(hasLeadingZeroCoefficient([["DIGITS", "1"], ["DOT", "."], ["DIGITS", "05"], ["SEP", " "], ["UNIT_LAKH", "lakh"]]), false);
+  assert.equal(hasLeadingZeroCoefficient([["DIGITS", "50000"]]), false);
+  assert.equal(hasLeadingZeroCoefficient([["DIGITS", "०५"], ["SEP", " "], ["UNIT_HAZAAR", "हज़ार"]]), true);
 });

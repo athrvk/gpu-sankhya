@@ -417,6 +417,23 @@ def should_drop_bare_digits(tokens: List[Tuple[str, str]]) -> bool:
     return False
 
 
+
+def has_leading_zero_coefficient(tokens: List[Tuple[str, str]]) -> bool:
+    """R10: a DIGITS token that starts with '0' and has 2+ digits ("05",
+    "007") is never an amount coefficient -- it is a vehicle plate, PIN,
+    date or phone fragment ("GJ05 CD 4567"). Only the FIRST digits token
+    of the span counts; a digits token right after a DOT ("1.05 lakh") is
+    a fractional part and is exempt. Mirrored in src/core.ts."""
+    prev = None
+    for cls, text in tokens:
+        if cls == "DIGITS":
+            if prev != "DOT" and len(text) >= 2 and text[0] in "0\u0966\u0ae6":
+                return True
+            return False
+        if cls not in ("SEP", "COMMA"):
+            prev = cls
+    return False
+
 _IGNORED_GLUE_CLASSES = ("SEP", "RANGE", "DOT", "COMMA", "O")
 
 

@@ -435,6 +435,23 @@ export function shouldDropBareDigits(tokens: Tok[]): boolean {
   return false;
 }
 
+/** R10: a DIGITS token that starts with "0" and has 2+ digits ("05", "007")
+ * is never an amount coefficient (vehicle plate, PIN, date, phone fragment:
+ * "GJ05 CD 4567"). Only the FIRST digits token of the span counts; digits
+ * right after a DOT ("1.05 lakh") are a fractional part and exempt.
+ * Mirrors python core.has_leading_zero_coefficient. */
+export function hasLeadingZeroCoefficient(tokens: Tok[]): boolean {
+  let prev: string | null = null;
+  for (const [cls, text] of tokens) {
+    if (cls === "DIGITS") {
+      if (prev !== "DOT" && text.length >= 2 && (text[0] === "0" || text[0] === "\u0966" || text[0] === "\u0ae6")) return true;
+      return false;
+    }
+    if (cls !== "SEP" && cls !== "COMMA") prev = cls;
+  }
+  return false;
+}
+
 const IGNORED_GLUE_CLASSES = new Set(["SEP", "RANGE", "DOT", "COMMA", "O"]);
 
 /** R4: whether a span consisting of a single ambiguous unit word (with no

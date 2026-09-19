@@ -81,6 +81,9 @@ def _apply_bare_digits_gate(text, decoded, classes):
             continue
         if core.should_drop_lone_ambiguous_unit(toks) and core.detect_currency_multi(text, d["start"], d["end"], _all_packs()) is None:
             continue
+        # R10: leading-zero digits coefficient (plates, PINs, dates) -- see core.has_leading_zero_coefficient.
+        if core.has_leading_zero_coefficient(toks):
+            continue
         kept.append(d)
     return kept
 

@@ -426,6 +426,10 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   summed, when both terms carry an explicit coefficient and the second
   term's unit is the same size or larger — this is the same shape of
   arithmetic as an explicit range connector, just spoken without one.
+- **R10 — leading-zero digits are never a coefficient**: a span whose first
+  digits token starts with `0` and has two or more digits (`"GJ05 CD"`,
+  `"007"`) is dropped; vehicle plates, PINs, dates and phone fragments, not
+  amounts. A fractional part after a dot (`"1.05 lakh"`) is exempt.
 - **R8 — juxtaposed spelled cardinals**: two adjacent spelled cardinals
   with nothing but a space between them and the smaller first (`"do teen
   lakh"`, `"paach ten hazar"`, `"तीस पैंतीस हज़ार"`) are a `[low, high]`

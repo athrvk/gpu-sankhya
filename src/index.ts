@@ -3,7 +3,7 @@ import { loadWeights, type LoadedWeights } from "./weights.ts";
 import { buildCharToId, encodeChars, makeWindows, normalizeText, MAX_LEN, PADDED_MAX, paddedLength } from "./charset.ts";
 import { forward, softmaxRow, argmaxRow, viterbi, Scratch } from "./infer-cpu.ts";
 import { decodeSpans } from "./decode.ts";
-import { evaluate, detectCurrency, mergeLangPacks, shouldDropBareDigits, shouldDropLoneAmbiguousUnit } from "./core.ts";
+import { evaluate, detectCurrency, mergeLangPacks, shouldDropBareDigits, shouldDropLoneAmbiguousUnit, hasLeadingZeroCoefficient } from "./core.ts";
 import { verifyTokens, isLexiconOOnly } from "./verify.ts";
 import { HI_LATN } from "./lang-hi-latn.ts";
 import { HI_DEVA } from "./lang-hi-deva.ts";
@@ -144,6 +144,8 @@ export class Parser {
       // preceding number) unless a currency marker was found for it -- see
       // shouldDropLoneAmbiguousUnit().
       if (shouldDropLoneAmbiguousUnit(tokens) && currency === null) continue;
+      // R10: a leading-zero digits coefficient ("GJ05 CD") is never an amount.
+      if (hasLeadingZeroCoefficient(tokens)) continue;
       // R9: drop a span carrying a meaningful token whose surface a language
       // pack declares an ordinary word (lexicon class "O" and no other
       // class anywhere in the union) -- the indefinite plurals
