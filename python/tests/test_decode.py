@@ -518,6 +518,61 @@ def test_word_connector_class_o_stays_two_spans():
     assert spans[1]["text"] == "8 hazaar"
 
 
+CARD_4 = C.CLASS_TO_ID["CARD_4"]
+PFX_PAUNE = C.CLASS_TO_ID["PFX_PAUNE"]
+
+
+def test_repair_letters_run_keeps_fused_prefix_cardinal_paunechaar():
+    # "पावणेचार" (paune + chaar fused, no space): raw per-char sub-runs
+    # "पावणे" (5 chars, PFX_PAUNE) and "चार" (3 chars, CARD_4) are both >= 2
+    # and unanimous. Without the two-sub-run bound-tail exception, sub-run
+    # smoothing (both sub-runs already >= 3 here, so this exercises the
+    # >=2-but-<3 case too) or a majority vote would collapse the whole word
+    # to PFX_PAUNE, losing the fused cardinal entirely (750 instead of
+    # 3.75 * 1000).
+    raw = [PFX_PAUNE] * 5 + [CARD_4] * 3
+    result = _repair_letters_run(raw)
+    assert [C.CLASSES[c] for c in result] == ["PFX_PAUNE"] * 5 + ["CARD_4"] * 3
+
+
+def test_repair_letters_run_keeps_fused_prefix_cardinal_short_subruns():
+    # Same shape but with short (length-2) sub-runs on both sides -- neither
+    # reaches the normal length->=3 "keep as-is" threshold, so this only
+    # survives via the bound-tail exception (unanimous, length >= 2).
+    raw = [PFX_PAUNE] * 2 + [CARD_4] * 2
+    result = _repair_letters_run(raw)
+    assert [C.CLASSES[c] for c in result] == ["PFX_PAUNE"] * 2 + ["CARD_4"] * 2
+
+
+def test_repair_letters_run_still_smooths_non_prefix_cardinal_short_subrun():
+    # A short CARD_* tail NOT preceded by a PFX_* head must still be
+    # smoothed away as before -- the exception is narrowly scoped to
+    # PFX_* -> CARD_*/UNIT_* and CARD_*/PFX_* -> UNIT_*.
+    raw = [UNIT_HAZAAR] * 4 + [CARD_10] * 2
+    result = _repair_letters_run(raw)
+    assert [C.CLASSES[c] for c in result] == ["UNIT_HAZAAR"] * 6
+
+
+def test_decode_paunechaar_hazaar_evaluates_3750():
+    from sankhya import core
+    text = "पावणेचार हजार भरले"
+    # "पावणेचार" = PFX_PAUNE(5) + CARD_4(3), "हजार" = UNIT_HAZAAR(4), "भरले" = O(4)
+    raw_cls = (
+        [PFX_PAUNE] * 5 + [CARD_4] * 3
+        + [SEP]
+        + [UNIT_HAZAAR] * 4
+        + [SEP]
+        + [O] * 4
+    )
+    assert len(raw_cls) == len(text)
+    bio = [1] + [2] * 7 + [0] + [2] * 4 + [0] * 5
+    spans = decode_spans(text, bio, raw_cls)
+    assert len(spans) == 1
+    toks = [(C.CLASSES[cid], sub) for cid, sub in spans[0]["tokens"]]
+    result = core.evaluate(toks)
+    assert result.value == 3750
+
+
 if __name__ == "__main__":
     import types
     mod = types.ModuleType("m")

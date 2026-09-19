@@ -20,6 +20,23 @@ class Result:
     currency: Optional[str] = None
 
 
+# Devanagari (U+0966-U+096F) and Gujarati (U+0AE6-U+0AEF) digits -> ASCII
+# "0"-"9", 1:1. Callers normally run text through charset.normalize_text()
+# before labelling, which already maps Devanagari digits to ASCII -- but
+# core.evaluate() is also called directly with raw (unnormalised) token
+# text in tests and some callers, so DIGITS text reaching _merge_numbers is
+# normalised here too, defensively, rather than assumed to already be ASCII.
+_DIGIT_MAP = {}
+for _i in range(10):
+    _DIGIT_MAP[chr(0x0966 + _i)] = str(_i)
+    _DIGIT_MAP[chr(0x0AE6 + _i)] = str(_i)
+del _i
+
+
+def _normalize_digits(text: str) -> str:
+    return "".join(_DIGIT_MAP.get(ch, ch) for ch in text)
+
+
 def _merge_numbers(tokens):
     """Drop SEP, merge consecutive DIGITS/DOT/COMMA runs into ('NUM', float)."""
     out = []
@@ -42,12 +59,8 @@ def _merge_numbers(tokens):
         if cls == "SEP":
             continue
         if cls in ("DIGITS", "DOT", "COMMA"):
-            # defensive: labels are computed on normalize_text()'d text, so
-            # DIGITS tokens must already be ASCII 0-9 (Devanagari digits are
-            # mapped before char encoding / labelling ever happens).
             if cls == "DIGITS":
-                assert text and all(ch in "0123456789" for ch in text), \
-                    f"non-ASCII digit reached core: {text!r}"
+                text = _normalize_digits(text)
             buf += text
             have_num = True
         else:

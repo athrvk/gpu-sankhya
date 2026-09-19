@@ -441,3 +441,33 @@ test("R7: 'do teen lakh' cardinal-only juxtaposition is unaffected (already an e
   assert.deepEqual(r.range, [200000, 300000]);
   assert.equal(r.unit, "lakh");
 });
+
+test("Devanagari digits: pachees hazaar", () => {
+  const r = ev(["DIGITS", "२५"], ["SEP", " "], ["UNIT_HAZAAR", "हजार"]);
+  assert.equal(r.value, 25000);
+});
+
+test("Devanagari digits: bare", () => {
+  const r = ev(["DIGITS", "७५००"]);
+  assert.equal(r.value, 7500);
+});
+
+test("Devanagari digits: grouped", () => {
+  const r = ev(["DIGITS", "२"], ["COMMA", ","], ["DIGITS", "५०"], ["COMMA", ","], ["DIGITS", "०००"]);
+  assert.equal(r.value, 250000);
+});
+
+test("Devanagari digits: decimal", () => {
+  const r = ev(["DIGITS", "१"], ["DOT", "."], ["DIGITS", "५"]);
+  assert.equal(r.value, 1.5);
+});
+
+test("Devanagari digits: mixed ASCII and Devanagari", () => {
+  const r = ev(["DIGITS", "1"], ["DOT", "."], ["DIGITS", "५"]);
+  assert.equal(r.value, 1.5);
+});
+
+test("Gujarati digits: bare", () => {
+  const r = ev(["DIGITS", "૭૫૦૦"]);
+  assert.equal(r.value, 7500);
+});

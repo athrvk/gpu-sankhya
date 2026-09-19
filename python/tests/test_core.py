@@ -384,3 +384,33 @@ def test_r7_do_teen_lakh_cardinal_only_juxtaposition_unaffected():
            ("CARD_3", "teen"), ("SEP", " "), ("UNIT_LAKH", "lakh"))
     assert r.range == (200000, 300000), r.range
     assert r.unit == "lakh"
+
+
+def test_devanagari_digits_pachees_hazaar():
+    r = ev(("DIGITS", "२५"), ("SEP", " "), ("UNIT_HAZAAR", "हजार"))
+    assert r.value == 25000, r.value
+
+
+def test_devanagari_digits_bare():
+    r = ev(("DIGITS", "७५००"))
+    assert r.value == 7500, r.value
+
+
+def test_devanagari_digits_grouped():
+    r = ev(("DIGITS", "२"), ("COMMA", ","), ("DIGITS", "५०"), ("COMMA", ","), ("DIGITS", "०००"))
+    assert r.value == 250000, r.value
+
+
+def test_devanagari_digits_decimal():
+    r = ev(("DIGITS", "१"), ("DOT", "."), ("DIGITS", "५"))
+    assert r.value == 1.5, r.value
+
+
+def test_devanagari_digits_mixed_ascii_and_deva():
+    r = ev(("DIGITS", "1"), ("DOT", "."), ("DIGITS", "५"))
+    assert r.value == 1.5, r.value
+
+
+def test_gujarati_digits_bare():
+    r = ev(("DIGITS", "૭૫૦૦"))
+    assert r.value == 7500, r.value

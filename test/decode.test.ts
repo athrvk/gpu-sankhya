@@ -465,3 +465,58 @@ test("R4b: class-O connector word ('aur') between two spans stays two spans", ()
   assert.equal(spans[0].text, "5 hazaar");
   assert.equal(spans[1].text, "8 hazaar");
 });
+
+test("repairClasses keeps fused prefix+cardinal paunechaar as two sub-runs", () => {
+  // "पावणेचार" (paune + chaar fused, no space): raw per-char sub-runs
+  // "पावणे" (5 chars, PFX_PAUNE) and "चार" (3 chars, CARD_4) are both >= 2
+  // and unanimous. Without the two-sub-run bound-tail exception, sub-run
+  // smoothing / majority vote would collapse the whole word to PFX_PAUNE.
+  const text = "पावणेचार";
+  const raw = new Array(text.length).fill(0);
+  for (let i = 0; i < 5; i++) raw[i] = cid("PFX_PAUNE");
+  for (let i = 5; i < 8; i++) raw[i] = cid("CARD_4");
+  const repaired = repairClasses(text, raw);
+  const names = repaired.map((c) => CLASSES[c]);
+  assert.deepEqual(names, ["PFX_PAUNE", "PFX_PAUNE", "PFX_PAUNE", "PFX_PAUNE", "PFX_PAUNE", "CARD_4", "CARD_4", "CARD_4"]);
+});
+
+test("repairClasses keeps fused prefix+cardinal with short (length-2) sub-runs", () => {
+  const text = "aabb";
+  const raw = [cid("PFX_PAUNE"), cid("PFX_PAUNE"), cid("CARD_4"), cid("CARD_4")];
+  const repaired = repairClasses(text, raw);
+  const names = repaired.map((c) => CLASSES[c]);
+  assert.deepEqual(names, ["PFX_PAUNE", "PFX_PAUNE", "CARD_4", "CARD_4"]);
+});
+
+test("repairClasses still smooths a non-prefix-headed short CARD tail", () => {
+  // A short CARD_* tail NOT preceded by a PFX_* head must still be smoothed
+  // away as before -- the exception is narrowly scoped to
+  // PFX_* -> CARD_*/UNIT_* and CARD_*/PFX_* -> UNIT_*.
+  const text = "aaaabb";
+  const raw = [cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("UNIT_HAZAAR"), cid("CARD_10"), cid("CARD_10")];
+  const repaired = repairClasses(text, raw);
+  const names = repaired.map((c) => CLASSES[c]);
+  assert.deepEqual(names, ["UNIT_HAZAAR", "UNIT_HAZAAR", "UNIT_HAZAAR", "UNIT_HAZAAR", "UNIT_HAZAAR", "UNIT_HAZAAR"]);
+});
+
+test("decode + evaluate: paunechaar hazaar bhare -> 3750", () => {
+  const text = "पावणेचार हजार भरले";
+  const raw: number[] = [];
+  for (let i = 0; i < 5; i++) raw.push(cid("PFX_PAUNE"));
+  for (let i = 0; i < 3; i++) raw.push(cid("CARD_4"));
+  raw.push(cid("SEP"));
+  for (let i = 0; i < 4; i++) raw.push(cid("UNIT_HAZAAR"));
+  raw.push(cid("SEP"));
+  for (let i = 0; i < 4; i++) raw.push(cid("O"));
+  assert.equal(raw.length, text.length);
+  const bio = new Array(text.length).fill(2);
+  bio[0] = 1;
+  // span covers "पावणेचार हजार" (indices 0-12); the space + "भरले" that
+  // follow (indices 13-17) are outside the span.
+  for (let i = 13; i < text.length; i++) bio[i] = 0;
+  const spans = decodeSpans(text, bio, raw);
+  assert.equal(spans.length, 1);
+  const tokens: Array<[string, string]> = spans[0].tokens.map(([c, t]) => [CLASSES[c], t]);
+  const result = evaluate(tokens);
+  assert.equal(result.value, 3750);
+});

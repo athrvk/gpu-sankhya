@@ -356,6 +356,30 @@ def test_gold_covers_every_prefix_and_shape():
     assert any("शे" in r["text"] and r["spans"] for r in rows)
 
 
+def test_gold_spans_end_at_word_boundaries():
+    """Per the pack convention (mr_deva.py word_suffixes /
+    word_oblique_endings, python/README.md), a Marathi case ending
+    attached to a number/unit word stays INSIDE the span. So every gold
+    span must end at a word boundary (space, punctuation, or end of
+    text) - never mid-word - and the char right after a span must never
+    be a Devanagari letter or combining mark, which would mean a case
+    ending got cut off outside the span."""
+    combining = "ऀँंऺऻ़ाि" \
+        "ीुूृॄॅॆेै" \
+        "ॉॊोौ्ॎॏ॒॑" \
+        "॓॔ॕॖॗॢॣ"
+    for r in _load_gold():
+        text = r["text"]
+        for sp in r["spans"]:
+            end = sp["end"]
+            if end < len(text):
+                nxt = text[end]
+                assert nxt in " ,.।!?)('\"" or not (
+                    "ऀ" <= nxt <= "ॿ"
+                ), (r["text"], sp, repr(nxt))
+                assert nxt not in combining, (r["text"], sp, repr(nxt))
+
+
 def test_gold_is_disjoint_from_the_raw_corpus():
     raw = os.path.join(PY_ROOT, "data_llm", "raw", "mr_deva.sonnet.jsonl")
     if not os.path.isfile(raw):

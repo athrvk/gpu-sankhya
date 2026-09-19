@@ -135,24 +135,35 @@ interface SubRun {
  * still fixing a short mistagged run like "d|as" (neither sub-run reaches
  * length 3, so both fall back to majority -> CARD_10). Returns
  * [start, end, classId) triples covering the whole run. */
-/** R2c: a word-final UNIT_* sub-run of length 2 that directly follows a
- * CARD_ or PFX_ sub-run of length >= 2 is a BOUND unit suffix written with
- * no space -- Marathi's fused hundreds ("दोनशे" = CARD_2 + UNIT_SAU,
- * "अठराशे", "दीडशे"), and equally "दोसौ" in Devanagari Hindi. Without this
- * the sub-run smoothing would absorb the 2-char unit into the cardinal
- * before it and evaluate "दोनशे" as 2 instead of 200. Deliberately narrow:
- * only the LAST sub-run of the run, only a unit class, and only when the
- * number word before it stands on its own evidence. Mirrors
- * python/sankhya/decode.py::_is_bound_unit_tail. */
+/** R2c: a word-final sub-run of length >= 2 that directly follows a
+ * CARD_ or PFX_ sub-run of length >= 2 is kept as its own class instead of
+ * being smoothed into the sub-run before it, when the two-sub-run split is
+ * one of:
+ *
+ *   - tail UNIT_, head CARD_ or PFX_ -- a BOUND unit suffix written with no
+ *     space -- Marathi's fused hundreds ("दोनशे" = CARD_2 + UNIT_SAU,
+ *     "अठराशे", "दीडशे"), and equally "दोसौ" in Devanagari Hindi.
+ *   - tail CARD_, head PFX_ -- a fused prefix+cardinal word -- Marathi
+ *     "पावणेचार" (PFX_PAUNE + CARD_4 = 3.75), "साडेआठ" (PFX_SAADHE + CARD_8
+ *     = 8.5).
+ *
+ * Without this the sub-run smoothing would absorb the tail sub-run into
+ * the head and evaluate e.g. "दोनशे" as 2 instead of 200, or "पावणेचार" as
+ * just PFX_PAUNE (0.75) instead of 3.75. Deliberately narrow: only the
+ * LAST sub-run of the run, only these two head/tail class-pair shapes, and
+ * only when both sub-runs stand on their own evidence (length >= 2).
+ * Mirrors python/sankhya/decode.py::_is_bound_unit_tail. */
 function isBoundUnitTail(subRuns: SubRun[], idx: number): boolean {
   if (idx !== subRuns.length - 1 || idx === 0) return false;
   const sr = subRuns[idx];
   if (sr.end - sr.start < 2) return false;
-  if (!CLASSES[sr.cls].startsWith("UNIT_")) return false;
+  const cname = CLASSES[sr.cls];
   const prev = subRuns[idx - 1];
   if (prev.end - prev.start < 2) return false;
   const pname = CLASSES[prev.cls];
-  return pname.startsWith("CARD_") || pname.startsWith("PFX_");
+  if (cname.startsWith("UNIT_") && (pname.startsWith("CARD_") || pname.startsWith("PFX_"))) return true;
+  if (cname.startsWith("CARD_") && pname.startsWith("PFX_")) return true;
+  return false;
 }
 
 function repairLetterRun(ids: number[] | Int32Array, start: number, end: number): Array<[number, number, number]> {

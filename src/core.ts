@@ -17,6 +17,24 @@ export interface LangPack {
 
 type Tok = [string, string];
 
+// Devanagari (U+0966-U+096F) and Gujarati (U+0AE6-U+0AEF) digits -> ASCII
+// "0"-"9", 1:1. Callers normally run text through normalizeText() (see
+// charset.ts) before labelling, which already maps Devanagari digits to
+// ASCII -- but evaluate() is also called directly with raw (unnormalised)
+// token text in tests and some callers, so DIGITS text reaching
+// mergeNumbers is normalised here too, defensively.
+const DIGIT_MAP: Record<string, string> = {};
+for (let i = 0; i < 10; i++) {
+  DIGIT_MAP[String.fromCharCode(0x0966 + i)] = String(i);
+  DIGIT_MAP[String.fromCharCode(0x0ae6 + i)] = String(i);
+}
+
+function normalizeDigits(text: string): string {
+  let out = "";
+  for (const ch of text) out += DIGIT_MAP[ch] ?? ch;
+  return out;
+}
+
 function mergeNumbers(tokens: Tok[]): Array<[string, string | number]> {
   const out: Array<[string, string | number]> = [];
   let buf = "";
@@ -33,7 +51,7 @@ function mergeNumbers(tokens: Tok[]): Array<[string, string | number]> {
   for (const [cls, text] of tokens) {
     if (cls === "SEP") continue;
     if (cls === "DIGITS" || cls === "DOT" || cls === "COMMA") {
-      buf += text;
+      buf += cls === "DIGITS" ? normalizeDigits(text) : text;
       haveNum = true;
     } else {
       flush();
