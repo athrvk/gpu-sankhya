@@ -131,6 +131,118 @@ def _word_class(pack, word_lower):
     return None
 
 
+_MAX_SPLIT_DEPTH = 4
+
+
+def _strip_word_suffixes(pack, word):
+    """Yield the stems of `word` after stripping this pack's case endings
+    (`word_suffixes`, longest first, up to two of them) and the oblique
+    stem endings that may sit under them (`word_oblique_endings`).
+
+    Marathi inflects unit/cardinal words for case ("हजारात", "लाखांचा",
+    "कोटींची", "तीसच"); the stem is what the lexicon knows. Yields the
+    longest stems first and never yields the empty string.
+    """
+    suffixes = getattr(pack, "word_suffixes", []) or []
+    obliques = getattr(pack, "word_oblique_endings", []) or []
+    if not suffixes:
+        return
+    seen = set()
+    frontier = [word]
+    for _round in range(2):
+        nxt = []
+        for w in frontier:
+            for suf in sorted(suffixes, key=len, reverse=True):
+                if not w.endswith(suf) or len(w) <= len(suf):
+                    continue
+                stem = w[: -len(suf)]
+                for cand in [stem] + [stem[: -len(o)] for o in obliques if stem.endswith(o) and len(stem) > len(o)]:
+                    if cand and cand not in seen:
+                        seen.add(cand)
+                        yield cand
+                nxt.append(stem)
+        frontier = nxt
+
+
+def _word_tokens(pack, word, depth=0):
+    """Split ONE letters-run into (cls, text) tokens, or return None.
+
+    Beyond a plain lexicon lookup this understands three shapes that some
+    packs write as a single word (all declared on the pack, so packs
+    without them behave exactly as before):
+
+      * a bound unit suffix (`glue_unit_forms`): "दोनशे" -> CARD_2 UNIT_SAU,
+        "साडेतीनशे" -> PFX_SAADHE CARD_3 UNIT_SAU
+      * a fused prefix (`fused_prefix_forms`): "साडेतीन" -> PFX_SAADHE CARD_3
+      * a case ending (`word_suffixes`): "हजारात" -> UNIT_HAZAAR (the
+        ending stays inside the unit's own token, so the whole word carries
+        the unit class)
+
+    Returns None when nothing recognises the word (the caller treats that
+    as an unknown token).
+    """
+    wl = word.lower()
+    glue_forms = {f.lower() for f in getattr(pack, "glue_unit_forms", []) or []}
+    if wl in glue_forms:
+        # a BOUND unit form is never a standalone word: on its own this is
+        # some other word entirely (Marathi "शेत" = field, not "शे" + a case
+        # ending), so it must not resolve to the unit.
+        return None
+    cls = _word_class(pack, wl)
+    if cls is not None:
+        return [(cls, word)]
+    if depth >= _MAX_SPLIT_DEPTH:
+        return None
+
+    # an indefinite plural ("लाखो", "करोडपती") is O as a whole word and must
+    # never be split into a unit + suffix.
+    if wl in {w.lower() for w in getattr(pack, "indefinite_plurals", [])}:
+        return [("O", word)]
+
+    forms = pack.all_forms()
+
+    # bound unit suffix, glued to the number before it
+    for suf in sorted(getattr(pack, "glue_unit_forms", []) or [], key=len, reverse=True):
+        if wl.endswith(suf.lower()) and len(wl) > len(suf):
+            head = word[: -len(suf)]
+            head_toks = _word_tokens(pack, head, depth + 1)
+            if head_toks and all(C.is_card(c) or C.is_prefix(c) for c, _ in head_toks):
+                return head_toks + [(forms[suf.lower()], word[len(word) - len(suf):])]
+
+    # fused prefix, glued to the cardinal after it. `fused_prefix_forms`
+    # keys are surfaces or PFX_* class names; a class key stands for every
+    # surface form of that class.
+    fused_keys = getattr(pack, "fused_prefix_forms", {}) or {}
+    fused_surfaces = set()
+    for key in fused_keys:
+        if C.is_prefix(key):
+            fused_surfaces.update(pack.lexicon.get(key, []))
+        else:
+            fused_surfaces.add(key)
+    for pfx_form in sorted(fused_surfaces, key=len, reverse=True):
+        pl = pfx_form.lower()
+        if wl.startswith(pl) and len(wl) > len(pl) and C.is_prefix(forms.get(pl, "")):
+            rest_toks = _word_tokens(pack, word[len(pfx_form):], depth + 1)
+            if rest_toks and C.is_card(rest_toks[0][0]):
+                return [(forms[pl], word[: len(pfx_form)])] + rest_toks
+
+    # case ending: keep the whole word as one token of the stem's class
+    for stem in _strip_word_suffixes(pack, word):
+        stem_toks = _word_tokens(pack, stem, depth + 1)
+        if not stem_toks:
+            continue
+        if all(c == "O" for c, _ in stem_toks):
+            # an inflected non-quantity word ("रुपयांवर" = rupaye + case) is
+            # O as a whole, exactly like its stem.
+            return [("O", word)]
+        if not all(C.is_card(c) or C.is_prefix(c) or C.is_unit(c) for c, _ in stem_toks):
+            continue
+        head, (last_cls, last_text) = stem_toks[:-1], stem_toks[-1]
+        return head + [(last_cls, word[len(word) - len(last_text) - (len(word) - len(stem)):])]
+
+    return None
+
+
 _RANGE_CONNECTOR_CHARS = ("-", "–", "—", "/")
 
 
@@ -172,14 +284,14 @@ def tokenize_span_text(pack, text):
             resolved.append((kind, run, toks))
             prev_other = None
         elif kind == "letter":
-            cls = _word_class(pack, run.lower())
-            if cls is None:
+            word_toks = _word_tokens(pack, run)
+            if word_toks is None:
                 # possessive suffix directly after an apostrophe ("'s") -> O
                 if prev_other in ("'", "’") and len(run) <= 2:
-                    cls = "O"
+                    word_toks = [("O", run)]
                 else:
                     raise TokenizeError(f"unknown_token:{run}")
-            resolved.append((kind, run, [(cls, run)]))
+            resolved.append((kind, run, word_toks))
             prev_other = None
         else:  # 'other': single punctuation/symbol char, resolved in pass 2
             resolved.append((kind, run, None))
@@ -251,6 +363,17 @@ def _negative_has_quantity(pack, normalized_text):
             if wl in marker_words or wl in after_words:
                 return True
             cls = forms.get(wl)
+            if wl in {f.lower() for f in getattr(pack, "glue_unit_forms", []) or []}:
+                cls = None  # bound form, never a standalone unit word
+            if cls is None:
+                # a word this pack writes fused or inflected ("दोनशे",
+                # "हजारात") still leaks a quantity: resolve it the same way
+                # the tokenizer does before deciding.
+                split = _word_tokens(pack, run)
+                if split:
+                    if any(c.startswith("UNIT_") for c, _ in split):
+                        return True
+                    cls = split[0][0]
             if cls and cls.startswith("UNIT_"):
                 if wl in ambiguous_units and not prev_numberish:
                     # lone ambiguous unit word not glued to a preceding
