@@ -3,3 +3,4 @@ torch>=2.2
 onnx>=1.16
 onnxruntime>=1.18
 pytest>=8
+huggingface_hub>=0.24
