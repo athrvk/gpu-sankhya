@@ -1,0 +1,78 @@
+name: Wrong parse
+description: Report an input that gpu-sankhya parses incorrectly (wrong value, wrong span, or a false positive).
+title: "wrong parse: "
+labels: ["wrong-parse"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a parse bug. If you got here from the [demo](https://athrvk.github.io/gpu-sankhya/demo/),
+        the fields below should already be filled in with the text and the model's output.
+
+        This report can be turned directly into a gold-set test case, so please be as precise as possible about
+        what the correct answer should be.
+
+  - type: textarea
+    id: input-text
+    attributes:
+      label: Input text
+      description: The exact text you parsed (copy-paste it, don't retype it).
+      placeholder: "sava lakh ka phone"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: lang-pack
+    attributes:
+      label: Language pack
+      description: Which language pack applies to this text?
+      options:
+        - hi_latn
+        - hi_deva
+        - mr_deva
+        - gu_gujr
+        - other
+      default: 0
+    validations:
+      required: true
+
+  - type: textarea
+    id: got
+    attributes:
+      label: What the parser returned
+      description: The JSON output of `parse()` / `inspect()` for this input. Leave blank if it returned nothing.
+      render: json
+      placeholder: |
+        [{"start": 0, "end": 9, "value": 125000, "confidence": 0.93, ...}]
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What the correct value / range / span should be
+      description: >
+        The correct answer for this input: the numeric value (or [low, high] range) and the character span
+        (start/end offsets) it should cover. If this is a false positive, describe why no amount should be found.
+      placeholder: |
+        value: 125000
+        span: text[0:9] ("sava lakh")
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: false-positive
+    attributes:
+      label: False positive
+      description: Check this if the text contains no amount at all, but the parser returned a span anyway.
+      options:
+        - label: This text contains no amount (false positive) — the parser should return no spans.
+          required: false
+
+  - type: input
+    id: pack-version
+    attributes:
+      label: Package / model version (optional)
+      placeholder: "gpu-sankhya@0.7.0"
+    validations:
+      required: false
