@@ -458,7 +458,31 @@ def _hi_latn_noise(word: str, rng) -> str:
     return NL.apply_noise(word, rng, apply_casing=True, apply_plural=False)
 
 
-BLOCKED_SURFACES = ["pune"]
+BLOCKED_SURFACES = [
+    # place/person names that collide with a number word after noising
+    "pune",
+    # real-text proper nouns built on number words (data_wild/REPORT.md §4.1)
+    "hazare", "hajare", "sawai", "savai",
+]
+
+# Lexicon surfaces that are also ordinary Hinglish/English words. See
+# LanguagePack.ambiguous_forms / R12. Every entry here IS a real form in
+# LEXICON/SYMBOL_UNITS above -- this list only says "needs an independently
+# justified number word beside it to count".
+AMBIGUOUS_FORMS = [
+    "k",        # UNIT_HAZAAR symbol, but also the ke/ki clitic
+    "so",       # UNIT_SAU, but also English "so"
+    "sath", "saath",   # CARD_60, but also "saath" = with
+    "sade", "sad",     # PFX_SAADHE, but also "sad"/"sade" (rotten)
+    "peti",     # UNIT_LAKH slang, but also "peti" = box/belt
+    "mil",      # UNIT_MILLION, but also "mil" = mile / "milna" stem
+    "kharab",   # UNIT_KHARAB, but also "kharab" = bad/broken
+    "arab",     # UNIT_ARAB, but also the ethnonym/place
+    "char",     # CARD_4, but also English "char"
+    "bees",     # CARD_20, but also English "bees"
+    "lac",      # UNIT_LAKH symbol, but also English "lac"/"lack"
+    "l", "m", "b",     # single-letter symbol units
+]
 
 PACK = base.LanguagePack(
     id="hi_latn",
@@ -474,6 +498,7 @@ PACK = base.LanguagePack(
     templates=TEMPLATES,
     noise_fn=_hi_latn_noise,
     blocked_surfaces=BLOCKED_SURFACES,
+    ambiguous_forms=AMBIGUOUS_FORMS,
     filler_words=FILLER_WORDS,
     duration_nouns=DURATION_NOUNS,
     conj_connectors=CONJ_CONNECTORS,

@@ -549,7 +549,20 @@ def _gu_gujr_noise(word: str, rng) -> str:
     return NG.apply_noise(word, rng)
 
 
-BLOCKED_SURFACES = ["રાજકોટ", "સુરત"]
+BLOCKED_SURFACES = [
+    "રાજકોટ", "સુરત",
+    # real-text proper nouns built on number words (data_wild/REPORT.md §4.1)
+    "અરબી", "હજારે", "સવાઈ",
+]
+
+# Lexicon surfaces that are also ordinary words -- see
+# LanguagePack.ambiguous_forms / R12.
+AMBIGUOUS_FORMS = [
+    "એક",       # CARD_1, but also the indefinite article
+    "અરબ",      # UNIT_ARAB, but also "Arab" (અરબ સાગર = the Arabian Sea)
+    "ખરબ",
+    "k", "l", "m", "lac",
+]
 
 PACK = base.LanguagePack(
     id="gu_gujr",
@@ -565,6 +578,7 @@ PACK = base.LanguagePack(
     templates=TEMPLATES,
     noise_fn=_gu_gujr_noise,
     blocked_surfaces=BLOCKED_SURFACES,
+    ambiguous_forms=AMBIGUOUS_FORMS,
     filler_words=FILLER_WORDS,
     duration_nouns=DURATION_NOUNS,
     conj_connectors=CONJ_CONNECTORS,

@@ -1,0 +1,554 @@
+{
+  "hi_latn": {
+    "lines": 424,
+    "pos_candidates": 274,
+    "negatives": 150,
+    "any_span_share_all": 0.27122641509433965,
+    "any_span_share_pos_candidates": 0.39416058394160586,
+    "any_span_share_negatives": 0.04666666666666667,
+    "spans": 127,
+    "spans_on_pos_candidates": 120,
+    "verified_spans": 85,
+    "strict_coverage_of_spans": 0.6692913385826772,
+    "strict_any_span_share_negatives": 0.0,
+    "confidence_buckets": {
+      "0.0-0.5": 0,
+      "0.5-0.7": 0,
+      "0.7-0.9": 49,
+      "0.9-1.0": 78
+    },
+    "mean_confidence": 0.9183663162377829,
+    "top_patterns": [
+      [
+        "PFX_SAADHE",
+        11
+      ],
+      [
+        "UNIT_SAU",
+        8
+      ],
+      [
+        "PFX_AADHA",
+        8
+      ],
+      [
+        "DIGITS+SEP+UNIT_MILLION",
+        7
+      ],
+      [
+        "DIGITS+SEP+UNIT_HAZAAR",
+        6
+      ],
+      [
+        "DIGITS+SEP+UNIT_LAKH",
+        6
+      ],
+      [
+        "UNIT_HAZAAR",
+        5
+      ],
+      [
+        "DIGITS+SEP+UNIT_CRORE",
+        4
+      ],
+      [
+        "CARD_60",
+        4
+      ],
+      [
+        "UNIT_LAKH",
+        3
+      ],
+      [
+        "CARD_6",
+        3
+      ],
+      [
+        "UNIT_CRORE",
+        3
+      ]
+    ],
+    "top_verified_patterns": [
+      [
+        "PFX_SAADHE",
+        9
+      ],
+      [
+        "UNIT_SAU",
+        6
+      ],
+      [
+        "DIGITS+SEP+UNIT_MILLION",
+        6
+      ],
+      [
+        "DIGITS+SEP+UNIT_LAKH",
+        5
+      ],
+      [
+        "DIGITS+SEP+UNIT_HAZAAR",
+        4
+      ],
+      [
+        "DIGITS+SEP+UNIT_CRORE",
+        4
+      ],
+      [
+        "UNIT_HAZAAR",
+        4
+      ],
+      [
+        "UNIT_LAKH",
+        3
+      ]
+    ],
+    "top_unverified_patterns": [
+      [
+        "PFX_AADHA",
+        5
+      ],
+      [
+        "CARD_6",
+        3
+      ],
+      [
+        "UNIT_CRORE",
+        3
+      ],
+      [
+        "PFX_SAADHE",
+        2
+      ],
+      [
+        "UNIT_SAU",
+        2
+      ],
+      [
+        "DIGITS+SEP+UNIT_HAZAAR",
+        2
+      ],
+      [
+        "DIGITS+SEP+UNIT_MILLION",
+        1
+      ],
+      [
+        "CARD_12+SEP+UNIT_HAZAAR",
+        1
+      ]
+    ]
+  },
+  "hi_deva": {
+    "lines": 450,
+    "pos_candidates": 300,
+    "negatives": 150,
+    "any_span_share_all": 0.47555555555555556,
+    "any_span_share_pos_candidates": 0.7133333333333334,
+    "any_span_share_negatives": 0.0,
+    "spans": 244,
+    "spans_on_pos_candidates": 244,
+    "verified_spans": 205,
+    "strict_coverage_of_spans": 0.8401639344262295,
+    "strict_any_span_share_negatives": 0.0,
+    "confidence_buckets": {
+      "0.0-0.5": 0,
+      "0.5-0.7": 0,
+      "0.7-0.9": 38,
+      "0.9-1.0": 206
+    },
+    "mean_confidence": 0.9465366196826476,
+    "top_patterns": [
+      [
+        "DIGITS+SEP+UNIT_LAKH",
+        31
+      ],
+      [
+        "DIGITS+SEP+UNIT_CRORE",
+        20
+      ],
+      [
+        "DIGITS+SEP+UNIT_HAZAAR",
+        14
+      ],
+      [
+        "UNIT_HAZAAR",
+        12
+      ],
+      [
+        "DIGITS+SEP+UNIT_MILLION",
+        11
+      ],
+      [
+        "DIGITS+DOT+DIGITS+SEP+UNIT_LAKH",
+        7
+      ],
+      [
+        "UNIT_ARAB",
+        6
+      ],
+      [
+        "DIGITS+DOT+DIGITS+SEP+UNIT_CRORE",
+        5
+      ],
+      [
+        "DIGITS+DOT+DIGITS+SEP+UNIT_MILLION",
+        5
+      ],
+      [
+        "CARD_4+SEP+UNIT_SAU",
+        5
+      ],
+      [
+        "PFX_SAADHE+SEP+UNIT_ARAB",
+        4
+      ],
+      [
+        "UNIT_CRORE",
+        4
+      ]
+    ],
+    "top_verified_patterns": [
+      [
+        "DIGITS+SEP+UNIT_LAKH",
+        31
+      ],
+      [
+        "DIGITS+SEP+UNIT_CRORE",
+        20
+      ],
+      [
+        "DIGITS+SEP+UNIT_HAZAAR",
+        14
+      ],
+      [
+        "DIGITS+SEP+UNIT_MILLION",
+        11
+      ],
+      [
+        "DIGITS+DOT+DIGITS+SEP+UNIT_LAKH",
+        7
+      ],
+      [
+        "DIGITS+DOT+DIGITS+SEP+UNIT_CRORE",
+        5
+      ],
+      [
+        "DIGITS+DOT+DIGITS+SEP+UNIT_MILLION",
+        5
+      ],
+      [
+        "CARD_4+SEP+UNIT_SAU",
+        5
+      ]
+    ],
+    "top_unverified_patterns": [
+      [
+        "UNIT_HAZAAR",
+        7
+      ],
+      [
+        "PFX_SAADHE+SEP+UNIT_ARAB",
+        4
+      ],
+      [
+        "UNIT_ARAB",
+        3
+      ],
+      [
+        "CARD_5",
+        2
+      ],
+      [
+        "CARD_9+SEP+UNIT_ARAB",
+        2
+      ],
+      [
+        "UNIT_CRORE",
+        2
+      ],
+      [
+        "CARD_6+SEP+UNIT_ARAB",
+        1
+      ],
+      [
+        "CARD_1+SEP+UNIT_ARAB",
+        1
+      ]
+    ]
+  },
+  "mr_deva": {
+    "lines": 450,
+    "pos_candidates": 300,
+    "negatives": 150,
+    "any_span_share_all": 0.47333333333333333,
+    "any_span_share_pos_candidates": 0.6833333333333333,
+    "any_span_share_negatives": 0.05333333333333334,
+    "spans": 229,
+    "spans_on_pos_candidates": 221,
+    "verified_spans": 184,
+    "strict_coverage_of_spans": 0.8034934497816594,
+    "strict_any_span_share_negatives": 0.0,
+    "confidence_buckets": {
+      "0.0-0.5": 0,
+      "0.5-0.7": 0,
+      "0.7-0.9": 31,
+      "0.9-1.0": 198
+    },
+    "mean_confidence": 0.9453989061770158,
+    "top_patterns": [
+      [
+        "DIGITS+SEP+UNIT_CRORE",
+        26
+      ],
+      [
+        "DIGITS+SEP+UNIT_LAKH",
+        20
+      ],
+      [
+        "DIGITS+SEP+UNIT_HAZAAR",
+        17
+      ],
+      [
+        "UNIT_SAU",
+        12
+      ],
+      [
+        "DIGITS+DOT+DIGITS+SEP+UNIT_LAKH",
+        11
+      ],
+      [
+        "UNIT_HAZAAR",
+        9
+      ],
+      [
+        "UNIT_ARAB",
+        8
+      ],
+      [
+        "DIGITS+DOT+DIGITS+SEP+UNIT_CRORE",
+        8
+      ],
+      [
+        "DIGITS",
+        7
+      ],
+      [
+        "CARD_2+SEP+UNIT_HAZAAR",
+        5
+      ],
+      [
+        "CARD_5+SEP+UNIT_HAZAAR",
+        4
+      ],
+      [
+        "CARD_5+SEP+UNIT_LAKH",
+        4
+      ]
+    ],
+    "top_verified_patterns": [
+      [
+        "DIGITS+SEP+UNIT_CRORE",
+        26
+      ],
+      [
+        "DIGITS+SEP+UNIT_LAKH",
+        20
+      ],
+      [
+        "DIGITS+SEP+UNIT_HAZAAR",
+        17
+      ],
+      [
+        "UNIT_SAU",
+        12
+      ],
+      [
+        "DIGITS+DOT+DIGITS+SEP+UNIT_LAKH",
+        11
+      ],
+      [
+        "DIGITS+DOT+DIGITS+SEP+UNIT_CRORE",
+        8
+      ],
+      [
+        "DIGITS",
+        7
+      ],
+      [
+        "UNIT_HAZAAR",
+        5
+      ]
+    ],
+    "top_unverified_patterns": [
+      [
+        "UNIT_ARAB",
+        7
+      ],
+      [
+        "UNIT_HAZAAR",
+        4
+      ],
+      [
+        "CARD_80",
+        2
+      ],
+      [
+        "UNIT_LAKH",
+        2
+      ],
+      [
+        "UNIT_CRORE",
+        2
+      ],
+      [
+        "PFX_SAVA",
+        2
+      ],
+      [
+        "PFX_PAAV+UNIT_LAKH",
+        2
+      ],
+      [
+        "DIGITS+UNIT_LAKH",
+        2
+      ]
+    ]
+  },
+  "gu_gujr": {
+    "lines": 450,
+    "pos_candidates": 300,
+    "negatives": 150,
+    "any_span_share_all": 0.45555555555555555,
+    "any_span_share_pos_candidates": 0.67,
+    "any_span_share_negatives": 0.02666666666666667,
+    "spans": 237,
+    "spans_on_pos_candidates": 233,
+    "verified_spans": 214,
+    "strict_coverage_of_spans": 0.9029535864978903,
+    "strict_any_span_share_negatives": 0.006666666666666667,
+    "confidence_buckets": {
+      "0.0-0.5": 0,
+      "0.5-0.7": 0,
+      "0.7-0.9": 18,
+      "0.9-1.0": 219
+    },
+    "mean_confidence": 0.953577724177101,
+    "top_patterns": [
+      [
+        "DIGITS+SEP+UNIT_MILLION",
+        31
+      ],
+      [
+        "DIGITS+SEP+UNIT_CRORE",
+        26
+      ],
+      [
+        "DIGITS+SEP+UNIT_LAKH",
+        25
+      ],
+      [
+        "UNIT_SAU",
+        10
+      ],
+      [
+        "DIGITS+SEP+UNIT_ARAB",
+        10
+      ],
+      [
+        "UNIT_ARAB",
+        9
+      ],
+      [
+        "DIGITS+DOT+DIGITS+SEP+UNIT_MILLION",
+        9
+      ],
+      [
+        "DIGITS+DOT+DIGITS+SEP+UNIT_CRORE",
+        7
+      ],
+      [
+        "DIGITS+SEP+UNIT_BILLION",
+        7
+      ],
+      [
+        "UNIT_HAZAAR",
+        6
+      ],
+      [
+        "DIGITS+DOT+DIGITS+SEP+UNIT_ARAB",
+        6
+      ],
+      [
+        "DIGITS+SEP+UNIT_HAZAAR",
+        5
+      ]
+    ],
+    "top_verified_patterns": [
+      [
+        "DIGITS+SEP+UNIT_MILLION",
+        31
+      ],
+      [
+        "DIGITS+SEP+UNIT_CRORE",
+        25
+      ],
+      [
+        "DIGITS+SEP+UNIT_LAKH",
+        25
+      ],
+      [
+        "UNIT_SAU",
+        10
+      ],
+      [
+        "DIGITS+SEP+UNIT_ARAB",
+        10
+      ],
+      [
+        "DIGITS+DOT+DIGITS+SEP+UNIT_MILLION",
+        9
+      ],
+      [
+        "UNIT_ARAB",
+        8
+      ],
+      [
+        "DIGITS+DOT+DIGITS+SEP+UNIT_CRORE",
+        7
+      ]
+    ],
+    "top_unverified_patterns": [
+      [
+        "UNIT_LAKH",
+        2
+      ],
+      [
+        "DIGITS+SEP+UNIT_CRORE",
+        1
+      ],
+      [
+        "CARD_3",
+        1
+      ],
+      [
+        "CARD_2+SEP+DIGITS+SEP+UNIT_CRORE",
+        1
+      ],
+      [
+        "PFX_DEDH+SEP+DIGITS+DOT+DIGITS",
+        1
+      ],
+      [
+        "UNIT_HAZAAR",
+        1
+      ],
+      [
+        "DIGITS+SEP+UNIT_MILLION+SEP+DIGITS",
+        1
+      ],
+      [
+        "DIGITS+O+RANGE+DIGITS+SEP+UNIT_HAZAAR",
+        1
+      ]
+    ]
+  }
+}

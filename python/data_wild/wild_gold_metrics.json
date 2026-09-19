@@ -1,0 +1,251 @@
+{
+  "per_file": {
+    "tests/gold_wild_hi_latn.jsonl": {
+      "examples": 100,
+      "spans": 21,
+      "precision": 0.3333333333333333,
+      "recall": 0.9047619047619048,
+      "f1": 0.4871794871794871,
+      "value_acc": 0.8571428571428571,
+      "categories": {
+        "digits": {
+          "spans": 7,
+          "value_acc": 1.0,
+          "exact_match_rate": 1.0
+        },
+        "words": {
+          "spans": 14,
+          "value_acc": 0.7857142857142857,
+          "exact_match_rate": 0.8571428571428571
+        },
+        "prefix": {
+          "spans": 1,
+          "value_acc": 0.0,
+          "exact_match_rate": 0.0
+        },
+        "currency": {
+          "spans": 1,
+          "value_acc": 1.0,
+          "exact_match_rate": 1.0
+        }
+      },
+      "negatives": {
+        "examples": 79,
+        "false_positives": 29,
+        "fp_rate": 0.3670886075949367
+      }
+    },
+    "tests/gold_wild_hi_deva.jsonl": {
+      "examples": 100,
+      "spans": 44,
+      "precision": 0.7454545454545455,
+      "recall": 0.9318181818181818,
+      "f1": 0.8282828282828283,
+      "value_acc": 0.9318181818181818,
+      "categories": {
+        "digits": {
+          "spans": 29,
+          "value_acc": 1.0,
+          "exact_match_rate": 1.0
+        },
+        "words": {
+          "spans": 15,
+          "value_acc": 0.8,
+          "exact_match_rate": 0.8
+        },
+        "prefix": {
+          "spans": 5,
+          "value_acc": 0.6,
+          "exact_match_rate": 0.6
+        },
+        "range": {
+          "spans": 2,
+          "value_acc": 1.0,
+          "exact_match_rate": 1.0
+        },
+        "currency": {
+          "spans": 1,
+          "value_acc": 1.0,
+          "exact_match_rate": 1.0
+        },
+        "multi_unit": {
+          "spans": 3,
+          "value_acc": 1.0,
+          "exact_match_rate": 1.0
+        }
+      },
+      "negatives": {
+        "examples": 57,
+        "false_positives": 8,
+        "fp_rate": 0.14035087719298245
+      }
+    },
+    "tests/gold_wild_mr_deva.jsonl": {
+      "examples": 100,
+      "spans": 49,
+      "precision": 0.803921568627451,
+      "recall": 0.8367346938775511,
+      "f1": 0.8200000000000001,
+      "value_acc": 0.8367346938775511,
+      "categories": {
+        "digits": {
+          "spans": 26,
+          "value_acc": 0.9230769230769231,
+          "exact_match_rate": 0.9230769230769231
+        },
+        "words": {
+          "spans": 23,
+          "value_acc": 0.7391304347826086,
+          "exact_match_rate": 0.7391304347826086
+        },
+        "prefix": {
+          "spans": 2,
+          "value_acc": 0.5,
+          "exact_match_rate": 0.5
+        },
+        "currency": {
+          "spans": 4,
+          "value_acc": 1.0,
+          "exact_match_rate": 1.0
+        },
+        "multi_unit": {
+          "spans": 1,
+          "value_acc": 0.0,
+          "exact_match_rate": 0.0
+        }
+      },
+      "negatives": {
+        "examples": 52,
+        "false_positives": 7,
+        "fp_rate": 0.1346153846153846
+      }
+    },
+    "tests/gold_wild_gu_gujr.jsonl": {
+      "examples": 100,
+      "spans": 54,
+      "precision": 0.864406779661017,
+      "recall": 0.9444444444444444,
+      "f1": 0.9026548672566371,
+      "value_acc": 0.9444444444444444,
+      "categories": {
+        "digits": {
+          "spans": 40,
+          "value_acc": 0.95,
+          "exact_match_rate": 0.95
+        },
+        "words": {
+          "spans": 14,
+          "value_acc": 0.9285714285714286,
+          "exact_match_rate": 0.9285714285714286
+        },
+        "range": {
+          "spans": 1,
+          "value_acc": 1.0,
+          "exact_match_rate": 1.0
+        },
+        "currency": {
+          "spans": 4,
+          "value_acc": 1.0,
+          "exact_match_rate": 1.0
+        }
+      },
+      "negatives": {
+        "examples": 52,
+        "false_positives": 4,
+        "fp_rate": 0.07692307692307693
+      }
+    }
+  },
+  "combined": {
+    "examples": 400,
+    "spans": 168,
+    "precision": 0.6846846846846847,
+    "recall": 0.9047619047619048,
+    "f1": 0.7794871794871795,
+    "value_acc": 0.8988095238095238,
+    "miss_summary": {
+      "missed_span": 9,
+      "spurious_span": 63,
+      "wrong_value": 1,
+      "wrong_boundary": 7,
+      "total": 80
+    },
+    "categories": {
+      "digits": {
+        "spans": 102,
+        "value_acc": 0.9607843137254902,
+        "exact_match_rate": 0.9607843137254902
+      },
+      "words": {
+        "spans": 66,
+        "value_acc": 0.803030303030303,
+        "exact_match_rate": 0.8181818181818182
+      },
+      "prefix": {
+        "spans": 8,
+        "value_acc": 0.5,
+        "exact_match_rate": 0.5
+      },
+      "range": {
+        "spans": 3,
+        "value_acc": 1.0,
+        "exact_match_rate": 1.0
+      },
+      "currency": {
+        "spans": 10,
+        "value_acc": 1.0,
+        "exact_match_rate": 1.0
+      },
+      "multi_unit": {
+        "spans": 4,
+        "value_acc": 0.75,
+        "exact_match_rate": 0.75
+      }
+    },
+    "negatives": {
+      "examples": 240,
+      "false_positives": 48,
+      "fp_rate": 0.2
+    },
+    "strict": {
+      "gold_spans": 168,
+      "covered": 146,
+      "coverage": 0.8690476190476191,
+      "value_correct": 146,
+      "value_acc": 1.0,
+      "spurious": 25,
+      "negatives": {
+        "examples": 240,
+        "false_positives": 21,
+        "fp_rate": 0.0875
+      },
+      "wrong_value_examples": []
+    },
+    "confidence_curve": [
+      {
+        "min_confidence": 0.0,
+        "kept": 222,
+        "coverage": 0.8988095238095238,
+        "value_acc": 0.6801801801801802
+      },
+      {
+        "min_confidence": 0.5,
+        "kept": 222,
+        "coverage": 0.8988095238095238,
+        "value_acc": 0.6801801801801802
+      },
+      {
+        "min_confidence": 0.7,
+        "kept": 222,
+        "coverage": 0.8988095238095238,
+        "value_acc": 0.6801801801801802
+      },
+      {
+        "min_confidence": 0.9,
+        "kept": 185,
+        "coverage": 0.8988095238095238,
+        "value_acc": 0.8162162162162162
+      }
+    ]
+  }
+}

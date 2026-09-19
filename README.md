@@ -411,6 +411,72 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   parses; `"das kharab"`, `"2 mil"`, and `"kharab rupaye"` (currency
   marker present) still parse. Other unit words (`"lakh"`, `"hazaar"`)
   are unaffected.
+
+The next six gates were added after the library was first measured on real
+text (see `python/data_wild/REPORT.md`): on 400 hand-labelled sentences from
+openly licensed corpora, one real negative in five produced a span, and one
+in eleven produced a *verified* one. They exist for precision, and cost
+nothing measurable on the synthetic gold.
+
+- **What counts as a span** (the convention the rules below implement): an
+  amount expression contains a **scale unit** (word or symbol), or a
+  **prefix word together with a number**, or **digits next to a currency
+  marker**. A bare digit run with no unit and no currency is not a span
+  (`"109 वोट"`, `"1956"`); a **lone prefix** is not a span (`"आधा"`,
+  `"ढाई साल"`, `"દોઢ સદી"`); an **indefinite plural** is not a span
+  (`"हजारों"`, `"करोड़ों"`, `"લાખો"`). A **bare cardinal word** is a span
+  only when its surface is an exact lexicon form and not an ambiguous one
+  — `"पचास"` (50) and `"બાવીસ"` (22) parse, `"sath"`, `"so"` and `"एक"` do
+  not. Currency words stay outside the span; pack case endings stay inside
+  it (`"32 करोडचा"`, `"15 લાખનું"`).
+- **R11 — lone-prefix gate**: a span whose only meaningful token is a
+  `PFX_*` is dropped unless a currency marker is beside it. A prefix
+  scales something: `"ढाई लाख"` is 250,000, but `"ढाई साल"` is two and a
+  half *years* and `"sade hue tamatar"` is rotten tomatoes.
+- **R12 — ambiguous-form gate**: each language pack declares
+  `ambiguous_forms`, lexicon **surfaces** (not classes) that are also
+  ordinary words: hi_latn `k`, `so`, `sath`/`saath`, `sade`/`sad`, `peti`,
+  `mil`, `kharab`, `arab`, `char`, `bees`, `lac`; hi_deva/mr_deva
+  `एक`, `अरब`, `खरब`; gu_gujr `એક`, `અરબ`, `ખરબ`. A meaningful token is
+  *justified* when it is `DIGITS` or a known lexicon form of its own
+  class; if every justified token of a span is an ambiguous surface, the
+  span is dropped (no currency marker). `"so usne kya kiya?"`,
+  `"sanyukt arab amirat"`, `"अरब संघ"`, `"અરબ સાગર"` and a lone `"एक"`
+  stop parsing; `"ek arab"`, `"100 अरब"`, `"do peti"`, `"das kharab"`,
+  `"unnis sau sath"` and `"bees lac pachees lac"` still do, because each
+  has one unambiguous number word holding it up. `"अरब रुपये"` survives on
+  the currency marker.
+- **R13b — bare-cardinal gate**: a span whose only meaningful token is a
+  spelled cardinal is kept only when its surface is an **exact** lexicon
+  form — no suffix stripping, no typo tolerance, since there is nothing
+  else in the span to corroborate it. `"aavesh"`, `"chaahie"`,
+  `"barabar"`, `"इ"` stop parsing.
+- **R14 — blocked surfaces**: every pack's `blocked_surfaces` list (already
+  used by the generator to refuse a colliding surface) is now also honoured
+  by the **verifier and the decoder**: such a surface never verifies as a
+  number word and a span carrying one is dropped. Proper nouns built on
+  number words are everywhere in real text and nowhere in the generator —
+  `"अण्णा हजारे"`, `"सवाई तुकोजीराव"`, `"अरबी समुद्र"`, `"અરબી સમુદ્ર"`.
+  The head words (`"हजार"`, `"सवा"`, `"अरब"`) are untouched.
+- **R15 — suffix stripping is per pack**: the verifier's case-ending strip
+  (`"लाखांचं"` = `लाख` + oblique `ां` + ending `चं`) now only uses endings
+  **the same pack declares**, and the stripped head must still be ≥ 3
+  characters. A union of every pack's morphology could let Marathi endings
+  inflect a Hindi-only head into a number.
+- **R16 — symbol units must be glued**: a 1-2 character ambiguous symbol
+  unit (`k`, `l`, `m`, `b`) counts only when written straight onto its
+  digits. `"20k"`, `"2.5L"` keep their unit; `"1996 k"` (the *ke/ki*
+  clitic after a year) and `"33 k. m."` (kilometres) lose theirs and the
+  span goes. Longer symbol forms (`lac`, `cr`, `bn`, `LPA`) are routinely
+  written with a space and are untouched.
+- **R17 — unknown unit words**: when a span's `UNIT_*` surface is neither a
+  lexicon form of that class (after one declared case ending) nor within
+  **edit distance 1** of one, and the span has no independently justified
+  `CARD_*`/`PFX_*` coefficient, the unit is a guess and the span is
+  dropped. `"3 hours"` → 3,000, `"25वे"` (an ordinal) → 2,500,000,
+  `"1980ના"` → 1.98e8, and bare `"chori"`/`"thought"`/`"oooh"`/`"खोड"`
+  stop parsing; the edit-distance tolerance keeps typo'd and noised unit
+  words (`"hazzar"`, `"करोड"`) working after digits.
 - **Range-connector repair**: a bare `-`/`–`/`—`/`/` between two amounts
   becomes a `RANGE` tag (spaces around it stay `SEP`) when the left side
   can end an amount by itself and the right side can start a fresh one
@@ -436,6 +502,15 @@ Raw per-character BIO/class predictions are cleaned up before evaluation:
   `"दस बीस हज़ार"` → one span, which R8 below then reads as a range. Two
   *complete* amounts are untouched (`"5 lakh 3 crore"`: the first span
   already ends in a unit).
+- **R18 — boundary artifacts**: two real-text shapes the BIO head glues into
+  one span although the writer wrote two things. A trailing 4-digit
+  **year** (1900–2099) after an already-closed amount is trimmed off —
+  `"इनाम दस हज़ार 1987 में बनी"` is a film title plus its release year, and
+  decodes as 10,000 rather than 11,987. A leading `DIGITS` token whose value
+  equals the `CARD_*` right after it is a **restatement** and is dropped —
+  `"agni 5 panch hajar kilometer"` says five thousand twice, and decodes as
+  5,000 rather than 5,005. The incomplete-amount merge above refuses the
+  same two shapes, so a span split at that boundary is not re-joined.
 - **Bound forms and fused number words**: a letters run written solid can
   be split into two or three unanimous sub-runs in `PFX? CARD? UNIT?`
   order (at least two present) and each part kept on its own class

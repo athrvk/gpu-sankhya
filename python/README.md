@@ -275,6 +275,41 @@ both per-file and combined results. Pass `--quiet` to suppress the
 missed/spurious/wrong-value/wrong-boundary listings and keep just the
 tables.
 
+Lines longer than `train.MAX_LEN` (128 characters) are handled with the same
+sliding window the JS runtime's `parse()` uses (`charset.make_windows`,
+mirroring `src/charset.ts::makeWindows`: 128-character windows overlapping
+by 16, each character taken from the first window that covers it).
+`eval_gold` used to predict over `normalize_text(text)[:MAX_LEN]` while
+returning the original text, so any longer line made `decode_spans` index
+past the end of the prediction and raise `IndexError` — never triggered by
+the short hand-written gold, but 11–27% of real sentences hit it (see
+`data_wild/REPORT.md` failure #10). Span offsets index into
+`normalize_text(text)`, which is 1:1 per character for every script these
+packs support, so gold offsets recorded against the raw text carry over
+unchanged — `tests/test_eval_long_lines.py` pins both facts and covers a
+200-character gold line.
+
+### What counts as a span
+
+The gold sets and the decoder now agree on one convention (the wild gold
+forced the question; see `data_wild/REPORT.md` §9):
+
+- an **amount expression** contains a scale unit (word or symbol), or a
+  prefix word together with a number, or digits next to a currency marker;
+- a **lone prefix** is not a span (`आधा`, `ढाई साल`, `દોઢ સદી`) — R11;
+- a **bare cardinal word** is a span only when its surface is an exact
+  lexicon form and not an `ambiguous_forms` entry: `पचास` (50) and `બાવીસ`
+  (22) are spans, `sath`, `so` and a lone `एक` are not — R13b and R12;
+- an **indefinite plural** is not a span (`हजारों`, `करोड़ों`, `લાખો`) — R9;
+- currency words stay **outside** the span; pack case endings stay
+  **inside** it (`32 करोडचा`, `15 લાખનું`).
+
+The full rule list, with the real sentence behind each one, is in the root
+`README.md`; the rules themselves live in `core.py` (structural) and
+`verify.py` (lexicon-driven), are applied by
+`eval_gold._apply_bare_digits_gate`, and are mirrored 1:1 in `src/core.ts` /
+`src/verify.ts` / `src/index.ts`.
+
 ### Comparing multiple models/configs (`eval_matrix.py`)
 
 `python -m sankhya.eval_matrix run` evaluates several checkpoints/weights
@@ -701,6 +736,39 @@ On Kaggle, set `EXTRA` (comma-separated repo-relative paths under
 EXTRA=data_llm/hi_latn.jsonl --set EXTRA_RATIO=0.2` — see "Training on
 Kaggle" below.
 
+## Real-text measurement (`sankhya.wild`)
+
+Everything above measures the model on data we made: the generator, or gold
+lines we wrote. `sankhya.wild` measures it on **sentences other people wrote**
+— openly licensed corpora (Dakshina romanised/native-script Wikipedia, CMU DoG
+Hinglish), filtered to 3–40 words and ≤128 chars, scored for amount-likelihood
+with the pack lexicon (never the model), and sampled seeded/deduplicated:
+
+```bash
+python -m sankhya.wild sources   # registry + URLs + licences (fetch by hand)
+python -m sankhya.wild sample    # -> data_wild/samples/, seed 17
+python -m sankhya.wild run       # shipped int8 weights + eval_gold's gates
+```
+
+Raw corpora and samples live under `python/data_wild/` and are gitignored (the
+sources are share-alike). 100 lines per language were hand-labelled into
+`tests/gold_wild_<lang>.jsonl` — same schema as the other gold files, with
+attribution in `tests/GOLD_WILD_SOURCES.md`.
+
+`tests/test_gold_wild.py` checks that they load, that `core.evaluate`
+reproduces every labelled value, and prints the per-language real-text table
+(value accuracy, strict coverage, FP, strict FP) under `pytest -s`. Accuracy
+floors on real text stay out of the gates — that is where the model is
+weakest and a floor would either be trivially loose or block unrelated work
+— but **precision is gated**: `tests/test_gates.py` pins the strict
+(verified) false-positive rate on the wild negatives at ≤ 0.02 (currently
+4/240 = 0.0167), the overall wild FP rate at ≤ 0.05 (10/240 = 0.0417), and
+strict value accuracy on real text at 1.0. Those are the numbers the R11–R18
+gates were added for; before them they were 0.0875 and 0.200.
+
+The measured numbers, the failure taxonomy and what real text contains that the
+generator never produces are in **`python/data_wild/REPORT.md`**.
+
 ## Tests
 
 ```bash
@@ -724,7 +792,11 @@ mismatches, unknown tokens, bad phrase substrings, hidden-quantity
 negatives, duplicates) against inline fixtures. `test_verify.py` covers the
 strict-tier predicate and the freshness of `src/data/lexicon.json`;
 `test_gates.py` is the release gate on the shipped int8 weights (see
-"Verified spans and strict metrics"). `tests/gold.jsonl` is the
+"Verified spans and strict metrics") — including the real-text
+false-positive ceilings. `tests/test_wild_rules.py` covers the R11–R18
+precision rules case by case (mirrored by `test/wild-rules.test.ts` on the
+JS side) and `tests/test_eval_long_lines.py` the >128-character windowing.
+`tests/gold.jsonl` is the
 hand-written gold set used by `eval_gold.py`, not a generator round-trip
 test.
 
@@ -898,7 +970,14 @@ full example) with:
 - `duration_nouns` — "din"/"minute"/etc., so bare numbers next to a
   duration noun are *not* tagged as a span
 - `blocked_surfaces` — surface strings the noise function must never
-  produce (collisions with real words/names)
+  produce (collisions with real words/names). Also honoured at runtime
+  (R14): a blocked surface never verifies as a number word and a decoded
+  span carrying one is dropped, so this is where proper nouns built on
+  number words go (`हजारे`, `सवाई`, `अरबी`)
+- `ambiguous_forms` — lexicon **surfaces** that are also ordinary words in
+  the language (`so`, `sath`, `mil`, `arab`, `अरब`, `એક`). They stay real
+  lexicon forms, but R12 drops a span whose every lexicon-justified token
+  is one of them; see "What counts as a span" above
 - `noise_fn(word, rng) -> str` — typo/spelling-variance injection for that
   script/language
 

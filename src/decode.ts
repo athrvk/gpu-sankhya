@@ -1,6 +1,6 @@
 // Port of python/sankhya/decode.py — strict BIO decoding + filtering + confidence.
 
-import { CLASSES, CLASS_TO_ID } from "./classes.ts";
+import { CLASSES, CLASS_TO_ID, cardValue } from "./classes.ts";
 import { isBoundForm } from "./verify.ts";
 
 const TRIM_CLASSES = new Set(["SEP", "RANGE", "DOT", "COMMA"]);
@@ -681,22 +681,6 @@ function mergeRangeConnectorSpans(text: string, clsIds: number[] | Int32Array, s
   return merged;
 }
 
-function lastMeaningfulCls(tokens: Array<[number, string]>): string | null {
-  for (let i = tokens.length - 1; i >= 0; i--) {
-    const name = CLASSES[tokens[i][0]];
-    if (isMeaningful(name)) return name;
-  }
-  return null;
-}
-
-function firstMeaningfulCls(tokens: Array<[number, string]>): string | null {
-  for (const [cid] of tokens) {
-    const name = CLASSES[cid];
-    if (isMeaningful(name)) return name;
-  }
-  return null;
-}
-
 /** R4c: merge an INCOMPLETE amount with the span right after it.
  *
  * The BIO head sometimes cuts a single amount in two at a word boundary
@@ -728,9 +712,15 @@ function mergeIncompleteAmountSpans(text: string, spansOut: DecodedSpan[]): Deco
     for (const nxt of spans.slice(1)) {
       const prev = merged[merged.length - 1];
       const gap = text.slice(prev.end, nxt.start);
-      const last = lastMeaningfulCls(prev.tokens);
-      const first = firstMeaningfulCls(nxt.tokens);
-      const gapIsOneSpace = gap.length === 1 && /\s/.test(gap);
+      const [last, lastTxt] = lastMeaningful(prev.tokens);
+      const [first, firstTxt] = firstMeaningful(nxt.tokens);
+      // R18: two real-text shapes that are NOT one interrupted amount -- a
+      // following YEAR ("दस हज़ार 1987 में बनी") and a digits amount restated
+      // in words ("5 panch hajar").
+      const blocked =
+        (first === "DIGITS" && firstTxt !== null && looksLikeYear(firstTxt)) ||
+        sameValueRestatement(last, lastTxt, first, firstTxt);
+      const gapIsOneSpace = !blocked && gap.length === 1 && /\s/.test(gap);
       const aIncomplete =
         last !== null && (last.startsWith("CARD_") || last.startsWith("PFX_") || last === "DIGITS");
       const bContinues = first !== null && (first.startsWith("UNIT_") || first.startsWith("CARD_"));
@@ -841,5 +831,136 @@ export function decodeSpans(
     });
   }
   const rangeMerged = mergeRangeConnectorSpans(text, clsIds, out);
-  return mergeIncompleteAmountSpans(text, rangeMerged);
+  return trimBoundaryArtifacts(text, mergeIncompleteAmountSpans(text, rangeMerged));
+}
+
+// --- R18: boundary artifacts the BIO head glues into one span ------------
+
+const YEAR_LO = 1900;
+const YEAR_HI = 2099;
+
+/** Indic digit glyphs -> ASCII, so a Devanagari/Gujarati year or digit run
+ * is read the same way the arithmetic core reads it. */
+function digitsToAscii(text: string): string {
+  let out = "";
+  for (const ch of text) {
+    const cp = ch.codePointAt(0)!;
+    if (cp >= 0x0966 && cp <= 0x096f) out += String(cp - 0x0966);
+    else if (cp >= 0x0ae6 && cp <= 0x0aef) out += String(cp - 0x0ae6);
+    else out += ch;
+  }
+  return out;
+}
+
+/** R18: a 4-digit run in 1900..2099 -- a year, not a coefficient. Mirrors
+ * python/sankhya/decode.py::_looks_like_year. */
+function looksLikeYear(text: string): boolean {
+  const digits = digitsToAscii(text);
+  if (digits.length !== 4 || !/^\d{4}$/.test(digits)) return false;
+  const n = Number(digits);
+  return n >= YEAR_LO && n <= YEAR_HI;
+}
+
+/** R18: the right side merely RESTATES the left one in words --
+ * "5 panch hajar" (digits 5, then the same 5 spelled out). Mirrors
+ * python/sankhya/decode.py::_same_value_restatement. */
+function sameValueRestatement(
+  leftCls: string | null,
+  leftTxt: string | null,
+  rightCls: string | null,
+  rightTxt: string | null,
+): boolean {
+  void rightTxt;
+  if (leftCls !== "DIGITS" || leftTxt === null || rightCls === null || !rightCls.startsWith("CARD_")) return false;
+  const digits = digitsToAscii(leftTxt);
+  if (!/^\d+$/.test(digits)) return false;
+  return Number(digits) === cardValue(rightCls);
+}
+
+function lastMeaningful(tokens: Array<[number, string]>): [string | null, string | null] {
+  for (let i = tokens.length - 1; i >= 0; i--) {
+    const name = CLASSES[tokens[i][0]];
+    if (isMeaningful(name)) return [name, tokens[i][1]];
+  }
+  return [null, null];
+}
+
+function firstMeaningful(tokens: Array<[number, string]>): [string | null, string | null] {
+  for (const [cid, txt] of tokens) {
+    const name = CLASSES[cid];
+    if (isMeaningful(name)) return [name, txt];
+  }
+  return [null, null];
+}
+
+/** Rebuild a span around a new token list, re-trimming glue tokens at its
+ * edges and re-deriving start/end. null if nothing meaningful is left.
+ * Mirrors python/sankhya/decode.py::_retrim. */
+function retrim(text: string, span: DecodedSpan, toks: Array<[number, string]>): DecodedSpan | null {
+  let lo = 0;
+  let hi = toks.length;
+  while (lo < hi && TRIM_CLASSES_FINAL.has(CLASSES[toks[lo][0]])) lo++;
+  while (hi > lo && TRIM_CLASSES_FINAL.has(CLASSES[toks[hi - 1][0]])) hi--;
+  const kept = toks.slice(lo, hi);
+  if (kept.length === 0 || !kept.some(([cid]) => isMeaningful(CLASSES[cid]))) return null;
+  const joined = kept.map(([, t]) => t).join("");
+  const start = text.indexOf(joined, span.start);
+  const realStart = start >= 0 && start < span.end ? start : span.start;
+  return {
+    start: realStart,
+    end: realStart + joined.length,
+    text: joined,
+    tokens: kept,
+    confidence: span.confidence,
+  };
+}
+
+/** R18: two real-text shapes the BIO head glues into ONE span although the
+ * writer wrote two things (python/data_wild/REPORT.md section 4, shape 8).
+ *
+ * (a) a trailing YEAR: "इनाम दस हज़ार 1987 में बनी" is a film title plus its
+ *     release year, decoded as one span worth 11,987. A 4-digit 1900..2099
+ *     DIGITS token at the END of a span whose amount is already CLOSED (the
+ *     meaningful token before it is a UNIT_) is a year and is trimmed off,
+ *     leaving "दस हज़ार" = 10,000.
+ *
+ * (b) a leading digits RESTATEMENT: "agni 5 panch hajar kilometer" says five
+ *     thousand twice, decoded as 5,005. A leading DIGITS token whose value
+ *     equals the CARD_ value of the very next meaningful token is dropped,
+ *     leaving "panch hajar" = 5,000.
+ *
+ * Both shapes are also refused by mergeIncompleteAmountSpans above, so a
+ * span the BIO head splits at the same boundary is not re-joined. Mirrors
+ * python/sankhya/decode.py::_trim_boundary_artifacts. */
+function trimBoundaryArtifacts(text: string, spansOut: DecodedSpan[]): DecodedSpan[] {
+  const out: DecodedSpan[] = [];
+  for (const span of spansOut) {
+    let toks = span.tokens;
+    let changed = true;
+    while (changed && toks.length > 0) {
+      changed = false;
+      const meaningful: Array<[number, string, string]> = [];
+      for (let i = 0; i < toks.length; i++) {
+        const name = CLASSES[toks[i][0]];
+        if (isMeaningful(name)) meaningful.push([i, name, toks[i][1]]);
+      }
+      if (meaningful.length < 2) break;
+      const [li, lcls, ltxt] = meaningful[meaningful.length - 1];
+      const [, pcls] = meaningful[meaningful.length - 2];
+      if (lcls === "DIGITS" && looksLikeYear(ltxt) && pcls.startsWith("UNIT_")) {
+        toks = toks.slice(0, li);
+        changed = true;
+        continue;
+      }
+      const [fi, fcls, ftxt] = meaningful[0];
+      const [, ncls, ntxt] = meaningful[1];
+      if (sameValueRestatement(fcls, ftxt, ncls, ntxt)) {
+        toks = toks.slice(fi + 1);
+        changed = true;
+      }
+    }
+    const rebuilt = toks.length !== span.tokens.length ? retrim(text, span, toks) : span;
+    if (rebuilt !== null) out.push(rebuilt);
+  }
+  return out;
 }
