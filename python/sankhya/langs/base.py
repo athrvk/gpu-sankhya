@@ -47,6 +47,28 @@ class LanguagePack:
     # (generator._apply_pack_glue), and the corpus tokenizer splits such a
     # word back into its two tokens (llm_corpus._word_tokens).
     glue_unit_forms: List[str] = field(default_factory=list)
+    # Subset of `glue_unit_forms` that ALSO exists as a free standalone
+    # word. Marathi's "शे" is purely bound, so its list is empty; Gujarati's
+    # "સો" is glued in બસો/અઢારસો but is equally a word on its own
+    # ("સો રૂપિયા" = 100, "સાડા સો" = 150). Forms listed here keep the
+    # gluing behaviour but are not refused when they stand alone.
+    glue_unit_forms_standalone: List[str] = field(default_factory=list)
+    # CARD_*/PFX_* surface forms that exist ONLY in the glued position
+    # immediately before one of `glue_unit_forms`. Gujarati's 200 is બસો,
+    # not *બેસો: the bound-position form of CARD_2 is "બ", which is not a
+    # word on its own and must never be labelled or verified standalone.
+    # Shape: {surface: {"cls": CLASS, "before": [unit surfaces], "p": prob}}
+    # where `p` is how often the generator prefers it over the free form.
+    # These forms are deliberately NOT part of `all_forms()`, so they never
+    # enter the cross-pack collision map, the standalone lexicon lookup, or
+    # the verifier's context-free surface table -- see `bound_number_map()`.
+    bound_number_forms: Dict[str, dict] = field(default_factory=dict)
+    # Per-pack native digit glyphs (Devanagari "०१२...", Gujarati "૦૧૨...").
+    # `native_digit_prob` is how often the generator renders a DIGITS token
+    # with them instead of ASCII. Token CLASSES are unaffected: the shared
+    # normalization maps these back to ASCII before labels are computed.
+    native_digits: str = ""
+    native_digit_prob: float = 0.0
     # PFX_* surface forms commonly typed as ONE word with the cardinal that
     # follows ("साडेतीन", "पावणेदोन"): surface -> probability the generator
     # glues them. Both spellings stay valid input for the tokenizer.
@@ -63,6 +85,28 @@ class LanguagePack:
         if self.noise_fn is not None:
             return self.noise_fn(word, rng)
         return word
+
+    def bound_units(self) -> List[str]:
+        """Glue unit forms that are BOUND: never valid on their own."""
+        free = {f.lower() for f in self.glue_unit_forms_standalone}
+        return [f for f in self.glue_unit_forms if f.lower() not in free]
+
+    def bound_number_map(self, before: str = None) -> Dict[str, str]:
+        """surface(lower) -> class for the pack's bound number forms.
+
+        With `before` (a glue unit surface), restricted to the forms that
+        may precede exactly that unit. Callers must only consult this in
+        the glued position -- that is what keeps "બ" from ever resolving,
+        or verifying, as a standalone CARD_2.
+        """
+        out = {}
+        for surface, spec in self.bound_number_forms.items():
+            if before is not None:
+                allowed = [u.lower() for u in spec.get("before", ())]
+                if before.lower() not in allowed:
+                    continue
+            out[surface.lower()] = spec["cls"]
+        return out
 
     def all_forms(self) -> Dict[str, str]:
         """Map surface_lower -> class, across every table, for collision checks."""
@@ -93,7 +137,7 @@ def register(pack: LanguagePack) -> None:
 # every pack module shipped in this package, in a stable order; importing
 # one registers its PACK. `load_all()` is what lets callers iterate
 # `registry` instead of hard-coding pack ids.
-KNOWN_PACKS = ("hi_latn", "hi_deva", "mr_deva")
+KNOWN_PACKS = ("hi_latn", "hi_deva", "mr_deva", "gu_gujr")
 
 
 def load_all() -> Dict[str, LanguagePack]:

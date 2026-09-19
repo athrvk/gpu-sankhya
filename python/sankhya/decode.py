@@ -7,6 +7,7 @@ from collections import Counter
 from typing import List, Optional, Sequence
 
 from . import classes as C
+from .verify import is_bound_form
 
 _TRIM_CLASSES = {"SEP", "RANGE", "DOT", "COMMA"}
 # R2: after word-integrity/possessive repair a partially-retagged word can
@@ -82,46 +83,70 @@ def _majority_vote_run(raw_ids: List[int]) -> int:
     return best_cid
 
 
-def _is_bound_unit_tail(sub_runs, idx) -> bool:
-    """R2c: a word-final sub-run of length >= 2 that directly follows a
-    CARD_*/PFX_* sub-run of length >= 2 is kept as its own class instead of
-    being smoothed into the sub-run before it, when the two-sub-run split
-    is one of:
+_BOUND_PARTITION_KINDS = ("PFX_", "CARD_", "UNIT_")
 
-      - tail UNIT_*, head CARD_*/PFX_* -- a BOUND unit suffix written with
-        no space -- Marathi's fused hundreds ("दोनशे" = CARD_2 + UNIT_SAU,
-        "अठराशे", "दीडशे"), and equally "दोसौ" in Devanagari Hindi.
-      - tail CARD_*, head PFX_* -- a fused prefix+cardinal word --
-        Marathi "पावणेचार" (PFX_PAUNE + CARD_4 = 3.75), "साडेआठ"
-        (PFX_SAADHE + CARD_8 = 8.5).
 
-    Without this the sub-run smoothing below would absorb the tail
-    sub-run into the head and evaluate e.g. "दोनशे" as 2 instead of 200,
-    or "पावणेचार" as just PFX_PAUNE (0.75) instead of 3.75.
+def _kind_index(cname: str) -> int:
+    """Position of `cname` in the PFX -> CARD -> UNIT fused-word order, or
+    -1 for anything else (O/SEP/DIGITS/...)."""
+    for i, p in enumerate(_BOUND_PARTITION_KINDS):
+        if cname.startswith(p):
+            return i
+    return -1
 
-    Deliberately narrow: only the LAST sub-run of the run, only these two
-    head/tail class-pair shapes, and only when both sub-runs stand on
-    their own evidence (length >= 2, i.e. unanimous, not a stray 1-char
-    misprediction) -- anything else is still smoothed away as before.
+
+def _bound_keep_indices(sub_runs, run_text: Optional[str] = None) -> frozenset:
+    """R2c: which sub-runs of ONE letters run are kept on their own class
+    instead of being smoothed into a neighbour.
+
+    A fused (written-solid) number word splits the letters run into two or
+    three unanimous sub-runs following the order PFX? CARD? UNIT? -- at
+    least two of the three present, each kind at most once, in that order:
+
+      - CARD + UNIT  -- a bound unit suffix, Marathi "दोनशे" (2 + 100),
+        Gujarati "બસો" (2 + 100), Hindi "दोसौ".
+      - PFX + UNIT   -- "dedhlakh" (1.5 * 100000).
+      - PFX + CARD   -- Marathi "पावणेचार" (0.75 + 4 = 3.75), "साडेआठ".
+      - PFX + CARD + UNIT -- Gujarati "સાડાત્રણસો" (PFX_SAADHE + CARD_3 +
+        UNIT_SAU = 350), the three-part case.
+
+    Every sub-run must stand on its own evidence: length >= 2 (unanimous,
+    not a stray 1-char misprediction). The ONE exception is a 1-char
+    sub-run whose surface is a BOUND number form declared by a language
+    pack for exactly the surface that follows it (`bound_forms` in the
+    exported lexicon, the same map `verify.verify_tokens` consults) --
+    Gujarati "બ" is CARD_2 only in "બસો", so "બસો" resolves to CARD_2 +
+    UNIT_SAU = 200 while a stray 1-char sub-run anywhere else is still
+    smoothed away. `run_text` is the run's surface (same indexing as
+    `sub_runs`); without it no 1-char sub-run can be justified.
+
+    Anything that does not match this shape returns an empty set, i.e.
+    today's majority-vote / neighbour-adoption smoothing applies as before.
     """
-    if idx != len(sub_runs) - 1 or idx == 0:
-        return False
-    c, s, e = sub_runs[idx]
-    if e - s < 2:
-        return False
-    cname = C.CLASSES[c]
-    pc, ps, pe = sub_runs[idx - 1]
-    if pe - ps < 2:
-        return False
-    pname = C.CLASSES[pc]
-    if cname.startswith("UNIT_") and (pname.startswith("CARD_") or pname.startswith("PFX_")):
-        return True
-    if cname.startswith("CARD_") and pname.startswith("PFX_"):
-        return True
-    return False
+    n = len(sub_runs)
+    if n < 2 or n > 3:
+        return frozenset()
+    kinds = []
+    for c, _s, _e in sub_runs:
+        k = _kind_index(C.CLASSES[c])
+        if k < 0:
+            return frozenset()
+        kinds.append(k)
+    for i in range(n - 1):
+        if kinds[i] >= kinds[i + 1]:  # strictly increasing: PFX < CARD < UNIT
+            return frozenset()
+    for idx, (c, s, e) in enumerate(sub_runs):
+        if e - s >= 2:
+            continue
+        if e - s == 1 and run_text is not None and idx + 1 < n:
+            _nc, ns, ne = sub_runs[idx + 1]
+            if is_bound_form(run_text[s:e], C.CLASSES[c], run_text[ns:ne]):
+                continue
+        return frozenset()
+    return frozenset(range(n))
 
 
-def _repair_letters_run(raw_ids: List[int]) -> List[int]:
+def _repair_letters_run(raw_ids: List[int], run_text: Optional[str] = None) -> List[int]:
     """Sub-run smoothing within one letters run.
 
     Splits raw_ids into maximal sub-runs of identical class. Sub-runs of
@@ -145,9 +170,10 @@ def _repair_letters_run(raw_ids: List[int]) -> List[int]:
 
     result = list(raw_ids)
     fallback_positions = []
+    keep = _bound_keep_indices(sub_runs, run_text)
 
     for idx, (c, s, e) in enumerate(sub_runs):
-        if e - s >= 3 or _is_bound_unit_tail(sub_runs, idx):
+        if e - s >= 3 or idx in keep:
             continue  # keep as-is
         prev_run = sub_runs[idx - 1] if idx > 0 else None
         next_run = sub_runs[idx + 1] if idx < len(sub_runs) - 1 else None
@@ -223,7 +249,7 @@ def extend_digit_spans(text: str, bio_ids: List[int]) -> List[int]:
 _MAX_WORD_RUN_LEN = 24
 
 
-def _run_unanimous_class(raw_run: List[int]) -> Optional[int]:
+def _run_unanimous_class(raw_run: List[int], run_text: Optional[str] = None) -> Optional[int]:
     """Like `_repair_letters_run`'s sub-run smoothing, but returns a class
     id ONLY when every sub-run resolves from real, DIRECT evidence -- its
     own length >= 3, or adoption from an immediately adjacent sub-run of
@@ -247,8 +273,9 @@ def _run_unanimous_class(raw_run: List[int]) -> Optional[int]:
         i = j
 
     resolved = []
+    keep = _bound_keep_indices(sub_runs, run_text)
     for idx, (c, s, e) in enumerate(sub_runs):
-        if e - s >= 3 or _is_bound_unit_tail(sub_runs, idx):
+        if e - s >= 3 or idx in keep:
             resolved.append(c)
             continue
         prev_run = sub_runs[idx - 1] if idx > 0 else None
@@ -300,7 +327,7 @@ def extend_word_integrity_bio(text: str, bio_ids: List[int], cls_ids: List[int],
         if not any(covered) or all(covered):
             continue  # nothing to extend: no span touches it, or already full
         raw_run = [cls_ids[k] for k in range(rs, re_)]
-        unanimous = _run_unanimous_class(raw_run)
+        unanimous = _run_unanimous_class(raw_run, text[rs:re_])
         if unanimous is None or not _is_word_class(C.CLASSES[unanimous]):
             continue
         for k in range(rs, re_):
@@ -309,7 +336,7 @@ def extend_word_integrity_bio(text: str, bio_ids: List[int], cls_ids: List[int],
     return out
 
 
-def _run_repr_class(run_type: str, rs: int, re_: int, cls_ids: List[int]) -> Optional[str]:
+def _run_repr_class(run_type: str, rs: int, re_: int, cls_ids: List[int], text: Optional[str] = None) -> Optional[str]:
     """Best-guess resulting class name for a run, without mutating cls_ids.
     Used by the R4 connector check to look at a letters-run neighbour that
     has not been processed yet (it comes after the connector in scan order).
@@ -318,7 +345,7 @@ def _run_repr_class(run_type: str, rs: int, re_: int, cls_ids: List[int]) -> Opt
         return "DIGITS"
     if run_type == "letter":
         raw_run = [cls_ids[k] for k in range(rs, re_)]
-        new_run = _repair_letters_run(raw_run)
+        new_run = _repair_letters_run(raw_run, text[rs:re_] if text is not None else None)
         cnt = Counter(new_run)
         best_id = max(cnt.items(), key=lambda kv: kv[1])[0]
         return C.CLASSES[best_id]
@@ -338,7 +365,7 @@ def _effective_neighbor(runs, idx: int, direction: int):
     return runs[j] if runs[j][0] in ("digit", "letter") else None
 
 
-def _connector_is_range(runs, idx: int, cls_ids: List[int]) -> bool:
+def _connector_is_range(runs, idx: int, cls_ids: List[int], text: Optional[str] = None) -> bool:
     """R4: true when the connector genuinely sits between two SEPARATE
     numeric amounts (a real range), not inside one compound number.
 
@@ -355,8 +382,8 @@ def _connector_is_range(runs, idx: int, cls_ids: List[int]) -> bool:
     right = _effective_neighbor(runs, idx, 1)
     if left is None or right is None:
         return False
-    left_cls = _run_repr_class(left[0], left[1], left[2], cls_ids)
-    right_cls = _run_repr_class(right[0], right[1], right[2], cls_ids)
+    left_cls = _run_repr_class(left[0], left[1], left[2], cls_ids, text)
+    right_cls = _run_repr_class(right[0], right[1], right[2], cls_ids, text)
     if not left_cls or not right_cls or not _is_meaningful(left_cls):
         return False
     return right_cls == "DIGITS" or right_cls.startswith(("CARD_", "PFX_"))
@@ -405,7 +432,7 @@ def repair_classes(text: str, start: int, end: int, cls_ids: List[int]) -> List[
 
         elif t == "letter":
             raw_run = [cls_ids[k] for k in range(rs, re_)]
-            new_run = _repair_letters_run(raw_run)
+            new_run = _repair_letters_run(raw_run, text[rs:re_])
             for offset, k in enumerate(range(rs, re_)):
                 out[k] = new_run[offset]
 
@@ -417,7 +444,7 @@ def repair_classes(text: str, start: int, end: int, cls_ids: List[int]) -> List[
 
             if length == 1 and ch in (".", ",") and prev_type == "digit" and next_type == "digit":
                 new_cls = dot_id if ch == "." else comma_id
-            elif length == 1 and ch in _RANGE_CONNECTORS and _connector_is_range(runs, idx, cls_ids):
+            elif length == 1 and ch in _RANGE_CONNECTORS and _connector_is_range(runs, idx, cls_ids, text):
                 new_cls = range_id
             elif ch == "-" and prev_type == "letter" and next_type == "letter":
                 new_cls = sep_id
@@ -583,6 +610,85 @@ def _merge_range_connector_spans(text: str, cls_ids: List[int], spans_out: List[
     return merged
 
 
+def _last_meaningful_cls(tokens) -> Optional[str]:
+    for cid, _txt in reversed(tokens):
+        name = C.CLASSES[cid]
+        if _is_meaningful(name):
+            return name
+    return None
+
+
+def _first_meaningful_cls(tokens) -> Optional[str]:
+    for cid, _txt in tokens:
+        name = C.CLASSES[cid]
+        if _is_meaningful(name):
+            return name
+    return None
+
+
+def _merge_incomplete_amount_spans(text: str, spans_out: List[dict]) -> List[dict]:
+    """R4c: merge an INCOMPLETE amount with the span right after it.
+
+    The BIO head sometimes cuts a single amount in two at a word boundary
+    even with no connector between them: "ચોંસઠ લાખમાં" decodes as
+    "ચોંસઠ" (64) + "લાખમાં" (100000) instead of 6400000, "पाव कोटीचा" as
+    "पाव" + "कोटीचा", "दस बीस हज़ार" as "दस" + "बीस हज़ार".
+
+    Span A is INCOMPLETE when its last meaningful token is a bare number
+    (CARD_*/PFX_*/DIGITS) -- it has no UNIT_* token after it, so it cannot
+    have closed an amount. Span B can CONTINUE it when its first
+    meaningful token is a UNIT_* (the unit A is missing) or a CARD_* (a
+    further number word of the same amount). When the two spans are
+    separated by exactly one whitespace character -- so nothing, not even
+    punctuation, stands between them -- they are one amount and get merged
+    with a SEP token in between. Repeated until stable, so a chain
+    ("दस" + "बीस" + "हज़ार") collapses into one span.
+
+    Two COMPLETE amounts are untouched: "5 lakh 3 crore" has A ending in
+    UNIT_LAKH, so A is not incomplete and the two stay separate spans (the
+    arithmetic core, not the decoder, decides what a multi-term span
+    means). After merging, core's R7/R8 juxtaposition rules apply to the
+    merged token list as usual, so "दस बीस हज़ार" becomes a range.
+    """
+    if len(spans_out) < 2:
+        return spans_out
+    sep_id = C.CLASS_TO_ID["SEP"]
+    spans = list(spans_out)
+    while True:
+        merged: List[dict] = [spans[0]]
+        changed = False
+        for nxt in spans[1:]:
+            prev = merged[-1]
+            gap = text[prev["end"]:nxt["start"]]
+            last = _last_meaningful_cls(prev["tokens"])
+            first = _first_meaningful_cls(nxt["tokens"])
+            if (
+                len(gap) == 1
+                and gap.isspace()
+                and last is not None
+                and (last.startswith(("CARD_", "PFX_")) or last == "DIGITS")
+                and first is not None
+                and first.startswith(("UNIT_", "CARD_"))
+            ):
+                if prev["confidence"] is None or nxt["confidence"] is None:
+                    confidence = None
+                else:
+                    confidence = (prev["confidence"] + nxt["confidence"]) / 2
+                merged[-1] = {
+                    "start": prev["start"],
+                    "end": nxt["end"],
+                    "text": text[prev["start"]:nxt["end"]],
+                    "tokens": prev["tokens"] + [(sep_id, gap)] + nxt["tokens"],
+                    "confidence": confidence,
+                }
+                changed = True
+            else:
+                merged.append(nxt)
+        spans = merged
+        if not changed:
+            return spans
+
+
 def decode_spans(
     text: str,
     bio_ids: List[int],
@@ -693,4 +799,5 @@ def decode_spans(
             "tokens": [(cid, text[a:b]) for cid, a, b in kept],
             "confidence": confidence,
         })
-    return _merge_range_connector_spans(text, cls_ids, out)
+    out = _merge_range_connector_spans(text, cls_ids, out)
+    return _merge_incomplete_amount_spans(text, out)

@@ -83,7 +83,10 @@ test("confidence filtering drops low-confidence spans", () => {
 });
 
 test("multiple spans are all returned", () => {
-  const text = "do lakh trin";
+  // A comma between the two spans keeps them apart: with only a single
+  // space between them the R4c incomplete-amount merge would (correctly)
+  // join "do" + "lakh" into one amount -- see the R4c tests below.
+  const text = "do, lakh trin";
   //             0         1
   //             0123456789012
   const bio = new Array(text.length).fill(0);
@@ -93,10 +96,10 @@ test("multiple spans are all returned", () => {
   cls[0] = cid("CARD_2");
   cls[1] = cid("CARD_2");
   bio[1] = 2;
-  // "lakh" span [3,7)
-  bio[3] = 1;
-  cls[3] = cid("UNIT_LAKH");
-  for (let i = 4; i < 7; i++) {
+  // "lakh" span [4,8)
+  bio[4] = 1;
+  cls[4] = cid("UNIT_LAKH");
+  for (let i = 5; i < 8; i++) {
     bio[i] = 2;
     cls[i] = cid("UNIT_LAKH");
   }
@@ -519,4 +522,133 @@ test("decode + evaluate: paunechaar hazaar bhare -> 3750", () => {
   const tokens: Array<[string, string]> = spans[0].tokens.map(([c, t]) => [CLASSES[c], t]);
   const result = evaluate(tokens);
   assert.equal(result.value, 3750);
+});
+
+// --- R4c: merging an INCOMPLETE amount with the span that follows it ------
+
+function tokNames(span: { tokens: Array<[number, string]> }): Array<[string, string]> {
+  return span.tokens.map(([c, t]) => [CLASSES[c], t] as [string, string]);
+}
+
+test("R4c: an incomplete amount merges with the following UNIT span", () => {
+  // "ચોંસઠ લાખમાં": the BIO head cuts the amount in two at the space, so
+  // "ચોંસઠ" (CARD_64) and "લાખમાં" (UNIT_LAKH) decode as separate spans.
+  const text = "ચોંસઠ લાખમાં";
+  const cls = [
+    ...Array(5).fill(cid("CARD_64")),
+    cid("SEP"),
+    ...Array(6).fill(cid("UNIT_LAKH")),
+  ];
+  const bio = [1, 2, 2, 2, 2, 0, 1, 2, 2, 2, 2, 2];
+  const spans = decodeSpans(text, bio, cls);
+  assert.equal(spans.length, 1);
+  assert.deepEqual([spans[0].start, spans[0].end], [0, 12]);
+  assert.deepEqual(tokNames(spans[0]), [
+    ["CARD_64", "ચોંસઠ"],
+    ["SEP", " "],
+    ["UNIT_LAKH", "લાખમાં"],
+  ]);
+  assert.equal(evaluate(tokNames(spans[0])).value, 6400000);
+});
+
+test("R4c: an incomplete amount merges with the following CARD span (range)", () => {
+  // "दस बीस हज़ार" -> "दस" + "बीस हज़ार"; after merging, core's R8
+  // cardinal-juxtaposition rule makes it a range.
+  const text = "दस बीस हज़ार";
+  const cls = [
+    ...Array(2).fill(cid("CARD_10")),
+    cid("SEP"),
+    ...Array(3).fill(cid("CARD_20")),
+    cid("SEP"),
+    ...Array(5).fill(cid("UNIT_HAZAAR")),
+  ];
+  const bio = [1, 2, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2];
+  const spans = decodeSpans(text, bio, cls);
+  assert.equal(spans.length, 1);
+  assert.deepEqual([spans[0].start, spans[0].end], [0, text.length]);
+  assert.deepEqual(evaluate(tokNames(spans[0])).range, [10000, 20000]);
+});
+
+test("R4c: two COMPLETE amounts are left alone", () => {
+  // "5 lakh 3 crore": span A ends with UNIT_LAKH, so it is complete and
+  // must not swallow the next span.
+  const text = "5 lakh 3 crore";
+  const cls = [
+    cid("DIGITS"), cid("SEP"),
+    ...Array(4).fill(cid("UNIT_LAKH")),
+    cid("SEP"), cid("DIGITS"), cid("SEP"),
+    ...Array(5).fill(cid("UNIT_CRORE")),
+  ];
+  const bio = [1, 2, 2, 2, 2, 2, 0, 1, 2, 2, 2, 2, 2, 2];
+  const spans = decodeSpans(text, bio, cls);
+  assert.equal(spans.length, 2);
+  assert.deepEqual(spans.map((s) => s.text), ["5 lakh", "3 crore"]);
+});
+
+test("R4c: the merge does not cross punctuation or a double space", () => {
+  for (const text of ["das, hazaar", "das  hazaar"]) {
+    const cls = [
+      ...Array(3).fill(cid("CARD_10")),
+      cid("O"), cid("O"),
+      ...Array(6).fill(cid("UNIT_HAZAAR")),
+    ];
+    const bio = [1, 2, 2, 0, 0, 1, 2, 2, 2, 2, 2];
+    assert.equal(decodeSpans(text, bio, cls).length, 2, text);
+  }
+});
+
+test("R4c: the merge chains until stable", () => {
+  const text = "das bees hazaar";
+  const cls = [
+    ...Array(3).fill(cid("CARD_10")),
+    cid("SEP"),
+    ...Array(4).fill(cid("CARD_20")),
+    cid("SEP"),
+    ...Array(6).fill(cid("UNIT_HAZAAR")),
+  ];
+  const bio = [1, 2, 2, 0, 1, 2, 2, 2, 0, 1, 2, 2, 2, 2, 2];
+  const spans = decodeSpans(text, bio, cls);
+  assert.equal(spans.length, 1);
+  assert.equal(spans[0].text, text);
+  assert.deepEqual(evaluate(tokNames(spans[0])).range, [10000, 20000]);
+});
+
+// --- R2c: bound forms and three-part fused words --------------------------
+
+test("R2c: a 1-char sub-run survives when it is a declared bound form (બસો)", () => {
+  const text = "બસો";
+  const spans = decodeSpans(text, [1, 2, 2], [cid("CARD_2"), cid("UNIT_SAU"), cid("UNIT_SAU")]);
+  assert.deepEqual(tokNames(spans[0]), [["CARD_2", "બ"], ["UNIT_SAU", "સો"]]);
+  assert.equal(evaluate(tokNames(spans[0])).value, 200);
+});
+
+test("R2c: an UNDECLARED 1-char sub-run is still smoothed away (છસો)", () => {
+  const text = "છસો";
+  const spans = decodeSpans(text, [1, 2, 2], [cid("CARD_6"), cid("UNIT_SAU"), cid("UNIT_SAU")]);
+  assert.deepEqual(tokNames(spans[0]), [["UNIT_SAU", "છસો"]]);
+});
+
+test("R2c: a three-part fused word keeps PFX + CARD + UNIT (સાડાત્રણસો)", () => {
+  const text = "સાડાત્રણસો";
+  const cls = [
+    ...Array(4).fill(cid("PFX_SAADHE")),
+    ...Array(4).fill(cid("CARD_3")),
+    ...Array(2).fill(cid("UNIT_SAU")),
+  ];
+  const bio = new Array(text.length).fill(2);
+  bio[0] = 1;
+  const spans = decodeSpans(text, bio, cls);
+  assert.deepEqual(tokNames(spans[0]), [
+    ["PFX_SAADHE", "સાડા"],
+    ["CARD_3", "ત્રણ"],
+    ["UNIT_SAU", "સો"],
+  ]);
+  assert.equal(evaluate(tokNames(spans[0])).value, 350);
+});
+
+test("R2c: out-of-order kinds (UNIT before CARD) are still smoothed", () => {
+  const text = "abcd";
+  const cls = [cid("UNIT_SAU"), cid("UNIT_SAU"), cid("CARD_3"), cid("CARD_3")];
+  const spans = decodeSpans(text, [1, 2, 2, 2], cls);
+  assert.equal(spans[0].tokens.length, 1);
 });

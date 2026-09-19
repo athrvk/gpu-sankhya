@@ -151,8 +151,8 @@ datasets:
 
 A small char-level CNN that extracts Indian informal number/currency
 shorthand -- Hinglish (romanised Hindi), Devanagari Hindi, Devanagari
-Marathi, and Indian-English amount phrases like `sava lakh`, `dedh crore`, `डेढ़ लाख`,
-`सवा करोड़`, `2.5L`, `20k`, `2-3 lakh` -- from free text, and turns each
+Marathi, Gujarati, and Indian-English amount phrases like `sava lakh`, `dedh crore`, `डेढ़ लाख`,
+`सवा करोड़`, `દોઢ લાખ`, `2.5L`, `20k`, `2-3 lakh` -- from free text, and turns each
 match into a clean numeric value via a deterministic arithmetic core (the
 model never predicts the value directly).
 
@@ -262,8 +262,9 @@ pipeline and `sankhya.eval_gold` for a ready-made evaluation CLI.
 ## Training
 
 Trained 20 epochs on 200,000 synthetic examples generated from the
-`hi_latn` (romanised Hindi), `hi_deva` (Devanagari Hindi), and `mr_deva`
-(Devanagari Marathi) grammar packs, mixed 0.40/0.33/0.27 with a 10%
+`hi_latn` (romanised Hindi), `hi_deva` (Devanagari Hindi), `mr_deva`
+(Devanagari Marathi), and `gu_gujr` (Gujarati) grammar packs, mixed
+0.32/0.26/0.21/0.21 with a 10%
 cross-pack share, plus out-of-vocab
 "unk noise" augmentation (emoji, CJK, Cyrillic, other symbols inserted as
 O-labelled context) so the `<unk>` embedding actually gets gradient
@@ -287,9 +288,9 @@ commands: `python/README.md` in the source repo.
 - Long multi-term/mixed-numeral constructs and multi-number range phrases
   ("तीस पैंतीस हज़ार", "three n half lakh") are the weakest category
   (`long`/`range` value_acc above).
-- Scoped to Indian languages: currently Hinglish, Devanagari Hindi, and
-  Devanagari Marathi only; other Indian languages are planned (see the
-  source repo's roadmap).
+- Scoped to Indian languages: currently Hinglish, Devanagari Hindi,
+  Devanagari Marathi, and Gujarati only; other Indian languages are
+  planned (see the source repo's roadmap).
 """
     return card
 
@@ -309,7 +310,7 @@ pinned: false
 license: mit
 ---
 
-Interactive demo of [gpu-sankhya](https://huggingface.co/{MODEL_REPO}) -- parses Hinglish, Devanagari Hindi, and Devanagari Marathi number/currency shorthand in the browser (CPU + WebGPU backends). Source: https://github.com/athrvk/gpu-sankhya
+Interactive demo of [gpu-sankhya](https://huggingface.co/{MODEL_REPO}) -- parses Hinglish, Devanagari Hindi, Devanagari Marathi, and Gujarati number/currency shorthand in the browser (CPU + WebGPU backends). Source: https://github.com/athrvk/gpu-sankhya
 """
 
 
@@ -328,6 +329,7 @@ _GOLD_BLURBS = {
     "hi_latn": 'romanised Hindi / Hinglish\n  ("bhai sava lakh mein ho jayega kya")',
     "hi_deva": 'Devanagari Hindi\n  ("सवा लाख मिलेगा")',
     "mr_deva": 'Devanagari Marathi\n  ("दीड लाख मिळतील")',
+    "gu_gujr": 'Gujarati\n  ("દોઢ લાખનું પેકેજ છે")',
 }
 
 

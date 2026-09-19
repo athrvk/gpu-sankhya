@@ -40,13 +40,18 @@ export function paddedLength(realLen: number): number {
  * capped at MAX_LEN chars) -- the size Scratch buffers are allocated to. */
 export const PADDED_MAX = paddedLength(MAX_LEN);
 
-// Devanagari decimal digits U+0966 ('०') .. U+096F ('९') -> ASCII "0".."9".
-const DEVANAGARI_DIGIT_RE = /[०-९]/g;
+// Indic decimal digits -> ASCII "0".."9": Devanagari U+0966 ('०') ..
+// U+096F ('९') and Gujarati U+0AE6 ('૦') .. U+0AEF ('૯'). Each block is
+// ten contiguous code points in 0..9 order, so the mapping is a pure
+// per-character substitution that preserves every offset. Kept in sync
+// with python/sankhya/charset.py NATIVE_DIGIT_BLOCKS.
+const INDIC_DIGIT_RE = /[\u0966-\u096F\u0AE6-\u0AEF]/g;
+const INDIC_DIGIT_BASES = [0x0966, 0x0ae6];
 
 /** Normalize input text exactly as the Python side does, before char
- * encoding: (1) Unicode NFC normalization, (2) Devanagari digits U+0966-
- * U+096F mapped 1:1 to ASCII "0"-"9", (3) lowercasing. Must stay byte-
- * identical to Python's `s.normalize("NFC")` + digit map + `.lower()`.
+ * encoding: (1) Unicode NFC normalization, (2) Indic digits mapped 1:1
+ * to ASCII "0"-"9" (Devanagari U+0966-U+096F, Gujarati U+0AE6-U+0AEF),
+ * (3) lowercasing. Must stay byte-identical to Python's `s.normalize("NFC")` + digit map + `.lower()`.
  *
  * NFC normalization can change string length (e.g. composing a base +
  * combining mark into fewer code units, or occasionally more). `parse()`
@@ -59,7 +64,16 @@ const DEVANAGARI_DIGIT_RE = /[०-९]/g;
  * the original input for non-NFC input should first call
  * `normalizeText()` themselves and index into its result. */
 export function normalizeText(s: string): string {
-  return s.normalize("NFC").replace(DEVANAGARI_DIGIT_RE, (d) => String(d.charCodeAt(0) - 0x0966)).toLowerCase();
+  return s
+    .normalize("NFC")
+    .replace(INDIC_DIGIT_RE, (d) => {
+      const cp = d.charCodeAt(0);
+      for (const base of INDIC_DIGIT_BASES) {
+        if (cp >= base && cp <= base + 9) return String(cp - base);
+      }
+      return d;
+    })
+    .toLowerCase();
 }
 
 export function buildCharToId(charset: string[]): Map<string, number> {
