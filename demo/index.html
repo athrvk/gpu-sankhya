@@ -3,740 +3,507 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>gpu-sankhya</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23b5541e'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='white' font-family='sans-serif'%3E₹%3C/text%3E%3C/svg%3E" />
+<title>gpu-sankhya — Indian Number Shorthand to Real Numbers</title>
+<meta name="description" content="gpu-sankhya turns Indian number shorthand — sava lakh, dedh crore, 2.5L, 12 LPA, डेढ़ लाख, અઢી લાખ — into real numbers. A small neural model, running locally in your browser." />
+<link rel="canonical" href="https://athrvk.github.io/gpu-sankhya/" />
+<meta name="theme-color" content="#ffffff" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://athrvk.github.io/gpu-sankhya/" />
+<meta property="og:title" content="gpu-sankhya — Indian Number Shorthand to Real Numbers" />
+<meta property="og:description" content="sava lakh, dedh crore, 2.5L, 12 LPA, डेढ़ लाख — parsed into real numbers by a small neural model running locally in your browser." />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23b5541e'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='white' font-family='sans-serif'%3E₹%3C/text%3E%3C/svg%3E" />
 <style>
   :root {
-    --bg: #f7f7f5;
-    --panel: #ffffff;
-    --border: #e2e0db;
-    --text: #1c1b19;
-    --muted: #706c64;
-    --accent: #b5541e;
-    --accent-soft: #f2d9c4;
-    --mark-bg: #ffe9b3;
-    --mark-border: #e0a83a;
-    --ok: #2f7d4f;
-    --ok-bg: #d9f0e2;
-    --bad: #b23b3b;
-    --bad-bg: #f6dcdc;
-    --warn: #93650f;
-    --warn-soft: #f5e3bd;
-    --cell-o: #d8d5cd;
-    --focus: #3567c9;
-    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     color-scheme: light;
+    --bg: #ffffff;
+    --text: #171717;
+    --muted: #737373;
+    --faint: #a3a3a3;
+    --line: #e5e5e5;
+    --card: #fafafa;
+    --card-line: #ededed;
+    --panel: #f5f5f5;
+    --accent: #b5541e;
+    --code-bg: #171717;
+    --code-text: #e5e5e5;
+    --code-muted: #8a8a8a;
+    --code-str: #a5d6a7;
+    --code-kw: #b3c7f0;
+    --focus: #2563eb;
+    --radius: 14px;
+
+    --c-num: #cfe3fd;      --c-num-t: #12447e;
+    --c-unit: #fde8b4;     --c-unit-t: #6b4a05;
+    --c-pfx: #e2dcfd;      --c-pfx-t: #402b96;
+    --c-cur: #cfefd8;      --c-cur-t: #14562c;
+    --c-range: #fbd5e3;    --c-range-t: #8a1c47;
+    --sw-num: #a8ccf8; --sw-unit: #f6d98a; --sw-pfx: #c5bbfa; --sw-cur: #a9dfba; --sw-range: #f7b3cd;
+
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #171614;
-      --panel: #201f1c;
-      --border: #38352f;
-      --text: #ece9e3;
-      --muted: #9a958a;
-      --accent: #e08a4f;
-      --accent-soft: #4a3626;
-      --mark-bg: #4a3a12;
-      --mark-border: #a87a26;
-      --ok: #59c98a;
-      --ok-bg: #1c3527;
-      --bad: #e37070;
-      --bad-bg: #402323;
-      --warn: #e0b64f;
-      --warn-soft: #453210;
-      --cell-o: #3a372f;
-      --focus: #7fa4e8;
       color-scheme: dark;
+      --bg: #121212;
+      --text: #ededed;
+      --muted: #9b9b9b;
+      --faint: #767676;
+      --line: #2a2a2a;
+      --card: #1a1a1a;
+      --card-line: #262626;
+      --panel: #1e1e1e;
+      --accent: #e08a4f;
+      --code-bg: #0c0c0c;
+      --focus: #7ea6ff;
+      --c-num: #1f3a5c;     --c-num-t: #cfe3fd;
+      --c-unit: #4a3a10;    --c-unit-t: #fde8b4;
+      --c-pfx: #332c5e;     --c-pfx-t: #ded7ff;
+      --c-cur: #16402a;     --c-cur-t: #cfefd8;
+      --c-range: #4a1f33;   --c-range-t: #fbd5e3;
+    --sw-num: #cfe3fd; --sw-unit: #fde8b4; --sw-pfx: #ded7ff; --sw-cur: #cfefd8; --sw-range: #fbd5e3;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #171614;
-    --panel: #201f1c;
-    --border: #38352f;
-    --text: #ece9e3;
-    --muted: #9a958a;
-    --accent: #e08a4f;
-    --accent-soft: #4a3626;
-    --mark-bg: #4a3a12;
-    --mark-border: #a87a26;
-    --ok: #59c98a;
-    --ok-bg: #1c3527;
-    --bad: #e37070;
-    --bad-bg: #402323;
-    --warn: #e0b64f;
-    --warn-soft: #453210;
-    --cell-o: #3a372f;
-    --focus: #7fa4e8;
     color-scheme: dark;
+    --bg: #121212; --text: #ededed; --muted: #9b9b9b; --faint: #767676;
+    --line: #2a2a2a; --card: #1a1a1a; --card-line: #262626; --panel: #1e1e1e;
+    --accent: #e08a4f; --code-bg: #0c0c0c; --focus: #7ea6ff;
+    --c-num: #1f3a5c; --c-num-t: #cfe3fd;
+    --c-unit: #4a3a10; --c-unit-t: #fde8b4;
+    --c-pfx: #332c5e; --c-pfx-t: #ded7ff;
+    --c-cur: #16402a; --c-cur-t: #cfefd8;
+    --c-range: #4a1f33; --c-range-t: #fbd5e3;
+    --sw-num: #cfe3fd; --sw-unit: #fde8b4; --sw-pfx: #ded7ff; --sw-cur: #cfefd8; --sw-range: #fbd5e3;
   }
+
   * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
-    padding: 1.5rem 1rem 4rem;
-    padding-block: 1.5rem 4rem;
     background: var(--bg);
     color: var(--text);
     font-family: var(--sans);
+    font-size: 14px;
     line-height: 1.5;
-    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 1500px; margin: 0 auto; }
-  .layout {
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-areas: "left" "right" "strip" "bench";
-    gap: 1.1rem;
-    align-items: start;
+  .wrap {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 0 20px;
   }
-  .col-left { grid-area: left; min-width: 0; }
-  .col-right { grid-area: right; min-width: 0; }
-  .col-strip { grid-area: strip; min-width: 0; }
-  .col-bench { grid-area: bench; min-width: 0; }
-  .results-scroll { min-width: 0; }
-  @media (min-width: 700px) {
-    body { padding: 1.75rem 1.5rem 4rem; }
-    .layout {
-      grid-template-columns: 1fr 1fr;
-      grid-template-areas: "left right" "strip strip" "bench bench";
-    }
-    .col-right .card-results { position: sticky; top: 1.1rem; }
-    .results-scroll { max-height: calc(100vh - 14rem); overflow-y: auto; padding-right: 0.3rem; }
-  }
-  @media (min-width: 1100px) {
-    body { padding: 2rem 2rem 4rem; }
-    .layout {
-      grid-template-columns: minmax(360px, 1fr) minmax(440px, 1.3fr);
-      grid-template-areas: "left right" "strip bench";
-    }
-    .col-left textarea#input { min-height: 14rem; }
-    .col-right .card-results { top: 1.25rem; }
-    .results-scroll { max-height: calc(100vh - 15rem); }
-  }
-  a { color: var(--accent); }
-  :focus-visible {
-    outline: 2px solid var(--focus);
-    outline-offset: 2px;
-  }
-  header.top {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.75rem 1rem;
-    margin-bottom: 0.5rem;
-  }
-  .title-block { min-width: 0; }
-  h1 {
-    font-size: 1.6rem;
-    margin: 0 0 0.2rem;
-    letter-spacing: -0.02em;
-  }
-  .tagline { color: var(--muted); margin: 0; font-size: 0.92rem; max-width: 56ch; }
-  .top-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-  .icon-btn {
-    font-family: var(--sans);
-    font-size: 0.8rem;
-    padding: 0.4rem 0.7rem;
-    border-radius: 7px;
-    border: 1px solid var(--border);
-    background: var(--panel);
-    color: var(--text);
-    cursor: pointer;
-  }
-  .icon-btn:hover { border-color: var(--accent); }
-  .badges-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 0.75rem;
-    margin: 0.9rem 0 1.25rem;
-    font-size: 0.8rem;
-    color: var(--muted);
-  }
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    border: 1px solid var(--border);
-    background: var(--panel);
-  }
-  .badge.yes { background: var(--ok-bg); color: var(--ok); border-color: transparent; }
-  .badge.no { background: var(--border); color: var(--muted); border-color: transparent; }
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem;
-    margin-bottom: 1.1rem;
-  }
-  label { font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 0.3rem; }
-  textarea {
-    width: 100%;
-    min-height: 8rem;
-    font-size: 0.95rem;
-    font-family: var(--sans);
-    padding: 0.6rem;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text);
-    resize: vertical;
-  }
-  .example-group { margin-top: 0.85rem; }
-  .example-group h3 {
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--muted);
-    margin: 0.6rem 0 0.35rem;
-  }
-  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-  .chip {
-    display: inline-block;
-    padding: 0.3rem 0.6rem;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    cursor: pointer;
-    font-size: 0.78rem;
-    color: var(--text);
-    max-width: 100%;
-    overflow-wrap: anywhere;
-  }
-  .chip:hover, .chip:focus-visible { border-color: var(--accent); color: var(--accent); }
-  .chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
-  .mode-row { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.6rem; font-size: 0.78rem; color: var(--muted); }
-  .stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem 1.5rem;
-    font-size: 0.82rem;
-    color: var(--muted);
-  }
-  .stats b { color: var(--text); font-weight: 600; }
-  .view-toggle { display: flex; gap: 0.4rem; margin-bottom: 0.75rem; }
-  .view-toggle button {
-    font-size: 0.78rem;
-    padding: 0.3rem 0.7rem;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--muted);
-    cursor: pointer;
-    font-weight: 600;
-  }
-  .view-toggle button.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
-  .line {
-    padding: 0.6rem 0;
-    border-bottom: 1px solid var(--border);
-    cursor: default;
-    border-left: 3px solid transparent;
-  }
-  .line:last-child { border-bottom: none; }
-  .line-text { font-size: 0.95rem; overflow-wrap: anywhere; padding-left: 0.1rem; }
-  .line.selected {
-    background: color-mix(in srgb, var(--accent) 6%, transparent);
-    border-left-color: var(--accent);
-    padding-left: 0.5rem;
-    margin-left: -0.6rem;
-  }
-  mark {
-    background: var(--mark-bg);
-    border-bottom: 2px solid var(--mark-border);
-    color: inherit;
-    border-radius: 2px;
-    padding: 0 1px;
-    position: relative;
-  }
-  mark.hot { border-bottom-width: 3px; border-bottom-color: var(--accent); }
-  .mark-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: #fff;
-    font-size: 0.6rem;
-    font-weight: 700;
-    margin-right: 2px;
-    vertical-align: middle;
-    line-height: 1;
-  }
-  .no-span { color: var(--muted); font-size: 0.8rem; font-style: italic; margin-top: 0.15rem; }
-
-  .report-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    font-size: 0.72rem;
-    color: var(--muted);
-    text-decoration: none;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 0.08rem 0.5rem;
-    margin-top: 0.3rem;
-  }
-  .report-link:hover { color: var(--bad); border-color: var(--bad); }
-  .report-row { display: flex; justify-content: flex-end; }
-  .report-all-row { display: flex; justify-content: flex-end; margin-bottom: 0.4rem; }
-
-  .span-row {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: 0.5rem 0.9rem;
-    align-items: center;
-    min-height: 56px;
-    font-size: 0.8rem;
-    color: var(--muted);
-    padding: 0.5rem 0.15rem;
-    border-top: 1px solid var(--border);
-  }
-  .span-row:first-of-type { margin-top: 0.4rem; }
-  .span-num {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-size: 0.6rem;
-    font-weight: 700;
-    margin-right: 0.3rem;
-  }
-  .span-zone-value { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
-  .span-value-btn {
-    all: unset;
-    cursor: pointer;
-    font-size: 1.35rem;
-    font-weight: 650;
-    color: var(--text);
-    font-variant-numeric: tabular-nums;
-    position: relative;
-  }
-  .span-value-btn:hover, .span-value-btn:focus-visible { color: var(--accent); }
-  .span-value-btn .copied-tip {
-    position: absolute;
-    top: -1.5em;
-    left: 0;
-    font-size: 0.65rem;
-    font-weight: 600;
-    background: var(--text);
-    color: var(--panel);
-    padding: 0.1rem 0.4rem;
-    border-radius: 4px;
-    opacity: 0;
-    pointer-events: none;
-  }
-  .span-value-btn.show-copied .copied-tip { opacity: 1; }
-  @media (prefers-reduced-motion: no-preference) {
-    .span-value-btn .copied-tip { transition: opacity 0.15s ease; }
-  }
-  .span-caption { font-size: 0.75rem; color: var(--muted); }
-  .span-zone-mid { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; min-width: 0; }
-  .chip-small {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.12rem 0.5rem;
-    border-radius: 999px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    background: var(--border);
-    color: var(--muted);
-    white-space: nowrap;
-  }
-  .span-western {
-    font-family: var(--mono);
-    font-size: 0.72rem;
-    color: var(--muted);
-    white-space: nowrap;
-  }
-  .span-zone-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem; }
-  .conf-pill {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.15rem 0.55rem;
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 700;
-  }
-  .conf-pill.ok { background: var(--ok-bg); color: var(--ok); }
-  .conf-pill.warn { background: var(--warn-soft); color: var(--warn); }
-  .conf-pill.low { background: var(--border); color: var(--muted); }
-  .verified-pill {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.15rem 0.55rem;
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 700;
-  }
-  .verified-pill.yes { background: var(--ok-bg); color: var(--ok); }
-  .verified-pill.no { background: var(--border); color: var(--muted); }
-  .token-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; width: 100%; padding: 0.1rem 0.15rem 0.5rem; }
-  .token-chip {
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 0.15rem 0.45rem;
-    color: var(--muted);
-  }
-  .token-chip b { color: var(--text); font-weight: 700; }
-  .how-btn {
-    all: unset;
-    cursor: pointer;
-    font-size: 0.7rem;
-    color: var(--muted);
-    padding: 0.1rem 0.3rem;
-    border-radius: 4px;
-  }
-  .how-btn:hover, .how-btn:focus-visible { color: var(--accent); }
-  .how-btn .chev { display: inline-block; transition: transform 0.15s ease; }
-  .how-btn[aria-expanded="true"] .chev { transform: rotate(90deg); }
-  @media (prefers-reduced-motion: reduce) {
-    .how-btn .chev { transition: none; }
-  }
-  .how-panel {
-    grid-column: 1 / -1;
-    display: none;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-    padding: 0.1rem 0.15rem 0.5rem;
-    font-family: var(--mono);
-    font-size: 0.7rem;
-  }
-  .how-panel.open { display: flex; }
-  .how-chip {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 0.15rem 0.45rem;
-    color: var(--text);
-  }
-  h2 { font-size: 1rem; margin: 0 0 0.6rem; }
-  .row-head { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
-  button {
-    font-family: var(--sans);
-    font-size: 0.85rem;
-    padding: 0.5rem 0.9rem;
-    border-radius: 7px;
-    border: 1px solid var(--accent);
-    background: var(--accent-soft);
-    color: var(--accent);
-    cursor: pointer;
-    font-weight: 600;
-  }
-  button:hover { filter: brightness(1.05); }
-  button:disabled { opacity: 0.6; cursor: default; }
-  select {
-    font-family: var(--sans);
-    font-size: 0.82rem;
-    padding: 0.35rem 0.5rem;
-    border-radius: 7px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text);
-  }
-  .controls-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.9rem 1.4rem;
-    align-items: flex-end;
-    margin-bottom: 0.9rem;
-  }
-  .control { display: flex; flex-direction: column; gap: 0.3rem; }
-  .bench-summary { font-size: 0.85rem; margin-bottom: 0.6rem; }
-  .bench-bars { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.7rem; }
-  .bench-bar-row { display: flex; align-items: center; gap: 0.6rem; font-size: 0.78rem; }
-  .bench-bar-label { width: 62px; flex-shrink: 0; color: var(--muted); }
-  .bench-bar-track { flex: 1; background: var(--border); border-radius: 4px; height: 14px; overflow: hidden; min-width: 0; }
-  .bench-bar-fill { height: 100%; background: var(--accent); border-radius: 4px; }
-  .bench-bar-fill.gpu { background: var(--focus); }
-  .bench-bar-num { width: 90px; flex-shrink: 0; text-align: right; font-variant-numeric: tabular-nums; }
-  .mismatch-list { font-family: var(--mono); font-size: 0.75rem; white-space: pre-wrap; color: var(--bad); overflow-wrap: anywhere; }
-  .match-ok { color: var(--ok); font-weight: 600; }
-  .strip-wrap { overflow-x: auto; padding-bottom: 0.3rem; }
-  .strip {
-    display: inline-flex;
-    flex-direction: column;
-    gap: 3px;
-    padding: 0.25rem 0;
-  }
-  .strip-chars { display: flex; gap: 2px; }
-  .cell {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 22px;
-    flex: 0 0 22px;
-    font-family: var(--mono);
-  }
-  .cell .ch {
-    width: 22px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    background: var(--cell-o);
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-  .cell.tag-B .ch { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .cell.tag-I .ch { background: var(--accent-soft); color: var(--accent); border-color: var(--mark-border); }
-  .cell .probbar { width: 18px; height: 3px; background: var(--border); border-radius: 2px; margin-top: 2px; overflow: hidden; }
-  .cell .probbar i { display: block; height: 100%; background: var(--accent); }
-  .strip-labels { position: relative; height: 15px; }
-  .run-label {
-    position: absolute;
-    top: 0;
-    box-sizing: border-box;
-    height: 100%;
-    padding-top: 2px;
-    border-top: 1px solid var(--mark-border);
-    font-size: 0.55rem;
-    color: var(--muted);
-    text-align: center;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-  .inspect-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
-  .unavailable-note { font-size: 0.8rem; color: var(--muted); font-style: italic; }
-  pre.raw {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.7rem;
-    font-family: var(--mono);
-    font-size: 0.76rem;
-    overflow-x: auto;
-    max-height: 420px;
-  }
-  .copy-row { display: flex; justify-content: flex-end; margin-bottom: 0.5rem; }
-  footer {
-    font-size: 0.82rem;
-    color: var(--muted);
-    margin-top: 2rem;
-  }
-  .error-box {
-    background: var(--bad);
-    color: #fff;
-    padding: 0.8rem;
-    border-radius: 8px;
-    font-family: var(--mono);
-    font-size: 0.82rem;
-  }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+  a { color: inherit; }
+  img, svg { max-width: 100%; }
   .hidden { display: none !important; }
   .sr-only {
     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
   }
-  .kbd-hint { font-size: 0.75rem; color: var(--muted); margin-top: 0.5rem; }
-  kbd {
-    font-family: var(--mono);
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 0.05rem 0.35rem;
-    font-size: 0.72rem;
+
+  /* ---------- header ---------- */
+  header { padding-top: calc(52px + env(safe-area-inset-top, 0px)); text-align: center; }
+  .brand {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-size: 17px; letter-spacing: -0.2px;
   }
-  @media (prefers-reduced-motion: no-preference) {
-    .conf-fill, .bench-bar-fill, .probbar i { transition: width 0.25s ease; }
+  .mark {
+    width: 26px; height: 26px; border-radius: 7px; background: var(--accent);
+    color: #fff; display: grid; place-items: center; font-size: 15px; line-height: 1;
+    flex: none;
   }
-  @media (prefers-reduced-motion: reduce) {
-    * { scroll-behavior: auto !important; }
+  h1 {
+    margin: 30px 0 0;
+    font-size: 30px; line-height: 1.2; font-weight: 400; letter-spacing: -0.7px;
   }
-  @media (max-width: 480px) {
-    h1 { font-size: 1.35rem; }
-    .stats { gap: 0.5rem 1rem; }
-    .bench-bar-label { width: 46px; }
-    .bench-bar-num { width: 72px; }
+  .subtitle { margin: 12px 0 0; color: var(--muted); font-size: 13.5px; }
+
+  /* ---------- try it out ---------- */
+  .try { margin-top: 40px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-line);
+    border-radius: var(--radius);
+    overflow: hidden;
   }
-  @media (max-width: 520px) {
-    .span-row {
-      grid-template-columns: 1fr;
-      grid-template-areas: "value" "mid" "right";
-      row-gap: 0.4rem;
-    }
-    .span-zone-value { grid-area: value; }
-    .span-zone-mid { grid-area: mid; }
-    .span-zone-right { grid-area: right; align-items: flex-start; flex-direction: row; justify-content: space-between; }
+  .card-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--card-line);
+  }
+  .label {
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+  }
+  .card-head .hint { font-size: 12px; color: var(--faint); }
+
+  .field { position: relative; background: var(--bg); padding: 16px; }
+  .mirror, #input {
+    font: inherit; font-size: 15px; line-height: 24px;
+    letter-spacing: normal;
+    padding: 0; margin: 0; border: 0;
+    white-space: pre; overflow: hidden;
+  }
+  .mirror {
+    position: absolute; inset: 16px 16px auto 16px;
+    pointer-events: none; color: var(--text);
+    height: 24px;
+  }
+  #input {
+    display: block; width: 100%; background: transparent;
+    color: transparent; caret-color: var(--text);
+    height: 24px; outline: none;
+  }
+  #input::selection { background: rgba(37, 99, 235, 0.22); }
+  .field:focus-within { box-shadow: inset 0 0 0 2px var(--focus); }
+  mark {
+    background: transparent; color: inherit; border-radius: 4px;
+    padding: 2px 0; box-decoration-break: clone; -webkit-box-decoration-break: clone;
+  }
+  mark.t-num { background: var(--c-num); color: var(--c-num-t); }
+  mark.t-unit { background: var(--c-unit); color: var(--c-unit-t); }
+  mark.t-pfx { background: var(--c-pfx); color: var(--c-pfx-t); }
+  mark.t-cur { background: var(--c-cur); color: var(--c-cur-t); }
+  mark.t-range { background: var(--c-range); color: var(--c-range-t); }
+
+  .result { background: var(--panel); padding: 14px 16px 16px; }
+  .result .label { display: block; margin-bottom: 8px; }
+  .res-row {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    padding: 5px 0;
+  }
+  .res-row + .res-row { border-top: 1px solid var(--card-line); margin-top: 4px; padding-top: 9px; }
+  .res-main { font-size: 21px; letter-spacing: -0.4px; }
+  .res-main .rupee { color: var(--muted); margin-right: 2px; }
+  .res-side { font-size: 12.5px; color: var(--muted); text-align: right; white-space: nowrap; }
+  .res-span { font-size: 12px; color: var(--faint); margin-top: 1px; }
+  .res-empty { font-size: 17px; color: var(--muted); letter-spacing: -0.2px; }
+  .res-note { font-size: 12.5px; color: var(--faint); margin-top: 4px; }
+  .badge {
+    display: inline-block; font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase;
+    border-radius: 999px; padding: 2px 7px; vertical-align: 2px; margin-left: 6px;
+    background: var(--c-cur); color: var(--c-cur-t); cursor: help;
+  }
+  .badge.unverified { background: var(--c-range); color: var(--c-range-t); }
+
+  .caption-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 10px; font-size: 12px; color: var(--faint);
+  }
+  .caption-row a { color: var(--faint); text-decoration: underline; text-underline-offset: 2px; }
+  .caption-row a:hover { color: var(--text); }
+
+  .legend {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px;
+    margin-top: 18px; font-size: 12px; color: var(--muted);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+  /* ---------- developer options ---------- */
+  details.dev {
+    margin-top: 16px; border: 1px solid var(--card-line); border-radius: 12px;
+    background: var(--card);
+  }
+  details.dev > summary {
+    cursor: pointer; padding: 10px 14px; font-size: 12.5px; color: var(--muted);
+    list-style: none;
+  }
+  details.dev > summary::-webkit-details-marker { display: none; }
+  details.dev > summary::before { content: "›"; display: inline-block; margin-right: 8px; transition: transform .15s; }
+  details.dev[open] > summary::before { transform: rotate(90deg); }
+  .dev-body { padding: 4px 14px 14px; border-top: 1px solid var(--card-line); font-size: 12.5px; }
+  .dev-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 9px 0; }
+  .dev-row + .dev-row { border-top: 1px solid var(--card-line); }
+  .dev-row label { color: var(--muted); }
+  .grow { flex: 1 1 auto; }
+  input[type="range"] { flex: 1 1 120px; min-width: 110px; accent-color: var(--accent); }
+  button.ghost {
+    font: inherit; font-size: 12px; cursor: pointer;
+    background: var(--bg); color: var(--text);
+    border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px;
+  }
+  button.ghost:hover { border-color: var(--muted); }
+  button.ghost[disabled] { opacity: .5; cursor: default; }
+  select {
+    font: inherit; font-size: 12px; background: var(--bg); color: var(--text);
+    border: 1px solid var(--line); border-radius: 8px; padding: 4px 6px;
+  }
+  pre.json {
+    margin: 8px 0 0; max-height: 260px; overflow: auto;
+    background: var(--panel); border-radius: 10px; padding: 10px 12px;
+    font-family: var(--mono); font-size: 11.5px; line-height: 1.5;
+  }
+  .dev-note { color: var(--faint); font-size: 12px; }
+  .bench-bar-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 12px; }
+  .bench-bar-label { width: 58px; color: var(--muted); }
+  .bench-bar-track { flex: 1; height: 8px; border-radius: 999px; background: var(--panel); overflow: hidden; }
+  .bench-bar-fill { display: block; height: 100%; border-radius: 999px; background: var(--c-num-t); }
+  .bench-bar-fill.gpu { background: var(--c-cur-t); }
+  .bench-bar-num { width: 66px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .mismatch-list { white-space: pre-wrap; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+  /* ---------- sections ---------- */
+  section { margin-top: 74px; }
+  h2 { margin: 0; font-size: 19px; font-weight: 400; letter-spacing: -0.35px; text-align: center; }
+  .sec-sub { margin: 9px 0 0; text-align: center; color: var(--muted); font-size: 13px; }
+  .sec-sub.narrow { max-width: 440px; margin-left: auto; margin-right: auto; }
+
+  .examples { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 26px; }
+  button.example {
+    font: inherit; text-align: left; cursor: pointer;
+    background: var(--card); border: 1px solid var(--card-line);
+    border-radius: var(--radius); padding: 13px 14px 14px;
+    color: var(--text); transition: border-color .15s, background .15s;
+  }
+  button.example:hover { border-color: var(--line); background: var(--panel); }
+  button.example .label { display: block; margin-bottom: 7px; }
+  button.example .phrase { font-size: 14px; line-height: 1.55; word-break: break-word; }
+
+  pre.code {
+    margin: 24px 0 0; background: var(--code-bg); color: var(--code-text);
+    border-radius: var(--radius); padding: 18px;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.75;
+    overflow-x: auto;
+  }
+  pre.code .c { color: var(--code-muted); }
+  pre.code .s { color: var(--code-str); }
+  pre.code .k { color: var(--code-kw); }
+  pre.code mark { padding: 1px 2px; }
+
+  /* ---------- inside the model ---------- */
+  .model-box { margin-top: 24px; border: 1px solid var(--card-line); border-radius: var(--radius); background: var(--card); overflow: hidden; }
+  .model-part { padding: 14px 16px; }
+  .model-part + .model-part { border-top: 1px solid var(--card-line); }
+  .model-part > .label { display: block; margin-bottom: 10px; }
+  .strip-scroll { overflow-x: auto; padding-bottom: 4px; }
+  .strip-chars { display: flex; gap: 2px; }
+  .cell { width: 22px; flex: none; text-align: center; }
+  .cell .ch {
+    font-family: var(--mono); font-size: 13px; line-height: 22px; height: 22px;
+    border-radius: 5px; background: var(--panel); color: var(--muted);
+    overflow: hidden;
+  }
+  .cell.g-num .ch { background: var(--c-num); color: var(--c-num-t); }
+  .cell.g-unit .ch { background: var(--c-unit); color: var(--c-unit-t); }
+  .cell.g-pfx .ch { background: var(--c-pfx); color: var(--c-pfx-t); }
+  .cell.g-cur .ch { background: var(--c-cur); color: var(--c-cur-t); }
+  .cell.g-range .ch { background: var(--c-range); color: var(--c-range-t); }
+  .cell .bio { font-size: 9px; line-height: 14px; color: var(--faint); font-family: var(--mono); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-size: 12px; border-radius: 8px; padding: 4px 9px;
+    background: var(--panel); color: var(--muted);
+  }
+  .chip b { font-weight: 500; color: var(--text); }
+  .arith {
+    font-family: var(--mono); font-size: 13px; color: var(--text);
+    overflow-x: auto; white-space: nowrap; padding-bottom: 2px;
+  }
+  .arith .eq { color: var(--muted); }
+  .model-caption { margin: 14px 0 0; text-align: center; font-size: 12.5px; color: var(--faint); }
+
+  /* ---------- footer ---------- */
+  footer { margin-top: 74px; padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); text-align: center; }
+  footer p { margin: 14px auto 0; max-width: 440px; color: var(--muted); font-size: 13px; }
+  .cta {
+    display: inline-block; margin-top: 26px;
+    background: var(--text); color: var(--bg);
+    border: 0; border-radius: 999px; padding: 10px 20px;
+    font: inherit; font-size: 13.5px; cursor: pointer;
+  }
+  .cta:hover { opacity: .88; }
+  .icons { display: flex; align-items: center; justify-content: center; gap: 20px; margin-top: 34px; }
+  .icons a { color: var(--faint); display: inline-flex; }
+  .icons a:hover { color: var(--text); }
+  .icons svg { display: block; }
+  .foot-name { margin-top: 22px; font-size: 13px; color: var(--muted); }
+  .foot-tag { margin-top: 2px; font-size: 13px; color: var(--faint); }
+  .foot-links { margin-top: 14px; font-size: 12px; color: var(--faint); }
+  .foot-links a { color: var(--faint); text-decoration: underline; text-underline-offset: 2px; }
+  .foot-links a:hover { color: var(--text); }
+  .theme-btn {
+    font: inherit; font-size: 12px; cursor: pointer; color: var(--faint);
+    background: none; border: 0; padding: 2px 4px; text-decoration: underline; text-underline-offset: 2px;
+  }
+  .theme-btn:hover { color: var(--text); }
+
+  .err {
+    margin-top: 20px; border-radius: 10px; padding: 10px 12px;
+    background: var(--c-range); color: var(--c-range-t); font-size: 12.5px;
+  }
+
+  @media (max-width: 560px) {
+    header { padding-top: calc(38px + env(safe-area-inset-top, 0px)); }
+    h1 { font-size: 26px; }
+    section { margin-top: 56px; }
+    footer { margin-top: 56px; }
+    .examples { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header class="top">
-    <div class="title-block">
-      <h1>gpu-sankhya</h1>
-      <p class="tagline">
-        Parses Indian informal number shorthand &mdash; Hinglish and Devanagari (sava lakh, dedh crore, डेढ़ लाख, सवा करोड़) &mdash; into numbers, entirely in your browser.
-      </p>
-    </div>
-    <div class="top-actions">
-      <a class="icon-btn" href="https://www.npmjs.com/package/gpu-sankhya" target="_blank" rel="noopener">npm</a>
-      <a class="icon-btn" href="https://github.com/athrvk/gpu-sankhya" target="_blank" rel="noopener">GitHub</a>
-      <button type="button" class="icon-btn" id="theme-toggle" aria-pressed="false">theme: system</button>
-    </div>
+
+  <header>
+    <div class="brand"><span class="mark" aria-hidden="true">₹</span> gpu-sankhya</div>
+    <h1>Indian Number Shorthand<br />to Real Numbers</h1>
+    <p class="subtitle">A small neural model, running locally in your browser</p>
   </header>
 
-  <div class="badges-row" id="badges-row">
-    <span class="badge" id="badge-params">model: &ndash;</span>
-    <span class="badge" id="badge-webgpu">WebGPU: checking&hellip;</span>
-  </div>
+  <div id="load-error" class="err hidden" role="alert"></div>
 
-  <div id="load-error" class="card error-box hidden"></div>
-
-  <div class="layout">
-    <div class="col-left">
-      <div class="card">
-        <label for="input">Input (one quantity per line)</label>
-        <textarea id="input" spellcheck="false">sava lakh ka phone
-dedh crore ka flat
-paune do lakh
-2.5L ka phone
-20k logon ne attend kiya
-2-3 lakh mein aa jayega
-das hazaar crore ka package
-bhai derh crore se badhkar saadhe teen crore ho gaya
-CTC 12 LPA hai
-Rs 2,50,000/- negotiable
-teen din baad milte hain
-lakhon log aaye</textarea>
-
-        <div id="example-groups"></div>
-        <div class="mode-row">
-          <label for="chip-mode" style="margin:0;">Chip click:</label>
-          <select id="chip-mode">
-            <option value="append">append line</option>
-            <option value="replace">replace input</option>
-          </select>
-        </div>
-        <div class="mode-row">
-          <label style="display:flex;align-items:center;gap:0.4rem;margin:0;">
-            <input type="checkbox" id="strict-toggle" />
-            strict mode &mdash; only verified spans
-          </label>
-        </div>
-        <div class="mode-row">
-          <label for="minconf" style="margin:0;">min confidence:</label>
-          <input type="range" id="minconf" min="0" max="1" step="0.01" value="0"
-                 style="flex:1;min-width:6rem;" />
-          <b id="minconf-value" style="min-width:2.5rem;text-align:right;">0%</b>
-        </div>
-        <p class="kbd-hint">
-          <kbd>Ctrl/Cmd</kbd>+<kbd>Enter</kbd> runs the benchmark &middot; <kbd>Esc</kbd> clears the input
-        </p>
+  <div class="try" id="try">
+    <div class="card">
+      <div class="card-head">
+        <span class="label">Try it out</span>
+        <span class="hint">Type any amount phrase</span>
+      </div>
+      <div class="field">
+        <label class="sr-only" for="input">Amount phrase to parse</label>
+        <div class="mirror" id="mirror" aria-hidden="true"></div>
+        <input id="input" type="text" spellcheck="false" autocomplete="off"
+               autocapitalize="off" value="sava lakh ka phone" />
+      </div>
+      <div class="result">
+        <span class="label">Result</span>
+        <div id="result-body"></div>
       </div>
     </div>
 
-    <div class="col-right">
-      <div class="card">
-        <div class="stats" id="stats">
-          <span>parse: <b id="stat-latency">&ndash;</b></span>
-          <span>lines: <b id="stat-lines">0</b></span>
-          <span>spans: <b id="stat-spans">0</b></span>
-        </div>
-      </div>
+    <div class="caption-row">
+      <span id="parse-caption">parsing…</span>
+      <a id="report-link" href="https://github.com/athrvk/gpu-sankhya/issues/new" target="_blank" rel="noopener">Wrong? Report it</a>
+    </div>
 
-      <div class="card card-results">
-        <div class="row-head">
-          <h2 style="margin:0;">Results</h2>
-          <div class="view-toggle" role="group" aria-label="Output view">
-            <button type="button" id="view-cards" class="active" aria-pressed="true">Cards</button>
-            <button type="button" id="view-json" aria-pressed="false">Raw JSON</button>
+    <div class="legend">
+      <span><i style="background:var(--sw-pfx)"></i> Fraction word</span>
+      <span><i style="background:var(--sw-num)"></i> Number</span>
+      <span><i style="background:var(--sw-unit)"></i> Unit</span>
+      <span><i style="background:var(--sw-cur)"></i> Currency</span>
+      <span><i style="background:var(--sw-range)"></i> Range</span>
+    </div>
+
+    <details class="dev">
+      <summary>Developer options</summary>
+      <div class="dev-body">
+        <div class="dev-row">
+          <label for="strict-toggle"><input type="checkbox" id="strict-toggle" /> strict mode</label>
+          <span class="dev-note">drop spans the lexicon can’t fully justify</span>
+        </div>
+        <div class="dev-row">
+          <label for="minconf">min confidence</label>
+          <input type="range" id="minconf" min="0" max="0.99" step="0.01" value="0" />
+          <span id="minconf-value" class="dev-note">0%</span>
+        </div>
+        <div class="dev-row">
+          <span class="grow dev-note" id="backend-status">backend: CPU · WebGPU: checking…</span>
+        </div>
+        <div class="dev-row" style="align-items:flex-start;flex-direction:column;gap:6px">
+          <div style="display:flex;gap:10px;align-items:center;width:100%">
+            <span class="grow"><label>Raw JSON</label></span>
+            <button type="button" class="ghost" id="copy-json">Copy</button>
           </div>
+          <pre class="json" id="results-raw"></pre>
         </div>
-        <div class="copy-row hidden" id="copy-row">
-          <button type="button" id="copy-json">Copy JSON</button>
-        </div>
-        <div class="report-all-row">
-          <a class="report-link" id="report-all" href="#" target="_blank" rel="noopener" title="Report a wrong parse for the whole input">🚩 report wrong parse (all lines)</a>
-        </div>
-        <div class="results-scroll">
-          <div id="results"></div>
-          <pre class="raw hidden" id="results-raw"></pre>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-strip">
-      <div class="card">
-        <div class="inspect-toggle-row">
-          <h2 style="margin:0;">Inside the model</h2>
-          <label style="display:flex;align-items:center;gap:0.4rem;margin:0;">
-            <input type="checkbox" id="inspect-toggle" checked />
-            show per-character view
-          </label>
-        </div>
-        <div id="inspect-body">
-          <p class="tagline" style="margin:0 0 0.5rem;">
-            Per-character BIO tag and predicted class for the focused (or last) line, straight from the network before the deterministic core repairs anything.
-            <span id="inspect-time"></span>
-          </p>
-          <div class="strip-wrap"><div class="strip" id="strip"></div></div>
-        </div>
-        <p class="unavailable-note hidden" id="inspect-unavailable">
-          inspect() is not available in this build yet &mdash; showing parsed spans only.
-        </p>
-      </div>
-    </div>
-
-    <div class="col-bench">
-      <div class="card">
-        <h2>Batch benchmark</h2>
-        <p class="tagline" style="margin-bottom:0.6rem;">
-          Parses a varied batch (generated from the example set) with <code>parseBatch</code> on CPU and (if available) WebGPU, then compares results span-for-span.
-        </p>
-        <div class="controls-grid">
-          <div class="control">
-            <label for="bench-backend">Backend</label>
-            <select id="bench-backend">
-              <option value="auto">auto</option>
-              <option value="cpu">cpu</option>
-              <option value="webgpu">webgpu</option>
-            </select>
-          </div>
-          <div class="control">
-            <label for="bench-size">Batch size</label>
+        <div class="dev-row" style="align-items:flex-start;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%">
+            <label for="bench-size">batch benchmark</label>
             <select id="bench-size">
-              <option value="100">100</option>
+              <option value="200">200</option>
               <option value="500" selected>500</option>
               <option value="2000">2000</option>
             </select>
+            <select id="bench-backend">
+              <option value="auto" selected>auto</option>
+              <option value="cpu">cpu</option>
+              <option value="webgpu">webgpu</option>
+            </select>
+            <button type="button" class="ghost" id="bench-btn">Run</button>
           </div>
-          <button type="button" id="bench-btn">Run batch benchmark</button>
+          <div id="bench-bars" style="width:100%"></div>
+          <div id="bench-summary" class="dev-note"></div>
+          <div id="bench-mismatches"></div>
         </div>
-        <div id="bench-summary" class="bench-summary"></div>
-        <div id="bench-bars" class="bench-bars"></div>
-        <div id="bench-mismatches"></div>
       </div>
-    </div>
+    </details>
   </div>
 
+  <section id="examples-section">
+    <h2>Tap One, See the Number</h2>
+    <p class="sec-sub">Each of these runs in the box above</p>
+    <div class="examples" id="examples"></div>
+  </section>
+
+  <section>
+    <h2>Use It in Your Code</h2>
+    <p class="sec-sub narrow">You pass the phrase. You get back the span, the value, the unit, the currency and a calibrated confidence</p>
+<pre class="code"><code><span class="c">$</span> npm install gpu-sankhya
+
+<span class="k">import</span> { parse } <span class="k">from</span> <span class="s">"gpu-sankhya"</span>;
+
+<span class="k">const</span> spans = parse(<span class="s">"</span><mark class="t-pfx">sava</mark> <mark class="t-unit">lakh</mark><span class="s"> ka phone"</span>);
+
+<span class="c">// spans[0] → { span: "sava lakh", start: 0, end: 9,</span>
+<span class="c">//              value: 125000, unit: "lakh", currency: null,</span>
+<span class="c">//              confidence: 0.97, verified: true,</span>
+<span class="c">//              tokens: [["PFX_SAVA","sava"],["UNIT_LAKH","lakh"]] }</span>
+
+<span class="c">// gate it:  parse(text, { strict: true, minConfidence: 0.9 })</span>
+<span class="c">// bulk it:  await parseBatch(texts, { backend: "webgpu" })</span></code></pre>
+  </section>
+
+  <section>
+    <h2>Inside the Model</h2>
+    <p class="sec-sub narrow">A char-level CNN tags every character; a deterministic arithmetic core does the maths, so the value can never be hallucinated</p>
+    <div class="model-box">
+      <div class="model-part">
+        <span class="label">Per-character tags</span>
+        <div class="strip-scroll"><div id="strip"></div></div>
+        <p class="dev-note hidden" id="strip-unavailable" style="margin:0">inspect() is not available in this build — showing tokens only.</p>
+      </div>
+      <div class="model-part">
+        <span class="label">Decoded tokens</span>
+        <div class="chips" id="token-chips"></div>
+      </div>
+      <div class="model-part">
+        <span class="label">Arithmetic</span>
+        <div class="arith" id="arith"></div>
+      </div>
+    </div>
+    <p class="model-caption" id="model-caption">Characters to classes to a number, in 40,475 parameters</p>
+  </section>
+
   <footer>
-    Char CNN tags spans + token classes; a deterministic core does the arithmetic.
-    Source: <a href="https://github.com/athrvk/gpu-sankhya" target="_blank" rel="noopener">github.com/athrvk/gpu-sankhya</a>
-    &middot; npm package <code>gpu-sankhya</code>
+    <h2>A Small Experiment. Still Growing</h2>
+    <p>Indian amounts come in every shape — <em>sava lakh</em>, <em>2.5L</em>, <em>12 LPA</em>, <em>डेढ़ लाख</em>, <em>Rs 2,50,000/-</em>. Try your own, in Hinglish, Hindi, Marathi or Gujarati.</p>
+    <p>It also knows when there is no amount: <em>teen din baad</em> is three days, and <em>lakhon log</em> is a crowd. Neither returns a number.</p>
+    <button type="button" class="cta" id="cta">Try your own phrase ↗</button>
+    <div class="icons">
+      <a href="https://github.com/athrvk/gpu-sankhya" target="_blank" rel="noopener" aria-label="gpu-sankhya on GitHub" title="GitHub">
+        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      </a>
+      <a href="https://www.npmjs.com/package/gpu-sankhya" target="_blank" rel="noopener" aria-label="gpu-sankhya on npm" title="npm">
+        <svg width="34" height="13" viewBox="0 0 780 250" fill="currentColor" aria-hidden="true"><path d="M240 250h100v-50h100V0H240v250zM340 50h50v100h-50V50zM480 0v200h100V50h50v150h50V50h50v150h50V0H480zM0 200h100V50h50v150h50V0H0v200z"/></svg>
+      </a>
+    </div>
+    <div class="foot-name">gpu-sankhya</div>
+    <div class="foot-tag">A small experiment in reading Indian amounts</div>
+    <div class="foot-links">
+      <a id="report-link-foot" href="https://github.com/athrvk/gpu-sankhya/issues/new" target="_blank" rel="noopener">Report a wrong parse</a>
+      · <button type="button" class="theme-btn" id="theme-toggle">theme: system</button>
+    </div>
   </footer>
+
 </div>
 
 <script type="module">
   let mod;
   try {
     mod = await import("./index.js");
-  } catch (e1) {
+  } catch (e) {
     try {
       mod = await import("../dist/index.js");
     } catch (e2) {
@@ -756,13 +523,9 @@ lakhon log aaye</textarea>
   function safeGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
   function safeSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
   function applyTheme(mode) {
-    if (mode === "dark" || mode === "light") {
-      document.documentElement.setAttribute("data-theme", mode);
-    } else {
-      document.documentElement.removeAttribute("data-theme");
-    }
+    if (mode === "dark" || mode === "light") document.documentElement.setAttribute("data-theme", mode);
+    else document.documentElement.removeAttribute("data-theme");
     themeBtn.textContent = "theme: " + (mode || "system");
-    themeBtn.setAttribute("aria-pressed", mode ? "true" : "false");
   }
   let theme = safeGet(THEME_KEY) || "system";
   applyTheme(theme);
@@ -772,730 +535,427 @@ lakhon log aaye</textarea>
     applyTheme(theme);
   });
 
-  // ---------- model badge ----------
-  const badgeParams = document.getElementById("badge-params");
-  if (modelInfoFn) {
-    try {
-      const info = modelInfoFn();
-      badgeParams.textContent =
-        `model: ${info.params.toLocaleString("en-IN")} params · ${info.layers.length} layers · vocab ${info.vocab}`;
-    } catch {
-      badgeParams.textContent = "model: 17,883 params";
-    }
-  } else {
-    badgeParams.textContent = "model: 17,883 params · 27 KB gzipped";
+  // ---------- model info ----------
+  let MODEL = null;
+  try { if (modelInfoFn) MODEL = modelInfoFn(); } catch {}
+  if (MODEL) {
+    document.getElementById("model-caption").textContent =
+      `Characters to classes to a number, in ${MODEL.params.toLocaleString("en-IN")} parameters` +
+      ` · ${MODEL.layers.length} conv layers · vocab ${MODEL.vocab}`;
   }
 
-  // ---------- webgpu badge ----------
-  const webgpuBadge = document.getElementById("badge-webgpu");
-  let gpuAvail = false;
-  try {
-    gpuAvail = !!(await probeWebGPU());
-  } catch {
-    gpuAvail = false;
+  // ---------- helpers ----------
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
-  webgpuBadge.textContent = "WebGPU: " + (gpuAvail ? "available" : "unavailable");
-  webgpuBadge.className = "badge " + (gpuAvail ? "yes" : "no");
-
-  // ---------- examples ----------
-  const EXAMPLE_GROUPS = [
-    ["Hinglish", [
-      "sava lakh",
-      "dedh crore ka flat",
-      "paune do lakh",
-      "2.5L ka phone",
-      "20k logon ne attend kiya",
-      "sawaa laakh ka budget hai",
-      "2-3 lakh mein aa jayega",
-      "das hazaar crore ka package",
-    ]],
-    ["Devanagari", [
-      "डेढ़ लाख",
-      "सवा दो करोड़ का फ्लैट",
-      "पौने दो लाख",
-      "२.५ लाख",
-      "दस हज़ार करोड़ का पैकेज",
-      "बजट साढ़े तीन लाख है",
-      "लाखों लोग आए",
-    ]],
-    ["Mixed", [
-      "20k लोग आए",
-      "budget 2 लाख hai",
-      "CTC 12 LPA hai",
-      "Rs 2,50,000/- negotiable",
-    ]],
-    ["Tricky", [
-      "bhai derh crore se badhkar saadhe teen crore ho gaya",
-      "teen din baad milte hain",
-      "तीन दिन बाद",
-    ]],
-  ];
-  const EXAMPLES = EXAMPLE_GROUPS.flatMap(([, list]) => list);
-
-  const input = document.getElementById("input");
-  const chipMode = document.getElementById("chip-mode");
-  const groupsDiv = document.getElementById("example-groups");
-  for (const [label, list] of EXAMPLE_GROUPS) {
-    const g = document.createElement("div");
-    g.className = "example-group";
-    const h = document.createElement("h3");
-    h.textContent = label;
-    g.appendChild(h);
-    const chips = document.createElement("div");
-    chips.className = "chips";
-    for (const ex of list) {
-      const chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = "chip";
-      chip.textContent = ex;
-      chip.addEventListener("click", () => {
-        if (chipMode.value === "replace") {
-          input.value = ex;
-        } else {
-          input.value = input.value.length && !input.value.endsWith("\n")
-            ? input.value + "\n" + ex
-            : input.value + ex;
-        }
-        scheduleParse();
-        input.focus();
-        updateHash();
-      });
-      chips.appendChild(chip);
-    }
-    g.appendChild(chips);
-    groupsDiv.appendChild(g);
-  }
-
-  // ---------- share via hash ----------
-  function updateHash() {
-    try {
-      history.replaceState(null, "", "#" + encodeURIComponent(input.value));
-    } catch {}
-  }
-  try {
-    if (location.hash.length > 1) {
-      input.value = decodeURIComponent(location.hash.slice(1));
-    }
-  } catch {}
-
   function indianGroup(n) {
     const neg = n < 0;
     n = Math.round(Math.abs(n));
     let s = String(n);
     if (s.length <= 3) return (neg ? "-" : "") + s;
-    let last3 = s.slice(-3);
-    let rest = s.slice(0, -3);
-    rest = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ",");
+    const last3 = s.slice(-3);
+    let rest = s.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ",");
     return (neg ? "-" : "") + rest + "," + last3;
   }
-
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, (c) => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-    }[c]));
-  }
-
-  // ---------- results (cards / raw json) ----------
-  const results = document.getElementById("results");
-  const resultsRaw = document.getElementById("results-raw");
-  const reportAllLink = document.getElementById("report-all");
-  const viewCardsBtn = document.getElementById("view-cards");
-  const viewJsonBtn = document.getElementById("view-json");
-  const copyRow = document.getElementById("copy-row");
-  const copyBtn = document.getElementById("copy-json");
-  const statLatency = document.getElementById("stat-latency");
-  const statLines = document.getElementById("stat-lines");
-  const statSpans = document.getElementById("stat-spans");
-
-  let currentView = "cards";
-  let lastParseData = []; // [{text, spans}]
-  let selectedLineIndex = null;
-
-  function setView(v) {
-    currentView = v;
-    viewCardsBtn.classList.toggle("active", v === "cards");
-    viewCardsBtn.setAttribute("aria-pressed", String(v === "cards"));
-    viewJsonBtn.classList.toggle("active", v === "json");
-    viewJsonBtn.setAttribute("aria-pressed", String(v === "json"));
-    results.classList.toggle("hidden", v !== "cards");
-    resultsRaw.classList.toggle("hidden", v !== "json");
-    copyRow.classList.toggle("hidden", v !== "json");
-    if (v === "json") renderRaw();
-  }
-  viewCardsBtn.addEventListener("click", () => setView("cards"));
-  viewJsonBtn.addEventListener("click", () => setView("json"));
-
-  function renderRaw() {
-    resultsRaw.textContent = JSON.stringify(lastParseData, null, 2);
-  }
-
-  copyBtn.addEventListener("click", async () => {
-    const text = JSON.stringify(lastParseData, null, 2);
-    try {
-      await navigator.clipboard.writeText(text);
-      copyBtn.textContent = "Copied!";
-    } catch {
-      try {
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        ta.style.position = "fixed";
-        ta.style.opacity = "0";
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
-        copyBtn.textContent = "Copied!";
-      } catch {
-        copyBtn.textContent = "Copy failed";
-      }
-    }
-    setTimeout(() => { copyBtn.textContent = "Copy JSON"; }, 1200);
-  });
-
-  const UNIT_VALUE = {
-    sau: 1e2, hazaar: 1e3, lakh: 1e5, crore: 1e7,
-    million: 1e6, billion: 1e9, arab: 1e9, kharab: 1e11,
-  };
-
+  const UNIT_VALUE = { sau: 1e2, hazaar: 1e3, lakh: 1e5, crore: 1e7, million: 1e6, billion: 1e9, arab: 1e9, kharab: 1e11 };
   function formatUnitAmount(n) {
     const r = Math.round(n * 100) / 100;
     return String(r).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
   }
-
   function unitCaption(sp) {
     if (!sp.unit) return "";
     const uv = UNIT_VALUE[sp.unit];
     if (!uv) return "";
-    if (sp.range) {
-      const a = formatUnitAmount(sp.range[0] / uv);
-      const b = formatUnitAmount(sp.range[1] / uv);
-      return `${a}–${b} ${sp.unit}`;
-    }
+    if (sp.range) return `${formatUnitAmount(sp.range[0] / uv)}–${formatUnitAmount(sp.range[1] / uv)} ${sp.unit}`;
     return `${formatUnitAmount(sp.value / uv)} ${sp.unit}`;
   }
 
-  async function copyText(text) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      try {
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        ta.style.position = "fixed";
-        ta.style.opacity = "0";
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
-        return true;
-      } catch {
-        return false;
+  // token class -> highlight group
+  function groupOf(cls) {
+    if (!cls) return null;
+    if (cls.startsWith("PFX_")) return "pfx";
+    if (cls.startsWith("UNIT_")) return "unit";
+    if (cls.startsWith("CARD_") || cls === "DIGITS" || cls === "DOT" || cls === "COMMA") return "num";
+    if (cls === "RANGE") return "range";
+    return null;
+  }
+
+  // currency markers are detected outside the token stream, so paint them
+  // with a small lexicon scan of the raw text.
+  const CURRENCY_RE = /(₹|\bRs\.?|\bINR\b|\brupees?\b|\brupaye\b|\brupaiya\b|रुपये|रुपए|रुपया|रू\.?|₨|રૂપિયા|રૂ\.?)/gi;
+
+  /** returns an array of group names (or null) per character of `text` */
+  function paintMap(text, spans) {
+    const map = new Array(text.length).fill(null);
+    const lower = text.toLowerCase();
+    for (const sp of spans) {
+      let cursor = sp.start;
+      for (const [cls, tok] of sp.tokens || []) {
+        const g = groupOf(cls);
+        if (!tok) continue;
+        const idx = lower.indexOf(String(tok).toLowerCase(), cursor);
+        if (idx < 0 || idx >= sp.end) { continue; }
+        if (g) for (let i = idx; i < idx + tok.length && i < text.length; i++) map[i] = g;
+        cursor = idx + tok.length;
       }
     }
-  }
-
-  // human-readable "how" tokens from the raw classes[] of a span
-  function humanizeClasses(classes, spanText) {
-    const PFX = {
-      PFX_SAVA: "sava ×1.25",
-      PFX_DEDH: "dedh ×1.5",
-      PFX_DHAI: "dhai ×2.5",
-      PFX_SAADHE: "saadhe +½",
-      PFX_PAUNE: "paune −¼",
-      PFX_AADHA: "aadha ½",
-      PFX_PAAV: "paav ¼",
-    };
-    const out = [];
-    for (const cls of classes) {
-      if (!cls || cls === "SEP") continue;
-      if (PFX[cls]) { out.push(PFX[cls]); continue; }
-      if (cls.startsWith("CARD_")) { out.push(cls.slice(5)); continue; }
-      if (cls === "DIGITS") {
-        const m = spanText && spanText.match(/\d[\d.,]*/);
-        out.push(m ? m[0] : "digits");
-        continue;
-      }
-      if (cls.startsWith("UNIT_")) {
-        const unitKey = cls.slice(5).toLowerCase();
-        const uv = UNIT_VALUE[unitKey];
-        out.push(uv ? `${unitKey} ×${indianGroup(uv)}` : unitKey);
-        continue;
-      }
-      if (cls === "RANGE") { out.push("–"); continue; }
-      if (cls === "DOT") { out.push("."); continue; }
-      if (cls === "COMMA") { out.push(","); continue; }
-      out.push(cls);
+    CURRENCY_RE.lastIndex = 0;
+    let m;
+    while ((m = CURRENCY_RE.exec(text)) !== null) {
+      for (let i = m.index; i < m.index + m[0].length; i++) if (!map[i]) map[i] = "cur";
+      if (m[0].length === 0) CURRENCY_RE.lastIndex++;
     }
-    return out;
+    return map;
   }
 
-  function confBand(conf) {
-    if (conf >= 0.9) return "ok";
-    if (conf >= 0.7) return "warn";
-    return "low";
+  function highlightHtml(text, spans) {
+    const map = paintMap(text, spans);
+    let out = "";
+    let i = 0;
+    while (i < text.length) {
+      const g = map[i];
+      let j = i + 1;
+      while (j < text.length && map[j] === g) j++;
+      const chunk = escapeHtml(text.slice(i, j));
+      out += g ? `<mark class="t-${g}">${chunk}</mark>` : chunk;
+      i = j;
+    }
+    return out || "&nbsp;";
   }
 
-  // ---------- wrong-parse reporting ----------
+  // ---------- wrong-parse reporting (unchanged logic) ----------
   const ISSUE_REPO = "athrvk/gpu-sankhya";
   const MAX_ISSUE_BODY_BYTES = 6000;
-
-  // Rough script guess from the characters present in the text, used only
-  // to preselect the "Language pack" dropdown on the issue form.
   function guessLangPack(text) {
     if (/[઀-૿]/.test(text)) return "gu_gujr";
-    if (/[ऀ-ॿ]/.test(text)) {
-      // both hi_deva and mr_deva use Devanagari; default to hi_deva and let
-      // the reporter correct it if it's actually Marathi.
-      return "hi_deva";
-    }
+    if (/[ऀ-ॿ]/.test(text)) return "hi_deva";
     if (/[A-Za-z]/.test(text)) return "hi_latn";
     return "other";
   }
-
   function truncateForIssue(str, maxBytes) {
     if (new Blob([str]).size <= maxBytes) return str;
-    // binary-search-ish trim to fit the byte budget, then mark truncated.
     let lo = 0, hi = str.length;
     while (lo < hi) {
       const mid = (lo + hi + 1) >> 1;
-      if (new Blob([str.slice(0, mid)]).size <= maxBytes) lo = mid;
-      else hi = mid - 1;
+      if (new Blob([str.slice(0, mid)]).size <= maxBytes) lo = mid; else hi = mid - 1;
     }
     return str.slice(0, lo) + "\n… (truncated)";
   }
-
   function buildIssueUrl({ text, gotJson }) {
-    const lang = guessLangPack(text);
-    const title = "wrong parse: " + text.slice(0, 60);
-    let bodyExtra =
-      "_Prefilled from the demo. Please fill in \"What the correct value / range / span should be\" below._";
     const params = new URLSearchParams();
+    const title = "wrong parse: " + text.slice(0, 60);
     params.set("template", "wrong_parse.yml");
     params.set("title", title);
     params.set("input-text", truncateForIssue(text, 1000));
-    params.set("lang-pack", lang);
-    if (gotJson) {
-      params.set("got", "```json\n" + truncateForIssue(gotJson, MAX_ISSUE_BODY_BYTES - 1500) + "\n```");
-    }
-    const url =
-      `https://github.com/${ISSUE_REPO}/issues/new?` + params.toString();
+    params.set("lang-pack", guessLangPack(text));
+    if (gotJson) params.set("got", "```json\n" + truncateForIssue(gotJson, MAX_ISSUE_BODY_BYTES - 1500) + "\n```");
+    const url = `https://github.com/${ISSUE_REPO}/issues/new?` + params.toString();
     if (new Blob([url]).size > MAX_ISSUE_BODY_BYTES) {
-      // last-resort safety net: drop the "got" JSON entirely.
       const minimal = new URLSearchParams();
       minimal.set("template", "wrong_parse.yml");
       minimal.set("title", title);
       minimal.set("input-text", truncateForIssue(text, 1000));
-      minimal.set("lang-pack", lang);
+      minimal.set("lang-pack", guessLangPack(text));
       return `https://github.com/${ISSUE_REPO}/issues/new?` + minimal.toString();
     }
     return url;
   }
 
-  function makeReportLink(text, spans, labelText) {
-    const a = document.createElement("a");
-    a.className = "report-link";
-    a.target = "_blank";
-    a.rel = "noopener";
-    a.href = "#";
-    a.textContent = labelText || "🚩 report wrong parse";
-    a.title = "Open a GitHub issue prefilled with this text and result";
-    a.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const gotJson = JSON.stringify(spans, null, 2);
-      a.href = buildIssueUrl({ text, gotJson });
+  // ---------- examples ----------
+  const EXAMPLES = [
+    { label: "A phone", text: "sava lakh ka phone" },
+    { label: "A flat", text: "dedh crore ka flat" },
+    { label: "Shorthand", text: "2.5L ka phone" },
+    { label: "Attendance", text: "20k logon ne attend kiya" },
+    { label: "A range", text: "2-3 lakh mein aa jayega" },
+    { label: "Salary", text: "CTC 12 LPA hai" },
+    { label: "Formal", text: "Rs 2,50,000/- negotiable" },
+    { label: "Hindi", text: "डेढ़ लाख का फोन" },
+    { label: "Marathi", text: "साडेतीन लाख रुपये" },
+    { label: "Gujarati", text: "અઢી લાખ રૂપિયા" },
+    { label: "Not money", text: "teen din baad milte hain", note: "correct — this is about days, not money" },
+    { label: "Not a number", text: "lakhon log aaye", note: "correct — “lakhon log” is a crowd, not a count" },
+  ];
+  const NOTES = new Map(EXAMPLES.filter((e) => e.note).map((e) => [e.text, e.note]));
+
+  const input = document.getElementById("input");
+  const mirror = document.getElementById("mirror");
+  const examplesDiv = document.getElementById("examples");
+  for (const ex of EXAMPLES) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "example";
+    const lab = document.createElement("span");
+    lab.className = "label";
+    lab.textContent = ex.label;
+    const phrase = document.createElement("span");
+    phrase.className = "phrase";
+    let spans = [];
+    try { spans = parse(ex.text); } catch {}
+    phrase.innerHTML = highlightHtml(ex.text, spans);
+    btn.appendChild(lab);
+    btn.appendChild(phrase);
+    btn.addEventListener("click", () => {
+      input.value = ex.text;
+      runParse();
+      document.getElementById("try").scrollIntoView({ behavior: "smooth", block: "start" });
+      input.focus();
     });
-    return a;
+    examplesDiv.appendChild(btn);
   }
 
-  function renderLine(text, spans, index) {
-    const lineDiv = document.createElement("div");
-    lineDiv.className = "line";
-    lineDiv.dataset.index = String(index);
-    if (index === selectedLineIndex) lineDiv.classList.add("selected");
-    lineDiv.tabIndex = 0;
-    lineDiv.addEventListener("click", () => selectLine(index));
-    lineDiv.addEventListener("focus", () => selectLine(index));
+  // ---------- state from hash ----------
+  try {
+    if (location.hash.length > 1) input.value = decodeURIComponent(location.hash.slice(1));
+  } catch {}
+  function updateHash() {
+    try { history.replaceState(null, "", "#" + encodeURIComponent(input.value)); } catch {}
+  }
 
-    const textDiv = document.createElement("div");
-    textDiv.className = "line-text";
-    if (spans.length === 0) {
-      textDiv.textContent = text || " ";
-      lineDiv.appendChild(textDiv);
-      if (text.trim()) {
-        const noSpan = document.createElement("div");
-        noSpan.className = "no-span";
-        noSpan.textContent = "no quantity found";
-        lineDiv.appendChild(noSpan);
-        const reportRow = document.createElement("div");
-        reportRow.className = "report-row";
-        reportRow.appendChild(makeReportLink(text, spans));
-        lineDiv.appendChild(reportRow);
+  // ---------- backend status ----------
+  const backendStatus = document.getElementById("backend-status");
+  let gpuAvail = false;
+  try { gpuAvail = !!(await probeWebGPU()); } catch { gpuAvail = false; }
+  backendStatus.textContent = "backend: CPU · WebGPU: " + (gpuAvail ? "available" : "unavailable");
+
+  // ---------- rendering ----------
+  const resultBody = document.getElementById("result-body");
+  const parseCaption = document.getElementById("parse-caption");
+  const reportLink = document.getElementById("report-link");
+  const reportLinkFoot = document.getElementById("report-link-foot");
+  const rawPre = document.getElementById("results-raw");
+  const strict = document.getElementById("strict-toggle");
+  const minConf = document.getElementById("minconf");
+  const minConfValue = document.getElementById("minconf-value");
+  const strip = document.getElementById("strip");
+  const stripUnavailable = document.getElementById("strip-unavailable");
+  const chipsDiv = document.getElementById("token-chips");
+  const arithDiv = document.getElementById("arith");
+
+  if (!inspectFn) stripUnavailable.classList.remove("hidden");
+
+  let lastSpans = [];
+
+  function renderResult(text, spans) {
+    resultBody.innerHTML = "";
+    if (!spans.length) {
+      const d = document.createElement("div");
+      d.className = "res-empty";
+      d.textContent = text.trim() ? "No amount found" : "Type something above";
+      resultBody.appendChild(d);
+      const note = NOTES.get(text.trim());
+      if (note) {
+        const n = document.createElement("div");
+        n.className = "res-note";
+        n.textContent = note;
+        resultBody.appendChild(n);
       }
-      return lineDiv;
+      return;
+    }
+    for (const sp of spans) {
+      const row = document.createElement("div");
+      row.className = "res-row";
+
+      const left = document.createElement("div");
+      const main = document.createElement("div");
+      main.className = "res-main";
+      if (sp.currency === "INR") {
+        const r = document.createElement("span");
+        r.className = "rupee";
+        r.textContent = "₹";
+        main.appendChild(r);
+      }
+      main.appendChild(document.createTextNode(
+        sp.range ? indianGroup(sp.range[0]) + " – " + indianGroup(sp.range[1]) : indianGroup(sp.value),
+      ));
+      const badge = document.createElement("span");
+      badge.className = "badge" + (sp.verified ? "" : " unverified");
+      badge.textContent = sp.verified ? "verified" : "unverified";
+      badge.title = sp.verified
+        ? "Every token in this span is justified by the lexicon and the value comes from the deterministic arithmetic core — it cannot be a hallucinated number."
+        : "At least one token in this span is not covered by the lexicon, so the value is not fully guaranteed by the arithmetic core.";
+      main.appendChild(badge);
+      left.appendChild(main);
+
+      const sub = document.createElement("div");
+      sub.className = "res-span";
+      sub.textContent = "“" + sp.span + "”";
+      left.appendChild(sub);
+      row.appendChild(left);
+
+      const right = document.createElement("div");
+      right.className = "res-side";
+      const uc = unitCaption(sp);
+      right.textContent = (uc ? uc + " · " : "") + Math.round(sp.confidence * 100) + "% confident";
+      row.appendChild(right);
+
+      resultBody.appendChild(row);
+    }
+  }
+
+  function renderModel(text, spans) {
+    // (a) per-character strip
+    strip.innerHTML = "";
+    if (inspectFn && text.trim()) {
+      let insp = null;
+      try { insp = inspectFn(text); } catch {}
+      if (insp) {
+        const row = document.createElement("div");
+        row.className = "strip-chars";
+        for (const c of insp.chars) {
+          const cell = document.createElement("div");
+          const g = groupOf(c.cls);
+          const tag = c.bio === 1 ? "B" : c.bio === 2 ? "I" : "O";
+          cell.className = "cell" + (tag !== "O" && g ? " g-" + g : "");
+          const ch = document.createElement("div");
+          ch.className = "ch";
+          ch.textContent = c.ch === " " ? "·" : c.ch;
+          const bio = document.createElement("div");
+          bio.className = "bio";
+          bio.textContent = tag;
+          cell.title = `"${c.ch}" · ${tag} · ${c.cls}`;
+          cell.appendChild(ch);
+          cell.appendChild(bio);
+          row.appendChild(cell);
+        }
+        strip.appendChild(row);
+      }
     }
 
-    const sorted = [...spans].sort((a, b) => a.start - b.start);
-    const numbered = sorted.length >= 2;
+    // (b) token chips
+    chipsDiv.innerHTML = "";
+    const PFX_LABEL = {
+      PFX_SAVA: "PREFIX 1.25", PFX_DEDH: "PREFIX 1.5", PFX_DHAI: "PREFIX 2.5",
+      PFX_SAADHE: "PREFIX +0.5", PFX_PAUNE: "PREFIX −0.25", PFX_AADHA: "PREFIX 0.5", PFX_PAAV: "PREFIX 0.25",
+    };
+    const toks = spans.flatMap((sp) => sp.tokens || []);
+    if (!toks.length) {
+      const c = document.createElement("span");
+      c.className = "chip";
+      c.textContent = "no tagged tokens";
+      chipsDiv.appendChild(c);
+    }
+    for (const [cls, tok] of toks) {
+      if (cls === "SEP") continue;
+      let rhs = cls;
+      if (PFX_LABEL[cls]) rhs = PFX_LABEL[cls];
+      else if (cls.startsWith("CARD_")) rhs = "NUMBER " + cls.slice(5);
+      else if (cls === "DIGITS") rhs = "DIGITS";
+      else if (cls.startsWith("UNIT_")) {
+        const key = cls.slice(5).toLowerCase();
+        rhs = "UNIT " + (UNIT_VALUE[key] ? UNIT_VALUE[key].toExponential().replace("e+", "e") : key);
+      } else if (cls === "RANGE") rhs = "RANGE";
+      const c = document.createElement("span");
+      c.className = "chip";
+      c.innerHTML = `<b>${escapeHtml(String(tok))}</b> → ${escapeHtml(rhs)}`;
+      chipsDiv.appendChild(c);
+    }
 
-    let html = "";
-    let cursor = 0;
-    sorted.forEach((sp, i) => {
-      html += escapeHtml(text.slice(cursor, sp.start));
-      const badge = numbered
-        ? `<span class="mark-badge" data-mark-idx="${i}">${i + 1}</span>`
-        : "";
-      html += `<mark data-mark-idx="${i}">${badge}${escapeHtml(text.slice(sp.start, sp.end))}</mark>`;
-      cursor = sp.end;
+    // (c) arithmetic
+    arithDiv.innerHTML = "";
+    if (!spans.length) {
+      arithDiv.innerHTML = '<span class="eq">no amount → nothing to compute</span>';
+      return;
+    }
+    const lines = spans.map((sp) => {
+      const uv = sp.unit ? UNIT_VALUE[sp.unit] : null;
+      const show = (v) => (uv ? `${formatUnitAmount(v / uv)} × ${indianGroup(uv)} = ${indianGroup(v)}` : `= ${indianGroup(v)}`);
+      if (sp.range) return show(sp.range[0]) + '  <span class="eq">…</span>  ' + show(sp.range[1]);
+      return show(sp.value);
     });
-    html += escapeHtml(text.slice(cursor));
-    textDiv.innerHTML = html;
-    lineDiv.appendChild(textDiv);
-
-    const marks = Array.from(textDiv.querySelectorAll("mark"));
-
-    sorted.forEach((sp, i) => {
-      const row = document.createElement("div");
-      row.className = "span-row";
-      row.tabIndex = 0;
-      const mark = marks[i];
-      const setHot = (on) => { if (mark) mark.classList.toggle("hot", on); };
-      row.addEventListener("mouseenter", () => setHot(true));
-      row.addEventListener("mouseleave", () => setHot(false));
-      row.addEventListener("focus", () => setHot(true));
-      row.addEventListener("blur", () => setHot(false));
-
-      const pct = Math.round((sp.confidence || 0) * 100);
-      const band = confBand(sp.confidence || 0);
-      const verified = !!sp.verified;
-
-      const valueZone = document.createElement("div");
-      valueZone.className = "span-zone-value";
-
-      const valueBtn = document.createElement("button");
-      valueBtn.type = "button";
-      valueBtn.className = "span-value-btn";
-      const rawNumber = sp.range ? sp.range[0] : sp.value;
-      const displayValue = sp.range
-        ? indianGroup(sp.range[0]) + " – " + indianGroup(sp.range[1])
-        : indianGroup(sp.value);
-      const currencyPrefix = sp.currency === "INR" ? "₹" : "";
-      valueBtn.innerHTML =
-        `${currencyPrefix}${escapeHtml(displayValue)}<span class="copied-tip">copied</span>`;
-      valueBtn.title = "Click to copy the raw number";
-      valueBtn.addEventListener("click", async (e) => {
-        e.stopPropagation();
-        const ok = await copyText(String(Math.round(rawNumber)));
-        if (ok) {
-          valueBtn.classList.add("show-copied");
-          setTimeout(() => valueBtn.classList.remove("show-copied"), 1000);
-        }
-      });
-      valueZone.appendChild(valueBtn);
-
-      const caption = unitCaption(sp);
-      if (caption) {
-        const cap = document.createElement("div");
-        cap.className = "span-caption";
-        cap.textContent = caption;
-        valueZone.appendChild(cap);
-      }
-
-      const midZone = document.createElement("div");
-      midZone.className = "span-zone-mid";
-      if (sp.unit) {
-        const c = document.createElement("span");
-        c.className = "chip-small";
-        c.textContent = sp.unit;
-        midZone.appendChild(c);
-      }
-      if (sp.currency) {
-        const c = document.createElement("span");
-        c.className = "chip-small";
-        c.textContent = sp.currency;
-        midZone.appendChild(c);
-      }
-      if (sp.range) {
-        const c = document.createElement("span");
-        c.className = "chip-small";
-        c.textContent = "range " + indianGroup(sp.range[0]) + " – " + indianGroup(sp.range[1]);
-        midZone.appendChild(c);
-      }
-      const western = document.createElement("span");
-      western.className = "span-western";
-      western.textContent = Math.round(rawNumber).toLocaleString("en-US");
-      midZone.appendChild(western);
-
-      const rightZone = document.createElement("div");
-      rightZone.className = "span-zone-right";
-      const pill = document.createElement("span");
-      pill.className = "conf-pill " + band;
-      pill.textContent = pct + "%";
-      pill.title = "calibrated confidence " + (sp.confidence || 0).toFixed(3) +
-        " (raw " + (sp.rawConfidence || 0).toFixed(3) + ") -- among spans reported at this level, " +
-        "about this share have the right value on held-out synthetic data";
-      rightZone.appendChild(pill);
-
-      const vPill = document.createElement("span");
-      vPill.className = "verified-pill " + (verified ? "yes" : "no");
-      vPill.textContent = verified ? "verified" : "unverified";
-      vPill.title = verified
-        ? "every token was independently justified by the lexicon"
-        : "the model tagged this, but not every token matched the lexicon exactly";
-      rightZone.appendChild(vPill);
-
-      const howBtn = document.createElement("button");
-      howBtn.type = "button";
-      howBtn.className = "how-btn";
-      howBtn.setAttribute("aria-expanded", "false");
-      howBtn.innerHTML = `<span class="chev">▸</span> how`;
-      rightZone.appendChild(howBtn);
-
-      row.appendChild(valueZone);
-      row.appendChild(midZone);
-      row.appendChild(rightZone);
-
-      const howPanel = document.createElement("div");
-      howPanel.className = "how-panel";
-      const tokens = humanizeClasses(sp.classes || [], sp.span || text.slice(sp.start, sp.end));
-      for (const t of tokens) {
-        const chip = document.createElement("span");
-        chip.className = "how-chip";
-        chip.textContent = t;
-        howPanel.appendChild(chip);
-      }
-      if (Array.isArray(sp.tokens) && sp.tokens.length) {
-        const tokenRow = document.createElement("div");
-        tokenRow.className = "token-chips";
-        for (const [cls, txt] of sp.tokens) {
-          const chip = document.createElement("span");
-          chip.className = "token-chip";
-          chip.innerHTML = `<b>${escapeHtml(cls)}</b>: ${escapeHtml(JSON.stringify(txt))}`;
-          tokenRow.appendChild(chip);
-        }
-        howPanel.appendChild(tokenRow);
-      }
-
-      howBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const open = howPanel.classList.toggle("open");
-        howBtn.setAttribute("aria-expanded", String(open));
-      });
-
-      lineDiv.appendChild(row);
-      lineDiv.appendChild(howPanel);
-    });
-
-    const reportRow = document.createElement("div");
-    reportRow.className = "report-row";
-    reportRow.appendChild(makeReportLink(text, spans));
-    lineDiv.appendChild(reportRow);
-
-    return lineDiv;
+    arithDiv.innerHTML = lines.join('<br />');
   }
 
-  function selectLine(index) {
-    selectedLineIndex = index;
-    document.querySelectorAll(".line").forEach((el) => {
-      el.classList.toggle("selected", Number(el.dataset.index) === index);
-    });
-    renderInspect();
-  }
-
-  let debounceTimer = null;
+  let debounce = null;
   function scheduleParse() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(runParse, 120);
-    updateHash();
+    clearTimeout(debounce);
+    debounce = setTimeout(runParse, 90);
   }
 
   function runParse() {
-    results.innerHTML = "";
-    const lines = input.value.split("\n");
-    lastParseData = [];
-    let spanCount = 0;
-    const strict = !!strictToggle.checked;
-    const minConfidence = Number(minConfSlider.value) || 0;
+    const text = input.value;
+    const opts = { strict: !!strict.checked, minConfidence: Number(minConf.value) || 0 };
+    let spans = [];
     const t0 = performance.now();
-    lines.forEach((line, i) => {
-      let spans = [];
-      try {
-        spans = parse(line, { strict, minConfidence });
-      } catch (e) {
-        spans = [];
-      }
-      spanCount += spans.length;
-      lastParseData.push({ text: line, spans });
-      results.appendChild(renderLine(line, spans, i));
-    });
-    reportAllLink.onclick = (e) => {
-      const wholeText = input.value;
-      const gotJson = JSON.stringify(lastParseData.map((l) => l.spans), null, 2);
-      reportAllLink.href = buildIssueUrl({ text: wholeText, gotJson });
-    };
-    const t1 = performance.now();
-    statLatency.textContent = (t1 - t0).toFixed(2) + " ms";
-    statLines.textContent = String(lines.length);
-    statSpans.textContent = String(spanCount);
-    if (currentView === "json") renderRaw();
+    try { spans = parse(text, opts); } catch { spans = []; }
+    const ms = performance.now() - t0;
+    lastSpans = spans;
 
-    if (selectedLineIndex === null || selectedLineIndex >= lines.length) {
-      selectedLineIndex = lines.length - 1;
-    }
-    document.querySelectorAll(".line").forEach((el) => {
-      el.classList.toggle("selected", Number(el.dataset.index) === selectedLineIndex);
-    });
-    renderInspect();
+    mirror.innerHTML = highlightHtml(text, spans);
+    mirror.scrollLeft = input.scrollLeft;
+    renderResult(text, spans);
+    renderModel(text, spans);
+    rawPre.textContent = JSON.stringify(spans, null, 2);
+
+    parseCaption.textContent =
+      `parsed in ${ms.toFixed(1)} ms on CPU · ${spans.length} ${spans.length === 1 ? "amount" : "amounts"}`;
+
+    const gotJson = JSON.stringify(spans, null, 2);
+    const issueUrl = buildIssueUrl({ text, gotJson });
+    reportLink.href = issueUrl;
+    reportLinkFoot.href = issueUrl;
+    updateHash();
   }
 
   input.addEventListener("input", scheduleParse);
-  const strictToggle = document.getElementById("strict-toggle");
-  strictToggle.addEventListener("change", () => { scheduleParse(); runParse(); });
-  const minConfSlider = document.getElementById("minconf");
-  const minConfValue = document.getElementById("minconf-value");
-  minConfSlider.addEventListener("input", () => {
-    minConfValue.textContent = Math.round(Number(minConfSlider.value) * 100) + "%";
+  input.addEventListener("scroll", () => { mirror.scrollLeft = input.scrollLeft; });
+  strict.addEventListener("change", runParse);
+  minConf.addEventListener("input", () => {
+    minConfValue.textContent = Math.round(Number(minConf.value) * 100) + "%";
     runParse();
   });
 
-  // ---------- inside the model ----------
-  const inspectToggle = document.getElementById("inspect-toggle");
-  const inspectBody = document.getElementById("inspect-body");
-  const inspectUnavailable = document.getElementById("inspect-unavailable");
-  const inspectTime = document.getElementById("inspect-time");
-  const strip = document.getElementById("strip");
-
-  if (!inspectFn) {
-    inspectUnavailable.classList.remove("hidden");
-    inspectBody.classList.add("hidden");
-    inspectToggle.disabled = true;
-  }
-
-  inspectToggle.addEventListener("change", () => {
-    inspectBody.classList.toggle("hidden", !inspectToggle.checked);
+  document.getElementById("cta").addEventListener("click", () => {
+    document.getElementById("try").scrollIntoView({ behavior: "smooth", block: "center" });
+    input.focus();
+    input.select();
   });
 
-  function abbrevClass(cls) {
-    if (!cls) return cls;
-    return cls
-      .replace(/^CARD_/, "C:")
-      .replace(/^UNIT_/, "U:")
-      .replace(/^PFX_/, "P:");
-  }
-
-  const CELL_STEP = 24; // 22px cell + 2px gap
-
-  function renderInspect() {
-    if (!inspectFn || !inspectToggle.checked) return;
-    const line = selectedLineIndex !== null ? lastParseData[selectedLineIndex] : null;
-    strip.innerHTML = "";
-    inspectTime.textContent = "";
-    if (!line || !line.text.trim()) return;
-    let insp;
-    try {
-      insp = inspectFn(line.text);
-    } catch {
-      return;
+  // ---------- copy json ----------
+  const copyBtn = document.getElementById("copy-json");
+  copyBtn.addEventListener("click", async () => {
+    const text = JSON.stringify(lastSpans, null, 2);
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.select(); document.execCommand("copy");
+        document.body.removeChild(ta); ok = true;
+      } catch { ok = false; }
     }
-    inspectTime.textContent = `· inspect: ${insp.ms.toFixed(2)} ms`;
-
-    const charsRow = document.createElement("div");
-    charsRow.className = "strip-chars";
-    const labelsRow = document.createElement("div");
-    labelsRow.className = "strip-labels";
-    labelsRow.style.width = insp.chars.length * CELL_STEP - 2 + "px";
-
-    insp.chars.forEach((c, i) => {
-      const cell = document.createElement("div");
-      const tag = c.bio === 1 ? "B" : c.bio === 2 ? "I" : "O";
-      cell.className = "cell tag-" + tag;
-      const bProb = Array.isArray(c.bioProb) ? c.bioProb[1] : 0;
-      const ch = document.createElement("div");
-      ch.className = "ch";
-      ch.textContent = c.ch === " " ? "·" : c.ch;
-      ch.style.opacity = String(Math.max(0.35, Math.min(1, 0.35 + bProb * 0.65)));
-      cell.appendChild(ch);
-      const bar = document.createElement("div");
-      bar.className = "probbar";
-      const fill = document.createElement("i");
-      fill.style.width = Math.round(bProb * 100) + "%";
-      bar.appendChild(fill);
-      cell.appendChild(bar);
-      cell.title = `char: "${c.ch}"  bio: ${tag}  class: ${c.cls}  P(B)=${bProb.toFixed(2)}`;
-      charsRow.appendChild(cell);
-    });
-
-    // group contiguous non-O runs of the same class into a single centred
-    // label with a bracket line, so labels never overlap between cells.
-    let i = 0;
-    while (i < insp.chars.length) {
-      const c = insp.chars[i];
-      const tag = c.bio === 1 ? "B" : c.bio === 2 ? "I" : "O";
-      if (tag === "O" || !c.cls) { i++; continue; }
-      let j = i + 1;
-      while (j < insp.chars.length) {
-        const cj = insp.chars[j];
-        const tagj = cj.bio === 1 ? "B" : cj.bio === 2 ? "I" : "O";
-        if (tagj === "O" || cj.cls !== c.cls) break;
-        j++;
-      }
-      const runLen = j - i;
-      const label = document.createElement("div");
-      label.className = "run-label";
-      label.style.left = i * CELL_STEP + "px";
-      label.style.width = runLen * CELL_STEP - 2 + "px";
-      label.textContent = abbrevClass(c.cls);
-      label.title = c.cls;
-      labelsRow.appendChild(label);
-      i = j;
-    }
-
-    strip.appendChild(charsRow);
-    strip.appendChild(labelsRow);
-  }
+    copyBtn.textContent = ok ? "Copied!" : "Copy failed";
+    setTimeout(() => { copyBtn.textContent = "Copy"; }, 1200);
+  });
 
   // ---------- batch benchmark ----------
   const BATCH_DECORATIONS = [
-    (s, i) => s,
-    (s, i) => s + " #" + i,
-    (s, i) => "ok " + s,
-    (s, i) => s + "!!",
-    (s, i) => "bhai " + s,
-    (s, i) => s + " (" + i + ")",
-    (s, i) => "yaar " + s + " hai",
-    (s, i) => s + " kal",
+    (s) => s, (s, i) => s + " #" + i, (s) => "ok " + s, (s) => s + "!!",
+    (s) => "bhai " + s, (s, i) => s + " (" + i + ")", (s) => "yaar " + s + " hai", (s) => s + " kal",
   ];
-
+  const BATCH_SEED = EXAMPLES.map((e) => e.text);
   function makeVariedBatch(n) {
     const batch = [];
     for (let i = 0; i < n; i++) {
-      const example = EXAMPLES[i % EXAMPLES.length];
-      const decorate = BATCH_DECORATIONS[i % BATCH_DECORATIONS.length];
-      batch.push(decorate(example, i));
+      batch.push(BATCH_DECORATIONS[i % BATCH_DECORATIONS.length](BATCH_SEED[i % BATCH_SEED.length], i));
     }
     return batch;
   }
-
   function spansEqual(a, b) {
     if (a.start !== b.start || a.end !== b.end) return false;
     if ((a.value || 0) !== (b.value || 0)) return false;
-    const aRange = a.range ? a.range[0] + "-" + a.range[1] : "";
-    const bRange = b.range ? b.range[0] + "-" + b.range[1] : "";
-    if (aRange !== bRange) return false;
+    const ar = a.range ? a.range.join("-") : "";
+    const br = b.range ? b.range.join("-") : "";
+    if (ar !== br) return false;
     if ((a.unit || "") !== (b.unit || "")) return false;
     if ((a.currency || "") !== (b.currency || "")) return false;
     if ((a.classes || []).join(" ") !== (b.classes || []).join(" ")) return false;
-    if (Math.abs((a.confidence || 0) - (b.confidence || 0)) > 0.02) {
-      return false;
-    }
+    if (Math.abs((a.confidence || 0) - (b.confidence || 0)) > 0.02) return false;
     return true;
   }
-
   function spanLabel(sp) {
-    const valueStr = sp.range ? sp.range[0] + "-" + sp.range[1] : String(sp.value);
-    return "[span=" + valueStr + "]";
+    return "[span=" + (sp.range ? sp.range.join("-") : String(sp.value)) + "]";
   }
-
   function compareBatchResults(texts, cpuResults, gpuResults) {
     const mismatches = [];
     for (let i = 0; i < texts.length; i++) {
@@ -1503,22 +963,13 @@ lakhon log aaye</textarea>
       const gpuSpans = gpuResults[i] || [];
       let ok = cpuSpans.length === gpuSpans.length;
       if (ok) {
-        const sortedCpu = [...cpuSpans].sort((a, b) => a.start - b.start);
-        const sortedGpu = [...gpuSpans].sort((a, b) => a.start - b.start);
-        for (let j = 0; j < sortedCpu.length; j++) {
-          if (!spansEqual(sortedCpu[j], sortedGpu[j])) {
-            ok = false;
-            break;
-          }
-        }
+        const a = [...cpuSpans].sort((x, y) => x.start - y.start);
+        const b = [...gpuSpans].sort((x, y) => x.start - y.start);
+        for (let j = 0; j < a.length; j++) if (!spansEqual(a[j], b[j])) { ok = false; break; }
       }
       if (!ok) {
-        const cpuStr = cpuSpans.length
-          ? cpuSpans.map((sp) => spanLabel(sp)).join(", ")
-          : "(no spans)";
-        const gpuStr = gpuSpans.length
-          ? gpuSpans.map((sp) => spanLabel(sp)).join(", ")
-          : "(no spans)";
+        const cpuStr = cpuSpans.length ? cpuSpans.map(spanLabel).join(", ") : "(no spans)";
+        const gpuStr = gpuSpans.length ? gpuSpans.map(spanLabel).join(", ") : "(no spans)";
         mismatches.push(`${texts[i]} → cpu: ${cpuStr} | gpu: ${gpuStr}`);
       }
     }
@@ -1526,10 +977,10 @@ lakhon log aaye</textarea>
   }
 
   const benchBtn = document.getElementById("bench-btn");
-  const benchBackendSel = document.getElementById("bench-backend");
   const benchSizeSel = document.getElementById("bench-size");
-  const benchSummary = document.getElementById("bench-summary");
+  const benchBackendSel = document.getElementById("bench-backend");
   const benchBars = document.getElementById("bench-bars");
+  const benchSummary = document.getElementById("bench-summary");
   const benchMismatches = document.getElementById("bench-mismatches");
 
   function drawBar(label, ms, maxMs, cls) {
@@ -1547,18 +998,12 @@ lakhon log aaye</textarea>
     benchBtn.disabled = true;
     benchSummary.textContent = "";
     benchBars.innerHTML = "";
-    benchMismatches.textContent = "";
+    benchMismatches.innerHTML = "";
     const n = parseInt(benchSizeSel.value, 10) || 500;
     const backend = benchBackendSel.value;
     const batch = makeVariedBatch(n);
 
-    let cpuTotal = null;
-    let cpuResults = null;
-    let gpuTotal = null;
-    let gpuResults = null;
-    let cpuErr = null;
-    let gpuErr = null;
-
+    let cpuTotal = null, cpuResults = null, gpuTotal = null, gpuResults = null, cpuErr = null, gpuErr = null;
     const wantCpu = backend === "cpu" || backend === "auto";
     const wantGpu = backend === "webgpu" || (backend === "auto" && gpuAvail);
 
@@ -1567,21 +1012,16 @@ lakhon log aaye</textarea>
         const c0 = performance.now();
         cpuResults = await parseBatch(batch, { backend: "cpu" });
         cpuTotal = performance.now() - c0;
-      } catch (e) {
-        cpuErr = e && e.message ? e.message : String(e);
-      }
+      } catch (e) { cpuErr = e && e.message ? e.message : String(e); }
     }
     if (wantGpu) {
-      if (!gpuAvail) {
-        gpuErr = "no WebGPU adapter available";
-      } else {
+      if (!gpuAvail) gpuErr = "no WebGPU adapter available";
+      else {
         try {
           const g0 = performance.now();
           gpuResults = await parseBatch(batch, { backend: "webgpu" });
           gpuTotal = performance.now() - g0;
-        } catch (e) {
-          gpuErr = e && e.message ? e.message : String(e);
-        }
+        } catch (e) { gpuErr = e && e.message ? e.message : String(e); }
       }
     }
 
@@ -1589,39 +1029,33 @@ lakhon log aaye</textarea>
     if (cpuTotal != null) benchBars.appendChild(drawBar("CPU", cpuTotal, maxMs, "cpu"));
     if (cpuErr) {
       const p = document.createElement("div");
-      p.className = "mismatch-list";
+      p.className = "dev-note";
       p.textContent = "CPU error: " + cpuErr;
       benchBars.appendChild(p);
     }
     if (gpuTotal != null) benchBars.appendChild(drawBar("WebGPU", gpuTotal, maxMs, "gpu"));
     else if (backend !== "cpu") {
       const p = document.createElement("div");
-      p.className = "unavailable-note";
+      p.className = "dev-note";
       p.textContent = "WebGPU: " + (gpuErr || "unavailable");
       benchBars.appendChild(p);
     }
 
-    let summaryParts = [];
-    summaryParts.push(`batch size: ${n}`);
-    if (cpuTotal != null) summaryParts.push(`CPU: ${cpuTotal.toFixed(1)} ms (${(cpuTotal / n).toFixed(3)} ms/string)`);
-    if (gpuTotal != null) summaryParts.push(`WebGPU: ${gpuTotal.toFixed(1)} ms (${(gpuTotal / n).toFixed(3)} ms/string)`);
-    else summaryParts.push(`WebGPU: unavailable`);
-    if (cpuTotal != null && gpuTotal != null && gpuTotal > 0) {
-      summaryParts.push(`speedup: ${(cpuTotal / gpuTotal).toFixed(1)}x`);
-    }
-    benchSummary.textContent = summaryParts.join(" · ");
+    const parts = [`batch size: ${n}`];
+    if (cpuTotal != null) parts.push(`CPU: ${cpuTotal.toFixed(1)} ms (${(cpuTotal / n).toFixed(3)} ms/string)`);
+    if (gpuTotal != null) parts.push(`WebGPU: ${gpuTotal.toFixed(1)} ms (${(gpuTotal / n).toFixed(3)} ms/string)`);
+    else parts.push("WebGPU: unavailable");
+    if (cpuTotal != null && gpuTotal != null && gpuTotal > 0) parts.push(`speedup: ${(cpuTotal / gpuTotal).toFixed(1)}x`);
+    benchSummary.textContent = parts.join(" · ");
 
     if (cpuResults && gpuResults) {
       const mismatches = compareBatchResults(batch, cpuResults, gpuResults);
+      const head = document.createElement("div");
+      head.className = "dev-note";
       if (mismatches.length === 0) {
-        const ok = document.createElement("div");
-        ok.className = "match-ok";
-        ok.textContent = `matches CPU: ${batch.length}/${batch.length}`;
-        benchMismatches.appendChild(ok);
+        head.textContent = `matches CPU: ${batch.length}/${batch.length}`;
+        benchMismatches.appendChild(head);
       } else {
-        const head = document.createElement("div");
-        head.style.color = "var(--bad)";
-        head.style.fontWeight = "600";
         head.textContent = `mismatches: ${mismatches.length}/${batch.length}`;
         benchMismatches.appendChild(head);
         const list = document.createElement("div");
@@ -1630,20 +1064,13 @@ lakhon log aaye</textarea>
         benchMismatches.appendChild(list);
       }
     }
-
     benchBtn.disabled = false;
   }
-
   benchBtn.addEventListener("click", runBenchmark);
 
-  // ---------- keyboard ----------
   window.addEventListener("keydown", (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-      e.preventDefault();
-      runBenchmark();
-    } else if (e.key === "Escape" && document.activeElement === input) {
+    if (e.key === "Escape" && document.activeElement === input) {
       input.value = "";
-      scheduleParse();
       runParse();
     }
   });

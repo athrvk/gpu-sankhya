@@ -4,6 +4,24 @@ All notable changes to `gpu-sankhya`, summarized release by release. See the
 [git history](https://github.com/athrvk/gpu-sankhya/commits/master) for full
 detail.
 
+## Unreleased
+
+- The demo site (`demo/index.html`) is redesigned as a single centred column:
+  a "Try it out" card that highlights the typed phrase in place (pastel
+  colours per token class — fraction word, number, unit, currency, range),
+  a clean Result panel with value, unit caption, confidence and the
+  `verified` badge, plus a tappable grid of example phrases in Hinglish,
+  Hindi, Marathi and Gujarati.
+- "Inside the Model" now explains the current phrase directly: the
+  per-character BIO/class strip from `inspect()`, the decoded token chips,
+  and the arithmetic line, captioned with the live `modelInfo()` parameter
+  count.
+- Everything the old demo could do is still there — shareable URL hash,
+  local parse timing, wrong-parse reporting — with strict mode, the
+  min-confidence slider, raw JSON, WebGPU status and the batch benchmark
+  moved into a collapsed "Developer options" disclosure. Light by default,
+  with `prefers-color-scheme: dark` support.
+
 ## 0.7.0 — Calibrated confidence
 
 - Confidence scores are now calibrated: an isotonic (PAV) map is fit on
