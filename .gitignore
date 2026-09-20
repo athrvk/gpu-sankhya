@@ -18,3 +18,5 @@ isolate-*.log
 /python/data_wild/raw/
 /python/data_wild/samples/
 /python/data_wild/wild_preds.jsonl
+/python/data_wild/negatives.jsonl
+/python/data_wild/pretrain_corpus.jsonl

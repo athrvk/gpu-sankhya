@@ -226,7 +226,96 @@ turns it straight into a gold line.
     that also means everything in this report is measured on the short end of
     real text.
 
-## 5. What real text has that the generator never produces
+## 5. Model-side experiments
+
+**Decision (0.8.0):** the shipped weights stay. Re-evaluated under the R11–R18
+rules (which landed in parallel), experiment B and the shipped weights are
+within seed noise of each other on every metric — real-text FP 8 vs 10 of
+240, verified FP 6 vs 4, synthetic value accuracy identical, strict value
+accuracy 1.000 for both — and B also changes the charset. The rules
+captured most of what B learned from real negatives. Real-negative mixing
+(`--extra-negatives`) and the pretrained trunk (`--init-from`) are now the
+standard recipe for the next weights release, when a fifth language or a
+new gold finding gives a reason to retrain.
+
+
+Section 3's headline is a *precision* problem: 20% of real no-amount
+sentences produce a span (8.8% a verified one) against 0% on the hand-written
+negatives, because the model has never seen real non-amount text. Two
+model-side levers, each one CPU run of the standard recipe (`v2`, 48 ch, 20
+epochs, seed 2, `--lang hi_latn,hi_deva,mr_deva,gu_gujr --mix
+0.32,0.26,0.21,0.21 --cross 0.10`, 200k train / 6k val, the four verified LLM
+corpora at `--extra-ratio 0.2`):
+
+- **A — real negatives in training.** 20,000 real sentences with no amount
+  signal, labelled all-`O`, mixed in at 15% of each epoch
+  (`--extra-negatives ... --extra-negative-ratio 0.15`). Pool built with
+  `python -m sankhya.wild negatives --out data_wild/negatives.jsonl --n 20000`:
+  lexicon score 0, *and* not spanned by the shipped weights, balanced 5,000 per
+  language, asserted disjoint from `tests/gold_wild_*.jsonl`. The file is
+  derived from CC BY-SA corpus text, so it is gitignored — only the tool is
+  committed (see python/README.md, "Real negatives").
+- **B — masked-character pretraining, then A.** `python -m sankhya.pretrain`
+  trains the same `SankhyaCNN` trunk (embedding + conv stack) with a throwaway
+  per-char vocab head to reconstruct 15% randomly masked characters of 500,000
+  real sentences (shipped 170-char charset, `<unk>` as the mask token, loss
+  only on masked positions, seed 23, wild-gold text excluded); `train.py
+  --init-from pretrain.pt` then runs recipe A on top with fresh heads.
+
+### Results (exported **int8** weights, same gates as section 3)
+
+| model | syn. value acc | syn. strict cov | wild value acc | wild strict cov | wild FP | wild strict FP |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| shipped 0.7.0 | 0.962 | 0.909 | 0.899 | 0.869 | **0.200** | **0.088** |
+| A (real negatives) | 0.952 | 0.891 | 0.881 | 0.869 | **0.079** | **0.063** |
+| B (pretrain + A) | **0.962** | 0.906 | **0.905** | **0.893** | **0.033** | **0.025** |
+
+Per-language wild false-positive rate (FP / strict FP, over the 240 real
+negatives in the wild gold):
+
+| model | hi_latn (79) | hi_deva (57) | mr_deva (52) | gu_gujr (52) |
+| --- | ---: | ---: | ---: | ---: |
+| shipped 0.7.0 | 0.367 / 0.177 | 0.140 / 0.070 | 0.135 / 0.019 | 0.077 / 0.038 |
+| A | 0.101 / 0.076 | 0.088 / 0.053 | 0.058 / 0.058 | 0.058 / 0.058 |
+| B | 0.051 / 0.038 | 0.070 / 0.053 | **0.000 / 0.000** | **0.000 / 0.000** |
+
+Spurious spans on the 400 wild gold lines: 63 (shipped) -> 22 (A) -> 10 (B).
+Strict value accuracy stays **1.000** on every row, synthetic and wild: the
+strict tier's promise is intact, and B finally makes strict mode mean what the
+synthetic numbers implied it meant.
+
+Synthetic negatives stay at 0 false positives for all three models, and
+synthetic strict value accuracy stays 1.000.
+
+**Did the synthetic numbers move?** A costs about a point of synthetic value
+accuracy (0.962 -> 0.952) and 1.8 points of synthetic strict coverage
+(0.909 -> 0.891) — real negatives are 15% of every epoch, and the model spends
+some capacity on them. B gets that back: 0.962 / 0.906, i.e. synthetic value
+accuracy indistinguishable from shipped, while cutting the wild FP rate by 6x.
+Note the caveat the sweep section already makes: seed-to-seed spread on this
+recipe is +/-1-2 points on gold, and these are single runs on a freshly
+generated dataset, so the small synthetic differences (and A's small wild
+value-accuracy dip) are within noise. The FP collapse — 48 -> 19 -> 8 false
+positives out of 240 — is far outside it.
+
+### Wall time (this container, 4 CPU cores)
+
+| step | time |
+| --- | ---: |
+| `wild negatives --n 20000` (scan + shipped-model filter) | 1m 46s |
+| A: train (20 epochs, 294k examples/epoch) | 22m 16s |
+| B: pretrain corpus collection (500k sentences) | 1m 33s |
+| B: pretrain (12 epochs x 500k, masked-char acc 0.412 -> 0.549) | 22m 10s |
+| B: train (20 epochs, same as A, `--init-from`) | 20m 1s |
+
+The per-epoch cost of A over the shipped recipe is the extra 44k negatives
+(294k vs 250k examples per epoch); pretraining adds a flat ~24 minutes once,
+reusable across tagger runs (the trunk checkpoint is 40,475 parameters).
+
+**Not adopted.** These weights are experiments, not a release: nothing under
+`models/default/` was touched.
+
+## 6. What real text has that the generator never produces
 
 - **Amounts are rare and unevenly distributed.** ~1% of real sentences mention
   one; the generator's world is mostly amounts. Precision, not recall, is what
