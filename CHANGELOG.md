@@ -6,6 +6,10 @@ detail.
 
 ## Unreleased
 
+- Demo site SEO and social sharing: an og.png preview image, favicon.svg
+  and apple-touch-icon.png, robots.txt/sitemap.xml, JSON-LD
+  (SoftwareApplication + FAQPage) structured data, and Open Graph/Twitter
+  card meta tags; `scripts/site.mjs` now copies every file in `demo/`.
 - The demo site (`demo/index.html`) is redesigned as a single centred column:
   a "Try it out" card that highlights the typed phrase in place (pastel
   colours per token class — fraction word, number, unit, currency, range),
